@@ -72,6 +72,11 @@ TOOLS = [
     {"type": "function", "function": {"name": "inbox_add",
      "description": f"Hızlı not: {USER} 'not al', 'kenara yaz', 'aklıma geldi' derse metni kutuya (00-Inbox/Dump) yaz; günlük çalışma yerine dağıtır.",
      "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}}},
+    {"type": "function", "function": {"name": "brain_capture",
+     "description": f"Beyne at: {USER} bir bağlantıyı (YouTube videosu, web sayfası) ya da metni 'beyne at', 'kasaya kaydet', 'özetle kaydet' "
+                    "derse kaydet. Video/sayfa özetlenip kaynak notu olur, düz metin not kutusuna düşer.",
+     "parameters": {"type": "object", "properties": {"target": {"type": "string", "description": "bağlantı (https://...) ya da metin"}},
+                    "required": ["target"]}}},
     {"type": "function", "function": {"name": "memory_add",
      "description": f"{USER} hakkında kalıcı bir bilgiyi hatırla ('bunu hatırla', 'Ahmet ev arkadaşım'). Şifre/kart/kimlik YAZMA.",
      "parameters": {"type": "object", "properties": {"fact": {"type": "string"}}, "required": ["fact"]}}},
@@ -185,6 +190,8 @@ ACTION_HINTS = [
     (r"\b(aç|ac|başlat)\b", "open_app"),
     (r"^\s*not al|\bnot al:|kenara yaz|not düş|nota ekle:|aklıma geldi|inbox'?a (at|yaz)|kutuya (at|yaz)", "inbox_add"),
     (r"hatırla:|bunu hatırla|aklında tut|unutma ki", "memory_add"),
+    (r"\bbeyn?(e|i|ime|ine)\s+(at|kaydet|ekle)|kasaya (at|kaydet|ekle)|(video|link|bağlantı|baglanti|sayfa|makale)\w*.*\b(kaydet|özetle|ozetle)|"
+     r"^\s*https?://\S+\s*$", "brain_capture"),
     (r"(başvur|ödev|odev|teslim|proje|görüşme|gorusme|randevu|sınav|sinav)\w*.*\b(yapmadım|yapmadim|yapmayacağım|yapmıcam|yapmicam|"
      r"yapmayacagim|vazgeçtim|vazgectim|bitirdim|tamamladım|tamamladim|teslim ettim|gönderdim|gonderdim|kabul|reddedildi|red|"
      r"iptal|olmadı|olmadi|yaptım|yaptim)", "note_update"),
@@ -210,6 +217,8 @@ def action_hint(text: str) -> list[str]:
     for pat, tool in ACTION_HINTS:
         if re.search(pat, t) and tool not in out:
             out.append(tool)
+    if "brain_capture" in out:                                  # bağlantıdaki "youtube" müzik/uygulama isteği değil
+        return ["brain_capture"]
     if "play_spotify" in out or "play_youtube" in out:          # "spotify'ı aç" → uygulama; "spotify'da X çal" → arama
         if re.fullmatch(rf"\s*{SPOTIFY_RE}'?(ı|i|yı|yi)?\s+(aç|ac|başlat)\s*\.?", t):
             out = ["open_app"] + [x for x in out if x not in ("play_spotify", "open_app")]
@@ -274,9 +283,12 @@ def propose(session: Session, args: dict) -> str:
     now = datetime.now()
     said = next((m["content"] for m in reversed(session.messages) if m["role"] == "user"), "")
     said = said.lower().translate(str.maketrans("ıİğüşöç", "iigusoc"))
+    explicit = re.search(r"\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)", said)
+    rel = re.findall(r"\b(bugun|yarin|obur gun|ertesi gun)\b", said)
+    if len(set(rel)) == 1 and not explicit:
+        day = resolve_day(rel[0], at, now)          # "yarın" dendi ama model başka tarih yazdı (gece 2'de iki gün sonrası) → kod hesaplar
     named = [w for w in WEEKDAYS_FOLD if re.search(rf"\b(haftaya |gelecek |onumuzdeki )?{w}\b", said)]
-    if len(named) == 1 and day.weekday() != WEEKDAYS_FOLD.index(named[0]) and not re.search(
-            r"\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)", said):
+    if len(named) == 1 and day.weekday() != WEEKDAYS_FOLD.index(named[0]) and not explicit:
         # Kullanıcı yalnız gün adı söyledi ama model başka güne denk gelen bir tarih yazdı → günü kod hesaplar
         m = re.search(rf"\b(haftaya |gelecek |onumuzdeki )?{named[0]}\b", said)
         day = resolve_day(m.group(0), at, now)
@@ -419,6 +431,13 @@ def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
             return _read_untrusted(session, name, args)
         if name == "sys_info":
             return actions.sys_info()
+        if name == "brain_capture":                  # yalnız kasaya ekler (geri alınabilir): telefondan da onaysız
+            from . import capture
+            target = str(args.get("target", "")).strip()
+            if session.tainted:                      # bağlantı ekrandan/kameradan gelmiş olabilir: indirmeden önce sor
+                return add_proposal(session, "eylem", f"🧠 Beyne at: {target[:80]}", "ekran/kamera okunduktan sonra onay gerekiyor",
+                                    lambda: capture.capture(target))
+            return capture.capture(target)
         if name == "inbox_add":                      # yalnız kutuya yazar: telefondan da onaysız
             from . import inbox
             return inbox.add(str(args.get("text", "")))
@@ -597,6 +616,11 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             out = run_tool(session, music[0], margs)
             pre_calls.append(f"{music[0]}({', '.join(f'{k}={v!r}' for k, v in margs.items())})")
             augmented = (f"{text}\n\n[ARAÇ ZATEN ÇALIŞTI: {pre_calls[-1]} → {out}\nkullanıcıya ({USER}) bunu tek cümleyle söyle; başka araç çağırma.]")
+        url = re.search(r"https?://\S+", text)
+        if "brain_capture" in hint and url:                  # bağlantıyı kod ayıklar ve kaydeder; özet uzun sürebilir, model beklemesin
+            out = run_tool(session, "brain_capture", {"target": url.group(0)})
+            session.messages.append({"role": "assistant", "content": out})
+            return {"reply": out, "trace": [f"brain_capture(target={url.group(0)!r}) [kod çalıştırdı]"], "proposals": pending(session)}
         if "note_update" in hint:                           # durum bildirimi: ilgili notları kod bulsun, eşlemeyi söylesin
             cands: list[str] = []
             for w in keywords(text, limit=8):

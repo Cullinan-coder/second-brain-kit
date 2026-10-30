@@ -1331,6 +1331,10 @@ def test_propose_trusts_spoken_weekday_over_model_date():
     out = chat.propose(s, {"tag": "RANDEVU", "title": "Doktor", "date": wrong.isoformat(), "time": "15:00"})
     p = list(s.proposals.values())[0]
     assert "Öneri hazırlandı" in out and date.fromisoformat(p["when"][:10]).weekday() == 4
+    s = chat.Session()
+    s.messages.append({"role": "user", "content": "yarın 23:00'te uyanmam için hatırlatma ekle"})
+    chat.propose(s, {"tag": "HATIRLATMA", "title": "Uyanma", "date": (date.today() + timedelta(days=2)).isoformat(), "time": "23:00"})
+    assert list(s.proposals.values())[0]["when"][:10] == (date.today() + timedelta(days=1)).isoformat()   # söylenen "yarın" üstün
 
 
 def test_capture_youtube_web_text_and_duplicates(tmp_path, monkeypatch):
@@ -1380,3 +1384,20 @@ def test_arsenal_and_update_changelog(tmp_path, monkeypatch):
     log.write_text("# D\n\n## 0.3.0 — x\n- üç\n\n## 0.2.0 — y\n- iki\n\n## 0.1.0\n- bir\n", encoding="utf-8")
     assert update.changes(log, "0.1.0") == "## 0.3.0 — x\n- üç\n\n## 0.2.0 — y\n- iki"
     assert update.changes(log, "0.3.0") == ""
+
+
+def test_chat_brain_capture_code_path(monkeypatch):
+    from sb import capture, chat
+    from sb.chat import Session, action_hint, respond
+    assert action_hint("şu videoyu beyne at https://www.youtube.com/watch?v=dQw4w9WgXcQ") == ["brain_capture"]
+    assert action_hint("https://ornek.com/yazi") == ["brain_capture"]
+    assert action_hint("youtube'da orkun ışıtmak aç") == ["play_youtube"]
+    got = []
+    monkeypatch.setattr(capture, "capture", lambda t: got.append(t) or "Kasaya eklendi: 40-Kaynaklar/Web/X.md")
+    monkeypatch.setattr(chat, "retrieve", lambda t: ("", ""))
+    s = Session()
+    r = respond(s, "bunu beyne at https://ornek.com/yazi", chat_fn=lambda m, c: (_ for _ in ()).throw(AssertionError("model çağrılmamalı")))
+    assert got == ["https://ornek.com/yazi"] and r["reply"].startswith("Kasaya eklendi")
+    s.tainted = True                                           # ekran okunmuşsa bağlantı indirilmeden önce onay
+    out = chat.run_tool(s, "brain_capture", {"target": "https://kotu.example/x"})
+    assert got == ["https://ornek.com/yazi"] and chat.pending(s)
