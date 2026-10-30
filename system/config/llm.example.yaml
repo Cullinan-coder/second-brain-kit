@@ -4,6 +4,7 @@ tasks:
   sessions: ollama         # Claude Code oturum özetleri
   extract_dates: ollama    # mailden/SMS'ten tarih çıkarma → hepsi onay-bekleyenler.md
   inbox: ollama            # hızlı not kutusunu (00-Inbox/Dump) yerine dağıtma
+  capture: ollama          # Beyne at (Ctrl+Alt+B): video/sayfa özeti
   topic_map: claude
   course_deep: claude
   project_deep: claude

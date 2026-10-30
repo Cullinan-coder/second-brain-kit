@@ -1331,3 +1331,52 @@ def test_propose_trusts_spoken_weekday_over_model_date():
     out = chat.propose(s, {"tag": "RANDEVU", "title": "Doktor", "date": wrong.isoformat(), "time": "15:00"})
     p = list(s.proposals.values())[0]
     assert "Öneri hazırlandı" in out and date.fromisoformat(p["when"][:10]).weekday() == 4
+
+
+def test_capture_youtube_web_text_and_duplicates(tmp_path, monkeypatch):
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    from sb import capture, inbox
+    monkeypatch.setattr(inbox, "DUMP", v / "00-Inbox" / "Dump")
+    (v / "00-Inbox").mkdir(exist_ok=True)
+    assert capture.YT_RE.search("https://youtu.be/dQw4w9WgXcQ?t=3").group(1) == "dQw4w9WgXcQ"
+    assert capture.YT_RE.search("https://www.youtube.com/shorts/abcdefghijk").group(1) == "abcdefghijk"
+    assert capture.YT_RE.search("https://www.youtube.com/watch?list=x&v=abcdefghijk").group(1) == "abcdefghijk"
+    title, text = capture.page_text("<html><title>Başlık &amp; X</title><script>kötü()</script><nav>menü menü menü menü menü menü</nav>"
+                                    "<p>" + "Bu sayfanın gerçek içeriği burada yazıyor. " * 3 + "</p></html>")
+    assert title == "Başlık & X" and "gerçek içeriği" in text and "kötü" not in text and "menü" not in text
+    summary = {"summary": "Kısa özet.", "points": ["bir", "iki"], "tags": ["Makine Öğrenmesi", "ai"]}
+    monkeypatch.setattr(capture, "summarize", lambda kind, title, text: dict(summary))
+    monkeypatch.setattr(capture, "youtube", lambda vid: ("Video: Başlık/1", "Kanal", "altyazı metni"))
+    out = capture.capture("https://youtu.be/dQw4w9WgXcQ")
+    assert out.startswith("Kasaya eklendi: 40-Kaynaklar/Videolar/")
+    note = next((v / capture.VIDEOS).glob("*.md")).read_text(encoding="utf-8")
+    assert "source_id: https://www.youtube.com/watch?v=dQw4w9WgXcQ" in note and "Kısa özet." in note and "altyazı metni" in note
+    assert "makine-öğrenmesi" in note
+    assert capture.capture("https://www.youtube.com/watch?v=dQw4w9WgXcQ").startswith("Zaten kasada")   # aynı video ikinci kez yok
+    monkeypatch.setattr(capture, "youtube", lambda vid: ("Altyazısız", "", ""))
+    assert "Kutuya not alındı" in capture.capture("https://youtu.be/zzzzzzzzzzz")                      # altyazı yoksa kutuya
+    monkeypatch.setattr(capture, "_get", lambda url: "<title>Sayfa</title><p>" + "uzun bir paragraf metni burada. " * 20 + "</p>")
+    assert capture.capture("https://ornek.com/yazi").startswith("Kasaya eklendi: 40-Kaynaklar/Web/Sayfa")
+    assert "Kutuya not alındı" in capture.capture("aklıma gelen bir fikir")
+    assert "Hassas" in capture.capture("kart 4111 1111 1111 1111")
+    assert capture.capture("   ") == "Pano boş."
+
+
+def test_arsenal_and_update_changelog(tmp_path, monkeypatch):
+    from collections import Counter
+
+    from sb import arsenal, update
+    monkeypatch.setattr(arsenal, "NOTE", tmp_path / "Araçlar ve erişimler.md")
+    rows = [("✓", "Model qwen3:14b", "ollama pull"), ("!", "Spotify", "docs/KURULUM-SPOTIFY.md")]
+    arsenal.build(rows, Counter({"contacts": 3, "web": 1}))
+    text = arsenal.NOTE.read_text(encoding="utf-8")
+    assert "| ✓ | Model qwen3:14b |  |" in text and "| ! | Spotify | docs/KURULUM-SPOTIFY.md |" in text
+    assert "| Rehber | 3 |" in text and "1/2 hazır" in text
+    arsenal.NOTE.write_text(text + "\nkendi notum\n", encoding="utf-8")
+    arsenal.build(rows[:1], Counter())
+    text = arsenal.NOTE.read_text(encoding="utf-8")
+    assert "kendi notum" in text and "Spotify" not in text and text.count("sb:auto:arsenal-durum:start") == 1
+    log = tmp_path / "CHANGELOG.md"
+    log.write_text("# D\n\n## 0.3.0 — x\n- üç\n\n## 0.2.0 — y\n- iki\n\n## 0.1.0\n- bir\n", encoding="utf-8")
+    assert update.changes(log, "0.1.0") == "## 0.3.0 — x\n- üç\n\n## 0.2.0 — y\n- iki"
+    assert update.changes(log, "0.3.0") == ""

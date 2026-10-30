@@ -53,6 +53,7 @@ DAILY_REST = [
     ("bağlantılar", ["links"], 900),
     ("mail notları", ["mail-index"], 900),
     ("rehber (SMS bağlantısı)", ["contacts-sync"], 900),
+    ("araçlar notu", ["arsenal"], 300),                         # Araçlar ve erişimler.md (doctor + kaynak sayımı)
 ]
 
 

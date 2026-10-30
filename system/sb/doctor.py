@@ -89,6 +89,10 @@ def checks() -> list[tuple[str, str, str]]:
         r = subprocess.run(["launchctl", "list"], capture_output=True, text=True)
         for t in ("daily", "weekly", "chat"):
             add(OK if f"com.secondbrain.{t}" in (r.stdout or "") else WARN, f"launchd com.secondbrain.{t}", "python3 _system/tools/schedule_macos.py")
+    if sys.platform == "win32":
+        import os
+        lnk = Path(os.environ.get("APPDATA", "")) / "Microsoft/Windows/Start Menu/Programs/Beyne at.lnk"
+        add(OK if lnk.exists() else WARN, "Beyne at kısayolu (Ctrl+Alt+B)", "powershell -ExecutionPolicy Bypass -File _system/tools/hotkey.ps1")
     add(OK if _http("http://127.0.0.1:8765/") else WARN, "Asistan sunucusu (127.0.0.1:8765)", "zamanlayıcıyı kur ya da `sb chat`")
     from .spotify_api import client_id
     add(OK if client_id() and _kr("spotify-refresh") else WARN, "Spotify doğrudan çalma (isteğe bağlı)", "docs/KURULUM-SPOTIFY.md")
@@ -103,6 +107,7 @@ def run() -> int:
     for st, name, hint in rows:
         print(f" {st} {name}" + (f"   → {hint}" if st != OK and hint else ""))
     fails = sum(1 for r in rows if r[0] == FAIL)
-    print(f"\n{len(rows)} kontrol: {sum(1 for r in rows if r[0] == OK)} hazır, "
+    from .update import version
+    print(f"\nSürüm {version()} · {len(rows)} kontrol: {sum(1 for r in rows if r[0] == OK)} hazır, "
           f"{sum(1 for r in rows if r[0] == WARN)} isteğe bağlı/eksik, {fails} gerekli eksik.")
     return 1 if fails else 0

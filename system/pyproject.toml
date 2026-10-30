@@ -27,6 +27,7 @@ dependencies = [
     "winrt-windows-graphics-imaging>=4!10.0.28000.2705; sys_platform == 'win32'",
     "winrt-windows-media-ocr>=4!10.0.28000.2705; sys_platform == 'win32'",
     "winrt-windows-storage-streams>=4!10.0.28000.2705; sys_platform == 'win32'",
+    "youtube-transcript-api>=1.2",
 ]
 
 [tool.uv]

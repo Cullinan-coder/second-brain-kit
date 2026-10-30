@@ -80,7 +80,7 @@ def copy_missing(src: Path, dst: Path) -> int:
 
 def sync_code(src: Path, dst: Path) -> None:
     """Kodu (sb/, tools/, tests/, docs/, pyproject, kit örnek ayarları) güncelle; config/*.yaml (kişisel) korunur."""
-    for item in ("sb", "tools", "tests", "docs", "pyproject.toml", "uv.lock", ".python-version"):
+    for item in ("sb", "tools", "tests", "docs", "pyproject.toml", "uv.lock", ".python-version", "VERSION"):
         s, d = src / item, dst / item
         if not s.exists():
             continue
@@ -94,6 +94,30 @@ def sync_code(src: Path, dst: Path) -> None:
             shutil.copy2(ex, dst / "config" / ex.name)
 
 
+def remember(vault: Path) -> None:
+    """sb update'in kiti ve kasayı bulabilmesi için (yerel veri klasöründe, kasada değil)."""
+    DATA.mkdir(parents=True, exist_ok=True)
+    ver = (KIT / "system" / "VERSION").read_text(encoding="utf-8").strip() if (KIT / "system" / "VERSION").exists() else "?"
+    (DATA / "kit.json").write_text(json.dumps({"kit": str(KIT), "vault": str(vault), "version": ver}, ensure_ascii=False, indent=1),
+                                   encoding="utf-8")
+
+
+def update(vault: Path) -> int:
+    """`sb update` buradan geçer: soru sormadan yalnız kodu yeniler (notlara ve config/*.yaml'a dokunmaz)."""
+    system = vault / "_system"
+    if not system.exists():
+        raise SystemExit(f"Kasa bulunamadı: {vault}")
+    n = copy_missing(KIT / "vault", vault)
+    sync_code(KIT / "system", system)
+    say(f"  kod güncellendi: {system} (şablondan {n} yeni dosya)")
+    run(["uv", "sync"], cwd=system)
+    if WIN and (system / "tools" / "hotkey.ps1").exists():
+        run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(system / "tools" / "hotkey.ps1")])
+    remember(vault)
+    run(["uv", "run", "--directory", str(system), "python", "-X", "utf8", "-m", "sb", "doctor"])
+    return 0
+
+
 def write_yaml(path: Path, data: dict, header: str = "") -> None:
     path.write_text(header + yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
@@ -104,7 +128,10 @@ def main() -> int:
     ap.add_argument("--vault", help="kasa klasörü (varsayılan ~/SecondBrain)")
     ap.add_argument("--answers", help="soruların cevapları (JSON) — otomatik/test kurulumu")
     ap.add_argument("--yes", action="store_true", help="sorulmayanlarda varsayılanı seç")
+    ap.add_argument("--update", action="store_true", help="yalnız kodu güncelle (sb update çağırır)")
     a = ap.parse_args()
+    if a.update:
+        return update(Path(os.path.expanduser(a.vault or Path.home() / "SecondBrain")).resolve())
     if a.answers:
         ANSWERS = json.loads(Path(a.answers).read_text(encoding="utf-8"))
     AUTO = a.yes or bool(a.answers)
@@ -226,6 +253,7 @@ def main() -> int:
         run(["git", "commit", "-q", "-m", "Second Brain Kit kurulumu"], cwd=vault)
         say("  Yedek için GitHub'da ÖZEL bir repo açıp: git remote add origin <adres> && git push -u origin main")
 
+    remember(vault)
     head(10, "Kontrol (sb doctor)")
     run(sb + ["doctor"])
     say(f"\nBitti. Obsidian'da '{vault}' klasörünü kasa olarak aç. Sonraki adımlar: README.md › 'Kurulumdan sonra'.")

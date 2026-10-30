@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 $tasks = @("SecondBrain-Daily", "SecondBrain-Weekly")
 if ($Remove) {
     foreach ($t in ($tasks + "SecondBrain-Syncthing", "SecondBrain-Chat")) { Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue }
+    & (Join-Path $PSScriptRoot "hotkey.ps1") -Remove
     Write-Host "Gorevler kaldirildi."
     exit 0
 }
@@ -49,4 +50,5 @@ if ($st -and (Test-Path $st)) {
     Write-Host "Kaydedildi: SecondBrain-Syncthing (oturum acilinca baslar)"
     $tasks += "SecondBrain-Syncthing"
 }
+& (Join-Path $PSScriptRoot "hotkey.ps1")      # Ctrl+Alt+B: Beyne at
 Get-ScheduledTask -TaskName $tasks | Get-ScheduledTaskInfo | Select-Object TaskName, NextRunTime | Format-Table -AutoSize

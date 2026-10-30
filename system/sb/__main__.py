@@ -657,8 +657,9 @@ def cmd_set_secret(args) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    for stream in (sys.stdout, sys.stderr):
+        if stream:                                   # pythonw (kısayol) altında akış yoktur
+            stream.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(prog="sb", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -802,6 +803,21 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--apply", action="store_true", help="gerçekten dağıt (yoksa yalnız kararları listeler)")
     g.set_defaults(func=lambda a: print("\n".join(__import__("sb.inbox", fromlist=["x"]).process(dry_run=not a.apply))
                                         or "kutu boş") or 0)
+
+    g = sub.add_parser("capture", help="Beyne at: panodaki bağlantı/metni kasaya kaydet (Ctrl+Alt+B)")
+    g.add_argument("text", nargs="?", help="pano yerine bu metni/bağlantıyı kaydet")
+    g.set_defaults(func=lambda a: (lambda c: print(c.capture(a.text)) or 0 if a.text else c.run())(
+        __import__("sb.capture", fromlist=["x"])))
+
+    g = sub.add_parser("arsenal", help="kasada 'Araçlar ve erişimler' notunu güncelle")
+    g.set_defaults(func=lambda a: print(__import__("sb.arsenal", fromlist=["x"]).build()) or 0)
+
+    g = sub.add_parser("update", help="kit kurulumunu son sürüme getir (notlara ve ayarlara dokunmaz)")
+    g.add_argument("--check", action="store_true", help="yalnız yeni sürüm var mı bak")
+    g.set_defaults(func=lambda a: __import__("sb.update", fromlist=["x"]).run(check_only=a.check))
+
+    g = sub.add_parser("version", help="kurulu sürüm")
+    g.set_defaults(func=lambda a: print(__import__("sb.update", fromlist=["x"]).version()) or 0)
 
     g = sub.add_parser("asistan-undo", help="asistanın son kasa değişikliğini geri al")
     g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).undo_last(actor="kullanici")) or 0)

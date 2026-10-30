@@ -1,0 +1,48 @@
+# Her push'ta Windows ve macOS'ta sıfırdan kurulum + testler (kişisel hesap/anahtar gerektirmez).
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  install-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: git kimliği (kasa deposu için)
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@example.com"
+      - name: Kurulum (sorusuz)
+        shell: bash
+        run: |
+          VAULT="$RUNNER_TEMP/vault"
+          python3 - "$VAULT" <<'EOF'
+          import json, sys
+          json.dump({"name": "Deneme", "full_name": "Deneme Kişi", "bio": "ci", "timezone": "Europe/Istanbul",
+                     "github_user": "", "workspace": "~/Projects", "vault": sys.argv[1], "gmail": "deneme@example.com",
+                     "client_secret": "", "google_login": False, "claude": False, "ollama_pull": False, "ollama_vl": False,
+                     "schedule": False, "git": True, "claude_md": False}, open("ans.json", "w", encoding="utf-8"), ensure_ascii=False)
+          EOF
+          uv run --no-project --python 3.12 --with pyyaml install.py --answers ans.json
+      - name: Testler
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/vault/_system"
+          uv run python -X utf8 -m pytest -q
+      - name: Komut satırı
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/vault/_system"
+          uv run python -X utf8 -m sb version
+          uv run python -X utf8 -m sb capture "deneme notu: CI'dan beyne at"
+          uv run python -X utf8 -m sb arsenal
+          ls "$RUNNER_TEMP/vault/00-Inbox/Dump"

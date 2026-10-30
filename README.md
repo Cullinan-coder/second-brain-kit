@@ -93,6 +93,8 @@ Kod güncellemesi için repoyu `git pull` edip kurucuyu yeniden çalıştırman 
 | "Not al: …" | Asistan → `00-Inbox/Dump` → her gün yerine dağıtılır |
 | "Bundan sonra hep şöyle yap" / "Bunu hatırla" | Asistan → `Asistan kuralları.md` / `Asistan hafızası.md` (Claude Code da okur) |
 | Kod/proje işi | Claude Code: oturum başında hafıza kendiliğinden gelir |
+| Video, makale, aklına gelen bir şey | Kopyala → **Ctrl+Alt+B** (Beyne at): video/sayfa özetlenir, metin not kutusuna düşer |
+| "Neler bağlı, ne eksik?" | Kasada `Araçlar ve erişimler` notu (her gün yenilenir) ya da `sb doctor` |
 
 Komut satırı: `sb --help` (40+ komut: `daily`, `doctor`, `search`, `add-event`, `chat`, `linkedin-import`, `housekeep`, …).
 
@@ -121,8 +123,18 @@ Komut satırı: `sb --help` (40+ komut: `daily`, `doctor`, `search`, `add-event`
   okunduğu turda her eylem onaya düşer (istem enjeksiyonuna karşı). Telefon yalnız Tailscale özel ağında.
 - Kasadaki her asistan değişikliği ayrı git commit'i → "geri al".
 
+## Güncelleme
+
+```bash
+sb update            # ya da: uv run --directory <kasa>/_system python -m sb update
+```
+Kit klasöründe `git pull` yapar, yalnız kodu yeniler; notlarına, `config/*.yaml` ayarlarına ve şifrelerine dokunmaz.
+Ne değiştiğini `CHANGELOG.md` yazar. Yalnız bakmak için `sb update --check`, kurulu sürüm için `sb version`.
+
 ## Testler
 
 ```bash
-cd <kasa>/_system && uv run pytest -q          # 80+ birim testi (gerçek hesap/ağ gerektirmez)
+cd <kasa>/_system && uv run pytest -q          # 90+ birim testi (gerçek hesap/ağ gerektirmez)
 ```
+
+Her push'ta GitHub Actions Windows ve macOS'ta sıfırdan kurulum yapıp testleri çalıştırır (`.github/workflows/test.yml`).
