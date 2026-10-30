@@ -1,0 +1,41 @@
+# Gizli bilgiler — asla commit edilmez
+.env
+.env.*
+!.env.example
+*.token
+*token*.json
+credentials*.json
+client_secret*.json
+*.pem
+*.key
+
+# Yerel veri (zaten %LOCALAPPDATA% altında, yine de)
+*.db
+*.sqlite
+*.sqlite3
+_system/.cache/
+_system/logs/
+00-Inbox/_imports/*
+!00-Inbox/_imports/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Obsidian cihaza özel durum
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.obsidian/plugins/*/data.json
+.trash/
+.smart-env/
+
+# Syncthing / OS
+.stfolder/
+.stversions/
+*.sync-conflict-*
+.DS_Store
+Thumbs.db
+desktop.ini

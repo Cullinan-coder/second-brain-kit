@@ -1,0 +1,64 @@
+# Mail kategorileri. Yukarıdan aşağı ilk eşleşen kural kazanır.
+# Alanlar: from_domain (gönderen alan adı, alt alan adları dahil), from (gönderen adres/ad içinde geçen),
+#          to_domain, subject (regex, büyük/küçük harf duyarsız), any (konu+gövde regex), label (Gmail etiketi),
+#          not_from_domain (bu gönderenlerde kural hiç uygulanmaz),
+#          sms_from (SADECE SMS: gönderici adında geçen ifade; boşluk/nokta yok sayılır).
+# Kategori adını değiştirirsen bir sonraki `sb mail-categorize --all` tüm mailleri yeniden sınıflar.
+categories:
+  - name: gonderilen
+    label: [SENT]
+  - name: guvenlik
+    subject: 'doğrulama kodu|dogrulama kodu|verification code|security code|güvenlik kodu|security alert|güvenlik uyarısı|guvenlik|şifre sıfırla|sifre sifirla|password reset|sign-?in attempt|yeni oturum|new sign-in|2-step|iki adımlı|one-time|tek kullanımlık'
+  - name: okul
+    from_domain: [universitem.edu.tr, yok.gov.tr, osym.gov.tr]      # kendi okul alan adını yaz
+    subject: 'Üniversitesi|ÖBS|obs\b|vize|final sınav|bütünleme|ders kaydı'
+    not_from_domain: [linkedin.com, instagram.com, facebookmail.com, x.com, twitter.com, youtube.com, medium.com, enuygun.com, google.com]
+  - name: basvuru-yarisma
+    any: 'hackathon|datathon|ideathon|yarışma|yarisma|teknofest|kaggle|competition|bootcamp|başvurunuz alındı|son başvuru|deadline'
+  - name: kariyer
+    from_domain: [kariyer.net, youthall.com, toptalent.co, anbean.co, greenhouse.io, lever.co, workable.com, smartrecruiters.com]
+    subject: 'mülakat|mulakat|interview|staj|internship|iş ilanı|job offer|application|başvuru|career|kariyer|position'
+  - name: finans
+    from_domain: [ziraatbank.com.tr, garantibbva.com.tr, isbank.com.tr, yapikredi.com.tr, akbank.com, enpara.com,
+                  papara.com, qnb.com.tr, halkbank.com.tr, vakifbank.com.tr, denizbank.com, kuveytturk.com.tr,
+                  paypal.com, wise.com, iyzico.com, stripe.com, gib.gov.tr]
+    subject: 'ekstre|fatura|invoice|receipt|makbuz|ödeme|odeme|payment|dekont|failed payment|abonelik yenile'
+    # SMS gönderici adları (alan adı yok) — sadece SMS'lerde
+    sms_from: [ziraatbank, ziraat, akbank, garanti, isbank, is bankasi, yapikredi, ykb, qnb, enpara, papara, halkbank,
+           vakifbank, denizbank, kuveyt, ingbank, teb, fibabanka, sekerbank, odeabank, param, ininal, troy]
+  - name: gelistirici
+    from_domain: [github.com, gitlab.com, vercel.com, netlify.com, cloudflare.com, render.com, railway.app, heroku.com,
+                  google.com, cloud.google.com, openai.com, anthropic.com, huggingface.co, docker.com, npmjs.com,
+                  pypi.org, jetbrains.com, atlassian.com, stackoverflow.com, digitalocean.com, hostinger.com]
+  - name: seyahat-bilet
+    sms_from: [tcdd, pegasus, thy, ajet, obilet, kamilkoc, metro turizm, pamukkale, blablacar, passo, biletix]
+    from_domain: [tcddtasimacilik.gov.tr, passo.com.tr, biletix.com, obilet.com, enuygun.com, flypgs.com, thy.com,
+                  turkishairlines.com, ajet.com, sunexpress.com, booking.com, airbnb.com, kamilkoc.com.tr, metroturizm.com.tr, blablacar.com]
+  - name: alisveris
+    sms_from: [trendyol, ty express, hepsiburada, hepsijet, altinyildiz, getir, yemeksepeti, migros, a101, bim, sok,
+           amazon, n11, ciceksepeti, lcwaikiki, defacto, koton, mng kargo, yurtici, aras kargo, ptt, surat kargo]
+    from_domain: [steampowered.com, trendyol.com, trendyolmail.com, trendyolgo.com, hepsiburada.com, amazon.com.tr, amazon.com, n11.com, getir.com, yemeksepeti.com,
+                  aliexpress.com, temu.com, ciceksepeti.com, migros.com.tr, a101.com.tr]
+  # Kendi şirket/iş adresin varsa: (profile.yaml important_mail_categories'e 'is' ekli)
+  - name: is
+    from_domain: [sirketim.com]
+    to_domain: [sirketim.com]
+  - name: sosyal
+    from_domain: [linkedin.com, instagram.com, facebookmail.com, x.com, twitter.com, discord.com, reddit.com,
+                  youtube.com, tiktok.com, medium.com]
+    label: [CATEGORY_SOCIAL]
+  - name: bildirim
+    # Operatör, belediye ve kamu SMS'leri
+    sms_from: [turktelekom, turk telekom, turkcell, vodafone, bld, belediye, e-devlet, edevlet, mhrs, saglik bak, sgk,
+           osym, meb, nvi, gib]
+  - name: reklam
+    from_domain: [herbalifemail.com]
+    label: [CATEGORY_PROMOTIONS]
+  - name: bildirim
+    label: [CATEGORY_UPDATES]
+  - name: forum
+    label: [CATEGORY_FORUMS]
+  - name: kisisel
+    label: [CATEGORY_PERSONAL, INBOX]
+# Hiçbiri eşleşmezse:
+default: diger

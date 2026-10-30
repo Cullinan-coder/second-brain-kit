@@ -1,0 +1,4 @@
+# Spotify Web API (doğrudan çalma, Premium gerekir). Client ID gizli değildir; istemci sırrı KULLANILMAZ (PKCE).
+# developer.spotify.com/dashboard → Create app → Redirect URI: http://127.0.0.1:8765/spotify/callback, Web API işaretli.
+# Settings → Client ID'yi buraya yaz; sonra bilgisayarda http://127.0.0.1:8765/spotify/login aç ve izin ver.
+client_id: ""

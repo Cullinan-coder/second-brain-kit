@@ -1,0 +1,10 @@
+// Syncthing: cihaza ozel ve buyuk seyler telefona gitmez. (Telefondaki Syncthing-Fork'a da ayni desenleri gir.)
+.git
+.trash
+_system/.venv
+**/__pycache__
+**/.pytest_cache
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/plugins/obsidian-git
+.smart-env

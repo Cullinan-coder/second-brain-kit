@@ -1,0 +1,13 @@
+# Kişi profili: kod içindeki tüm kişisel bilgiler buradan okunur. Kurucu (install.py) bunu senin cevaplarınla doldurur.
+name: Ayşe                       # asistanın sana hitap ettiği ad
+full_name: Ayşe Yılmaz
+bio: "X Üniversitesi Bilgisayar Mühendisliği öğrencisi"   # asistan ve tarih çıkarıcı seni tanısın diye 1 cümle
+timezone: Europe/Istanbul
+language: tr
+github_user: ""                  # GitHub kullanıcı adın (boşsa GitHub projeleri atlanır)
+workspace: ~/Projects            # kod projelerinin durduğu klasör
+important_mail_categories: [okul, basvuru-yarisma, kariyer, is, kisisel, finans]
+lms:                              # isteğe bağlı: okulunun Moodle/LMS bildirim maili → ders notlarına duyuru/ödev listesi
+  from: ""                        # ör. noreply@lms.universite.edu.tr (boşsa kapalı)
+  link_regex: 'https://\S+?(?=[\s\]\)>"'']|$)'
+  name: LMS

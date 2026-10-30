@@ -1,0 +1,24 @@
+# Hesaplar (gizli bilgi YOK; token/şifreler işletim sisteminin şifre kasasında: Windows Kimlik Yöneticisi / macOS Anahtar Zinciri).
+# Google: her hesap için `sb login <takma-ad>` (tarayıcıda izin). Salt-okunur Gmail; takvim yazma yalnız onaylı ekleme için.
+google:
+  main:
+    email: senin.adresin@gmail.com
+    source: gmail-main
+    scopes: [gmail, calendar, contacts, drive]   # ana hesap: mail + takvim + rehber + Drive
+  # side:                                        # isteğe bağlı ikinci Gmail (yalnız mail)
+  #   email: ikinci.adresin@gmail.com
+  #   source: gmail-side
+  #   scopes: [gmail]
+# İsteğe bağlı: şirket/okul IMAP hesapları (salt-okunur okunur). Şifre: `sb set-secret imap-<takma-ad>`.
+imap: {}
+#  is:
+#    email: ben@sirketim.com
+#    host: mail.sirketim.com
+#    source: imap-is
+# Sabah özeti maili: bir IMAP hesabının SMTP'sinden gönderilir (Gmail'e gönderme izni verilmez).
+# IMAP hesabın yoksa boş bırak; özet yine kasada 50-Günlük/<tarih> Özet.md olarak durur.
+notify:
+  to: []                    # ör. [senin.adresin@gmail.com] — kod bu listenin dışına mail GÖNDEREMEZ
+  smtp:
+    account: ""             # imap takma adı (ör. is)
+    host: ""

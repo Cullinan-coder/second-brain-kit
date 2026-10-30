@@ -1,0 +1,17 @@
+# Hangi iş hangi modelle çalışır. claude: `claude -p` (abonelik), ollama: bu bilgisayardaki yerel Qwen.
+# Yerelde üretilen metinlerin başına "yerel model" etiketi konur; yerelde tarih çıkarma ASLA otomatik takvime yazmaz (hepsi onaya düşer).
+tasks:
+  sessions: ollama         # Claude Code oturum özetleri
+  extract_dates: ollama    # mailden/SMS'ten tarih çıkarma → hepsi onay-bekleyenler.md
+  inbox: ollama            # hızlı not kutusunu (00-Inbox/Dump) yerine dağıtma
+  topic_map: claude
+  course_deep: claude
+  project_deep: claude
+fallback_to_local: true    # Claude hata verirse (kota/giriş/ağ) yerel modele düş
+ollama:
+  host: http://localhost:11434
+  model: qwen3:14b         # 16 GB ekran kartına sığar; daha hızlı/küçük için qwen3:4b
+  num_ctx: 24576           # bağlam penceresi (token)
+  max_chars: 66000         # yerel modele giden metin bu kadar karaktere kırpılır (baş + son)
+  max_confidence: 0.79     # yerel tarih çıkarmada güven üst sınırı (< 0.8 eşiği: otomatik takvime yazılmaz)
+  vision_model: qwen3-vl:8b   # ekran/kamera görüntüsünü anlatır (yaklaşık 6 GB); boş bırakılırsa yalnız yazı (OCR) okunur

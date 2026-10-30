@@ -1,0 +1,5 @@
+# Claude Code oturumlarının projeye elle eşleştirilmesi (otomatik eşleşme klasör adından yapılır).
+# by_title: oturum başlığında geçen ifade → proje klasörü (önceliklidir)
+# by_dir:   ~/.claude/projects altındaki klasör adında geçen ifade → proje klasörü
+by_title: {}
+by_dir: {}

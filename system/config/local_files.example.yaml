@@ -1,0 +1,10 @@
+# Bu bilgisayardaki klasörler → 40-Kaynaklar/Bilgisayar indeks notları. Dosyalar KOPYALANMAZ, link verilir.
+# `only_ext` verilmişse o kökte yalnız bu uzantılar alınır; verilmemişse TÜM dosya türleri. macOS'ta da ~/... yolları geçerli.
+roots:
+  Masaüstü: ~/Desktop
+  Belgeler: ~/Documents
+  İndirilenler: ~/Downloads
+  Projeler: ~/Projects
+skip_dirs: [node_modules, .git, .venv, venv, __pycache__, build, dist, .next, .idea, .vscode, vendor, .gradle,
+            .dart_tool, target, .pytest_cache, .ipynb_checkpoints, AppData, site-packages, Library]
+skip_files: ["desktop.ini", "Thumbs.db", "*.lnk", "~$*", "*.tmp", ".DS_Store", "NTUSER*", "*.pyc"]

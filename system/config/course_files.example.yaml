@@ -1,0 +1,11 @@
+# Ders → bilgisayardaki dosyalar. Dosyalar kasaya KOPYALANMAZ; ders notunun "Dosyalar" bölümüne link olarak yazılır.
+# Desen: `~` ev klasörü; `**` alt klasörler dahil. Bir desen klasörse içindeki her şey alınır.
+# Ders kodları ders notlarından (takvim/ÖBS) gelir. Güncelleme: bu dosyayı düzenle → `sb course-files`.
+roots:
+  courses: ~/Documents/Dersler
+  downloads: ~/Downloads
+courses: {}
+#  BIL101:
+#    - courses/Programlamaya Giriş
+#    - downloads/BIL101*
+skip: ["*.lnk", "desktop.ini", "~$*", "*.tmp", "Thumbs.db", ".DS_Store"]
