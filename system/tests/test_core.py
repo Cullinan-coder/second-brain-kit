@@ -1320,3 +1320,14 @@ def test_linkedin_read_preamble_and_privacy(tmp_path):
     text = "\n".join(spec.auto.values())
     assert "AI öğrencisi" in text and "Gizli Sokak" not in text and "2006" not in text      # adres/doğum tarihi kasaya girmez
     assert linkedin._media_month("You uploaded a photo on September 24, 2026 at 3:12 PM (GMT)") == "2026-09"
+
+
+def test_propose_trusts_spoken_weekday_over_model_date():
+    from datetime import date, timedelta
+    from sb import chat
+    s = chat.Session()
+    s.messages.append({"role": "user", "content": "cuma 15:00 doktor ekle"})
+    wrong = date.today() + timedelta(days=((3 - date.today().weekday()) % 7) or 7)          # model perşembe yazdı
+    out = chat.propose(s, {"tag": "RANDEVU", "title": "Doktor", "date": wrong.isoformat(), "time": "15:00"})
+    p = list(s.proposals.values())[0]
+    assert "Öneri hazırlandı" in out and date.fromisoformat(p["when"][:10]).weekday() == 4

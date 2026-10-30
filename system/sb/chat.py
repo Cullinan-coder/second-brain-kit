@@ -274,6 +274,12 @@ def propose(session: Session, args: dict) -> str:
     now = datetime.now()
     said = next((m["content"] for m in reversed(session.messages) if m["role"] == "user"), "")
     said = said.lower().translate(str.maketrans("ıİğüşöç", "iigusoc"))
+    named = [w for w in WEEKDAYS_FOLD if re.search(rf"\b(haftaya |gelecek |onumuzdeki )?{w}\b", said)]
+    if len(named) == 1 and day.weekday() != WEEKDAYS_FOLD.index(named[0]) and not re.search(
+            r"\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(ocak|subat|mart|nisan|mayis|haziran|temmuz|agustos|eylul|ekim|kasim|aralik)", said):
+        # Kullanıcı yalnız gün adı söyledi ama model başka güne denk gelen bir tarih yazdı → günü kod hesaplar
+        m = re.search(rf"\b(haftaya |gelecek |onumuzdeki )?{named[0]}\b", said)
+        day = resolve_day(m.group(0), at, now)
     if (datetime.combine(day, at) if at else datetime.combine(day, dtime.max)) < now and \
             __import__("re").search(rf"\b{WEEKDAYS_FOLD[day.weekday()]}\b", said) and (now.date() - day).days < 7:
         day += timedelta(days=7)                    # "cuma 15:00" cuma 16:00'da söylendi → gelecek cuma (model bugünü yazmış olsa da)
@@ -544,6 +550,25 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
     return redact("\n\n".join(parts))[:budget], ", ".join(labels)
 
 
+def latest_mail_reply(n: int = 3) -> str:
+    """En son gelen mailler (gönderilenler ve SMS hariç), yeniden eskiye."""
+    import sqlite3
+    from .config import MAIL_DB
+    try:
+        con = sqlite3.connect(f"file:{MAIL_DB.as_posix()}?mode=ro", uri=True, timeout=10)
+        rows = con.execute("SELECT date_ms, account, from_name, from_addr, subject FROM messages WHERE account NOT IN ('sms') "
+                           "AND COALESCE(category, '') != 'gonderilen' ORDER BY date_ms DESC LIMIT ?", (n,)).fetchall()
+    except sqlite3.Error:
+        return ""
+    if not rows:
+        return ""
+    fmt = lambda r: f"{datetime.fromtimestamp(r[0] / 1000):%d.%m %H:%M} · {r[2] or r[3]} ({r[1]}) — {redact((r[4] or '(konusuz)').strip())[:120]}"
+    out = "En son gelen mail: " + fmt(rows[0])
+    if len(rows) > 1:
+        out += "\nÖncekiler:\n" + "\n".join("- " + fmt(r) for r in rows[1:])
+    return out
+
+
 def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
     """Bir kullanıcı mesajını işler: otomatik getirme + araç çağırma döngüsü → {reply, trace, proposals}."""
     cfg = llm.config()
@@ -590,6 +615,12 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             pre_calls += [f"{t}()" for t in pre]
             augmented = (f"{text}\n\n[ARAÇ ZATEN ÇALIŞTI — cevabını YALNIZ aşağıdaki sonuca dayandır, ekleme yapma, uydurma.]\n"
                          + "\n\n".join(results))
+    if not hint and re.search(r"\bson (gelen )?(mail|e-?posta)|en (son|yeni) (gelen )?(mail|e-?posta)", text.lower()):
+        reply = latest_mail_reply()                         # veri sorusu: model reklam başlığında "bulamadım" diyordu → kod cevaplar
+        if reply:
+            session.messages.append({"role": "assistant", "content": reply})
+            return {"reply": reply, "trace": [f"otomatik getirme: {label or 'son mailler'}", "son mailler [kod cevapladı]"],
+                    "proposals": pending(session)}
     if SEND_RE.search(text.lower()):                         # yapamayacağı bir eylem: kasada aramaya kalkmasın, açıkça söylesin
         augmented = (f"{text}\n\n[UYARI: {USER} senden mail/mesaj GÖNDERMENİ, cevaplamanı ya da silmeni istiyor. Bu yetkin YOK; "
                      "kısaca 'bunu yapamam, mail salt okunur' de ve istersen taslak metni sohbette yazmayı teklif et.]")
