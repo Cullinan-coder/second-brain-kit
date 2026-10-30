@@ -1199,7 +1199,7 @@ def test_spotify_pkce_login_and_fallback(monkeypatch):
     assert "Geçersiz" in spotify_api.callback("kod", "yanlis-state")                # state doğrulanır
     opened = []
     monkeypatch.setattr(spotify_api, "ready", lambda: False)
-    monkeypatch.setattr(actions.os, "startfile", lambda u: opened.append(u))
+    monkeypatch.setattr(actions, "_open_uri", lambda u: opened.append(u))
     assert "ilk sonuca tıkla" in actions.spotify("Müslüm+Gürses+-+Affet") and opened == ["spotify:search:M%C3%BCsl%C3%BCm%20G%C3%BCrses%20Affet"]
     monkeypatch.setattr(spotify_api, "ready", lambda: True)
     monkeypatch.setattr(spotify_api, "play", lambda q: f"Çalıyor: {q}")

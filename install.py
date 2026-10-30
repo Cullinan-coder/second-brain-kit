@@ -124,6 +124,8 @@ def write_yaml(path: Path, data: dict, header: str = "") -> None:
 
 def main() -> int:
     global ANSWERS, AUTO
+    for stream in (sys.stdout, sys.stderr):              # Türkçe karakterler eski kod sayfalı konsolda çökmesin
+        stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Second Brain Kit kurucusu")
     ap.add_argument("--vault", help="kasa klasörü (varsayılan ~/SecondBrain)")
     ap.add_argument("--answers", help="soruların cevapları (JSON) — otomatik/test kurulumu")

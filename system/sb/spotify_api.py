@@ -105,7 +105,8 @@ def _device(wait: int = 25) -> str | None:
     import socket
     me = socket.gethostname().lower()
     if not _spotify_running():
-        os.startfile("spotify:")
+        from .actions import _open_uri         # Windows startfile, Mac open (os.startfile Mac'te yok)
+        _open_uri("spotify:")
     for _ in range(wait):
         devs = _api("GET", "/me/player/devices").get("devices", [])
         pc = [d for d in devs if d.get("type") == "Computer" and d.get("name", "").lower() == me] or \
