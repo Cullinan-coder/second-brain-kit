@@ -61,7 +61,8 @@ def decide(text: str, cands: list[str]) -> dict:
     prompt = (
         f"kullanıcının ({USER}) hızlı notunu ikinci beynine yerleştir. Notu UYDURMA, yalnız temizle ve özetle.\n"
         f"NOT:\n{text[:3000]}\n\nİLGİLİ OLABİLECEK MEVCUT NOTLAR (yol):\n" + ("\n".join(cands) or "(yok)") + "\n\n"
-        "Karar: not açıkça bu notlardan birine (proje, ders, kişi, konu) aitse action=append ve target o yol; genel bir bilgi, "
+        "Karar: not açıkça bu notlardan birine (proje, ders, kişi, konu) aitse action=append ve target o yol. Not bir ders kodu "
+        "(ör. YPZ301) ya da proje adı içeriyorsa o dersin/projenin ANA notuna (klasörle aynı adlı not) append et; genel bir bilgi, "
         "fikir ya da öğrenilen şeyse action=knowledge ve kısa bir title; ne olduğu anlaşılmıyorsa action=keep. "
         "line: notun temiz Türkçe hali (tek-iki cümle). JSON döndür.")
     raw, _ = llm.complete("inbox", prompt, schema=SCHEMA, timeout=600)

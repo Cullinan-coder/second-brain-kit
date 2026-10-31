@@ -190,6 +190,7 @@ ACTION_HINTS = [
     (r"\b(aç|ac|başlat)\b", "open_app"),
     (r"^\s*not al|\bnot al:|kenara yaz|not düş|nota ekle:|aklıma geldi|inbox'?a (at|yaz)|kutuya (at|yaz)", "inbox_add"),
     (r"hatırla:|bunu hatırla|aklında tut|unutma ki", "memory_add"),
+    (r"\bbundan (sonra|böyle|boyle)\b|\b(her zaman|hep)\b.*\b(yap|ver|söyle|soyle|yaz|ekle|kullan|cevap)\w*", "rule_add"),
     (r"\bbeyn?(e|i|ime|ine)\s+(at|kaydet|ekle)|kasaya (at|kaydet|ekle)|(video|link|bağlantı|baglanti|sayfa|makale)\w*.*\b(kaydet|özetle|ozetle)|"
      r"^\s*https?://\S+\s*$", "brain_capture"),
     (r"(başvur|ödev|odev|teslim|proje|görüşme|gorusme|randevu|sınav|sinav)\w*.*\b(yapmadım|yapmadim|yapmayacağım|yapmıcam|yapmicam|"
@@ -531,12 +532,14 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
     for kind, p in hits[:3]:
         parts.append(f"## {kind} notu: {p.stem}\n{note_digest(p.read_text(encoding='utf-8'), per)}")
         labels.append(p.stem)
-    for p in ms._notes("60-Kişiler"):
-        n = ms._norm(p.stem)
-        if " " in n and len(n) >= 5 and n in nt:
-            parts.append(f"## kişi notu: {p.stem}\n{p.read_text(encoding='utf-8')[:2500]}")
-            labels.append(p.stem)
-            break
+    people = ms._notes("60-Kişiler")
+    full = next((p for p in people if " " in (n := ms._norm(p.stem)) and len(n) >= 5 and n in nt), None)
+    if full:
+        parts.append(f"## kişi notu: {full.stem}\n{full.read_text(encoding='utf-8')[:2500]}")
+        labels.append(full.stem)
+    elif (cands := person_candidates(text)):
+        parts.append(f"## Adı geçen kişiler ({len(cands)})\n" + "\n".join(f"- {person_line(p)}" for p in cands))
+        labels.append(f"kişi adayları {len(cands)}")
     def has(*stems: str) -> bool:
         return any(s in nt for s in stems)
     if has("mail", "e-posta", "eposta", "posta", "sms", "mesaj"):         # "son mail neydi" gibi yapısal sorular: en yeniler
@@ -567,6 +570,43 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
         except sqlite3.Error:
             pass
     return redact("\n\n".join(parts))[:budget], ", ".join(labels)
+
+
+PERSON_Q = re.compile(r"\bkim\b|kimdi|tanıyor|tanir|numara|iletişim|iletisim")
+
+
+def person_candidates(text: str) -> list:
+    """Yalnız ad söylendiğinde ("Burak kim") adı geçen kişi notları (en çok 8; fazlası belirsiz sayılır)."""
+    from . import mcp_server as ms
+    nt = ms._norm(text)
+    if not PERSON_Q.search(nt):
+        return []
+    words = set(re.findall(r"\w{3,}", nt)) - {"kim", "kimdi", "numara", "numarasi", "iletisim", "tanir", "tanıyor", "benim"}
+    people = ms._notes("60-Kişiler")
+    full = [p for p in people if " " in (n := ms._norm(p.stem)) and n in nt]
+    if full:                                                  # tam ad söylendi: yalnız o (en uzun eşleşme)
+        return [max(full, key=lambda p: len(p.stem))]
+    cands = [p for p in people if set(ms._norm(p.stem).split()) & words]
+    return cands if len(cands) <= 8 else []
+
+
+def person_line(p) -> str:
+    from .notes import split_note
+    fm = split_note(p.read_text(encoding="utf-8"))[0]
+    src = {"contacts": "rehber", "linkedin": "LinkedIn"}.get(fm.get("source"), fm.get("source") or "")
+    bits = [x for x in (fm.get("role"), fm.get("company"), fm.get("relation")) if x]
+    bits += [f"kaynak: {src}"] + (["telefon kayıtlı"] if fm.get("phone") else []) + (["mail kayıtlı"] if fm.get("email") else [])
+    return f"{p.stem} — " + ", ".join(bits)
+
+
+def person_reply(text: str) -> str:
+    """'X kim' sorusunu kod cevaplar: notlar çoğunlukla yalnız ad/şirket içeriyor, model 'bulamadım' diyordu."""
+    cands = person_candidates(text)
+    if not cands or len(text.split()) > 5:
+        return ""
+    if len(cands) == 1:
+        return "Kasada: " + person_line(cands[0])
+    return f"Kasada bu adla {len(cands)} kişi var:\n" + "\n".join(f"- {person_line(p)}" for p in cands) + "\nHangisini soruyorsun?"
 
 
 def latest_mail_reply(n: int = 3) -> str:
@@ -645,6 +685,9 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             session.messages.append({"role": "assistant", "content": reply})
             return {"reply": reply, "trace": [f"otomatik getirme: {label or 'son mailler'}", "son mailler [kod cevapladı]"],
                     "proposals": pending(session)}
+    if not hint and (reply := person_reply(text)):
+        session.messages.append({"role": "assistant", "content": reply})
+        return {"reply": reply, "trace": [f"otomatik getirme: {label}", "kişi adayları [kod cevapladı]"], "proposals": pending(session)}
     if SEND_RE.search(text.lower()):                         # yapamayacağı bir eylem: kasada aramaya kalkmasın, açıkça söylesin
         augmented = (f"{text}\n\n[UYARI: {USER} senden mail/mesaj GÖNDERMENİ, cevaplamanı ya da silmeni istiyor. Bu yetkin YOK; "
                      "kısaca 'bunu yapamam, mail salt okunur' de ve istersen taslak metni sohbette yazmayı teklif et.]")

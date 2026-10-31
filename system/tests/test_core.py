@@ -1401,3 +1401,19 @@ def test_chat_brain_capture_code_path(monkeypatch):
     s.tainted = True                                           # ekran okunmuşsa bağlantı indirilmeden önce onay
     out = chat.run_tool(s, "brain_capture", {"target": "https://kotu.example/x"})
     assert got == ["https://ornek.com/yazi"] and chat.pending(s)
+
+
+def test_person_and_rule_intents(tmp_path, monkeypatch):
+    from sb import chat, mcp_server as ms
+    people = tmp_path / "60-Kişiler"
+    people.mkdir()
+    for name, fm in [("Burak Eriş", "company: Teknobil\nrole: Öğrenci\nsource: contacts\nphone: ['+900000000000']"),
+                     ("Burak Yılmaz", "source: linkedin\nrelation: LinkedIn bağlantısı"), ("Bu Kim Yaa", "source: contacts")]:
+        (people / f"{name}.md").write_text(f"---\ntype: kisi\n{fm}\n---\n# {name}\n", encoding="utf-8")
+    monkeypatch.setattr(ms, "_notes", lambda folder: sorted((tmp_path / folder).glob("*.md")))
+    r = chat.person_reply("Burak kim")
+    assert "2 kişi" in r and "Burak Eriş — Öğrenci, Teknobil, kaynak: rehber, telefon kayıtlı" in r and "Bu Kim" not in r
+    assert chat.person_reply("Burak Eriş kim").startswith("Kasada: Burak Eriş")
+    assert chat.person_reply("selam") == "" and chat.person_reply("Ahmet kim") == ""
+    assert chat.action_hint("bundan sonra bana hep kısa cevap ver") == ["rule_add"]
+    assert chat.action_hint("hafta sonu ne yapıyorum") == []
