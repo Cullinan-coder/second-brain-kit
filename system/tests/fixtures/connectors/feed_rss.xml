@@ -1,0 +1,4 @@
+<?xml version="1.0"?><rss version="2.0"><channel><title>Blog</title>
+<item><title>Yazı Bir</title><link>https://blog.example/1</link><guid>g1</guid><pubDate>Sat, 31 Oct 2026 10:00:00 +0000</pubDate><description>&lt;p&gt;Özet &lt;b&gt;bir&lt;/b&gt;&lt;/p&gt;</description></item>
+<item><title>Yazı İki</title><link>https://blog.example/2</link><pubDate>Fri, 30 Oct 2026 10:00:00 GMT</pubDate></item>
+</channel></rss>

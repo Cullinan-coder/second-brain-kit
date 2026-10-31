@@ -7,6 +7,8 @@ tasks:
   capture: ollama          # Beyne at (Ctrl+Alt+B): video/sayfa özeti
   flush: ollama            # Claude Code oturum özeti (sıkıştırma öncesi / oturum sonu), arka planda
   worker: ollama           # Claude Code'un ücretsiz alt işçisi (sb qwen / MCP local_work)
+  cluster: ollama          # not kümelerine ad koyma (sb clusters)
+  answer: ollama           # beyin dizininden kaynak numaralı cevap (sb answer); kişisel veri yerelde kalsın
   topic_map: claude
   course_deep: claude
   project_deep: claude

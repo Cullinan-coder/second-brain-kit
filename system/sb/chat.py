@@ -580,6 +580,16 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
                 labels.append(f"arama {len(found)} sonuç")
         except sqlite3.Error:
             pass
+        try:                                                    # beyin dizini: anlamca yakın parçalar (not, mail, belge, kaynak)
+            from . import brain
+            if brain.DB.exists():
+                hits = brain.find(text, k=5)
+                if hits:
+                    parts.append("## Anlamsal arama (tüm kaynaklar)\n" + "\n".join(
+                        f"- [{h['kind']} · {h['date']} · {h['title']}] {' '.join(h['text'].split())[:450]}" for h in hits))
+                    labels.append(f"anlam {len(hits)}")
+        except Exception:
+            pass                                                # dizin yoksa/bozuksa sohbet yine çalışır
     return redact("\n\n".join(parts))[:budget], ", ".join(labels)
 
 

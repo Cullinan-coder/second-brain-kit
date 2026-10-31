@@ -45,6 +45,10 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
     "claude_hooks": ("Claude Code hafızası", "Kancalar, son oturum kartları, makbuz, skill'ler", "Claude Code", True),
     "flush": ("Oturum özetleri", "Sıkıştırma öncesi / oturum sonu yerel model özeti", "model", True),
     "night": ("Gece koşusu", "İstenince gece işlerini Claude Code'a sırayla yaptırır", "Claude Code", True),
+    "brain": ("Beyin dizini", "Bütün kaynaklarda anlam araması, kişi bağlantıları, kümeleme, analizler", "gömme modeli", True),
+    "browser": ("Tarayıcı geçmişi", "Chrome/Edge/Firefox geçmişi ve yer imleri (giriş/banka sayfaları hariç)", "—", True),
+    "derived": ("Fatura ve kargo", "Maillerden fatura ve kargo kayıtları", "Gmail", True),
+    "github": ("GitHub derin", "Issue, PR, commit ve release kayıtları", "gh girişi", True),
 }
 TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her zaman açık)
     "calendar_add": "calendar", "calendar_delete": "calendar", "calendar_list": "calendar",
@@ -57,6 +61,8 @@ STEP_MODULE = {          # günlük çalışma komutu → modül
     "sync-gcal": "calendar", "inbox-process": "inbox", "contacts-sync": "contacts", "drive-sync": "drive", "drive-index": "drive",
     "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "project-deep": "projects",
     "course-files": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
+    "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
+    "github-deep": "github", "clusters": "brain", "suggest-links": "brain", "analyze": "brain",
 }
 
 

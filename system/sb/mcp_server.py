@@ -137,6 +137,24 @@ def brain_search(query: str, limit: int = 12) -> str:
 
 
 @mcp.tool()
+def brain_find(query: str, kind: str = "", since: str = "", until: str = "", k: int = 10) -> str:
+    """Beyin dizininde doğal dille arar (kelime + anlam; notlar, mail/SMS, belgeler, diğer kaynaklar). Sorguda 'geçen ay', 'ekimde',
+    'hocadan gelen mailler' gibi ifadeler süzgeç olur. kind: note | mail | file | item (boş = hepsi); since/until: YYYY-AA-GG."""
+    from . import search
+    hits = search.smart_find(query, k=max(1, min(k, 30)), log=False, kinds=[kind] if kind else None, since=since or None, until=until or None)
+    lines = [f"[{h['kind']}] {h['date']} {h['title']} — {h['ref']}\n    {' '.join(h['text'].split())[:300]}" for h in hits]
+    return redact("\n".join(lines) or "Sonuç yok.")
+
+
+@mcp.tool()
+def brain_answer(question: str) -> str:
+    """Soruyu yerel modelle, YALNIZ beyin dizininden bulunan kaynaklara dayanarak cevaplar; her cümle [n] kaynağına bağlanır."""
+    from . import brain, search
+    search._log_question(question)
+    return redact(brain.answer(question))
+
+
+@mcp.tool()
 def brain_today(days: int = 14) -> str:
     """Önümüzdeki günlerde teslim/sınav/başvuru tarihi olan açık notlar ve onay bekleyen takvim adayları."""
     today, end = date.today(), date.today() + timedelta(days=days)

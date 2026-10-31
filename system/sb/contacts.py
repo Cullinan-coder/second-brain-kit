@@ -124,6 +124,7 @@ def build_specs(people: list[dict], con: sqlite3.Connection | None = None) -> li
                 "linkedin": linkedin,
             },
             owned=("company", "role", "email", "phone", "linkedin"),
+            rename=True,
             body=f"# {title}\n\n## Bağlam\n" + (f"{redact(bio)}\n" if bio else "") +
                  "\n## Etkileşimler\n\n## Son mailler\n<!-- sb:auto:mailler:start -->\n<!-- sb:auto:mailler:end -->\n"
                  "\n## Son mesajlar ve aramalar\n<!-- sb:auto:telefon:start -->\n<!-- sb:auto:telefon:end -->\n",

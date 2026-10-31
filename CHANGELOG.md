@@ -2,6 +2,20 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.5.0 — 2026-10-31 (Faz 1: derin beyin)
+- **Beyin dizini:** notlar, mailler, dosyalar, Drive, sohbetler tek dizinde; kelime + anlam (yerel `nomic-embed-text`) karma arama.
+  `sb index`, `sb find "..."`, `sb answer "..."` (kaynaklı cevap), `sb similar <not>`; MCP `brain_find` / `brain_answer`.
+- **Akıllı arama:** doğal dil süzgeçleri ("geçen ay hocadan gelen pdf"), kayıtlı aramalar + uyarı, yarım hatırlananı bulma,
+  ek dosya ve görsel içinde arama, çok adımlı araştırma (kasa + istersen internet), SSS, arama kalite testi (`sb search2`).
+- **Yeni kaynaklar:** WhatsApp dışa aktarımları (sohbet + gün bazında), Google Takeout (Gemini, Keep, Chrome, YouTube),
+  tarayıcı geçmişi/yer imleri (giriş/jeton adresleri süzülür), GitHub derin (issue/PR/commit/release), RSS, arXiv/Scholar/Zotero,
+  Kindle, Spotify, Telegram; Outlook/iCloud IMAP ve CalDAV hazır ayarları; fatura ve kargo çıkarımı (`sb derive`).
+- **Kişiler:** tekrar kişi notları otomatik birleşir (`sb merge-people --auto`, günlük çalışmada); rehberde ad değişince not da
+  yeniden adlandırılır ve bağlantılar güncellenir (büyük/küçük harf değişikliği dahil); sohbetler ve geçen adlar kişi/proje notlarına bağlanır.
+- **Kümeleme ve analiz:** konu kümeleri + küme haritası, bağlantı önerileri (onayla/reddet), konu zaman çizelgesi, proje haritası,
+  belge sınıflandırma, tekrar belge, yaşlanan/tazelik/çelişki, yetenek profili, sözlük, etiket düzeni, not kalitesi,
+  kaynak güveni, veri hattı panosu (`sb analyze all`).
+
 ## 0.4.1 — 2026-10-31
 - Özellik kataloğu (`features.yaml`) pakete, kurulum güncellemesine ve güncelleme yedeğine eklendi (0.4.0'da eksikti; `sb roadmap` boş görünüyordu).
 

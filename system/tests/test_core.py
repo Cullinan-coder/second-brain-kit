@@ -351,7 +351,7 @@ def test_course_files_links(tmp_path):
     for s in specs:
         v2.upsert(s, date(2026, 10, 30))
     note = (vault_dir / "10-Dersler/FEF203/FEF203 Diferansiyel Denklemler.md").read_text(encoding="utf-8")
-    assert "benim notum" in note and "### Dosyalar" in note and v2.stats == {"created": 0, "updated": 1, "unchanged": 0}
+    assert "benim notum" in note and "### Dosyalar" in note and v2.stats == {"created": 0, "updated": 1, "unchanged": 0, "renamed": 0}
 
 
 def test_projects_scan_and_specs(tmp_path, monkeypatch):
@@ -1633,3 +1633,24 @@ def test_feature_switches_and_roadmap(tmp_path, monkeypatch):
     assert len(items) == 250 and {i["faz"] for i in items} == {0, 1, 2, 3, 4, 5}
     assert all(i["denetleyen"] == "opus" for i in items)
     assert "Toplam 250" in features.roadmap()
+
+
+def test_contact_rename_follows_source_and_relinks(tmp_path):
+    from datetime import date
+    from sb.notes import NoteSpec, Vault, split_note
+    v = tmp_path / "v"
+    (v / "60-Kişiler").mkdir(parents=True)
+    (v / "20-Projeler").mkdir()
+    (v / "60-Kişiler" / "burcu abla.md").write_text(
+        "---\ntype: kisi\nsource: contacts\nsource_id: people/c1\nphone: ['1']\n---\n# burcu abla\n\n## Bağlam\nnot\n", encoding="utf-8")
+    (v / "20-Projeler" / "p.md").write_text("# p\n[[burcu abla]] ve [[burcu abla|Burcu]]\n", encoding="utf-8")
+    spec = NoteSpec(folder="60-Kişiler", title="Burcu Yılmaz", owned=("phone",), rename=True,
+                    frontmatter={"type": "kisi", "source": "contacts", "source_id": "people/c1", "phone": ["1"]})
+    vault = Vault(v)
+    p = vault.upsert(spec, date(2026, 11, 1))
+    vault.relink()
+    assert p.name == "Burcu Yılmaz.md" and not (v / "60-Kişiler" / "burcu abla.md").exists()
+    fm, body = split_note(p.read_text(encoding="utf-8"))
+    assert fm["aliases"] == ["burcu abla"] and body.startswith("# Burcu Yılmaz") and "not" in body
+    assert (v / "20-Projeler" / "p.md").read_text(encoding="utf-8") == "# p\n[[Burcu Yılmaz]] ve [[Burcu Yılmaz|Burcu]]\n"
+    assert Vault(v).upsert(spec, date(2026, 11, 1)) == p                         # ikinci çalıştırma: değişiklik yok

@@ -1,0 +1,12 @@
+{"personal_information": {"user_id": 111, "first_name": "Ayşe"},
+ "chats": {"list": [
+  {"name": "Arda", "type": "personal_chat", "id": 5, "messages": [
+    {"id": 1, "type": "service", "date": "2026-10-30T10:00:00", "actor": "Arda", "action": "phone_call"},
+    {"id": 2, "type": "message", "date": "2026-10-30T10:01:00", "date_unixtime": "1793354460", "from": "Arda", "from_id": "user5", "text": "Merhaba"},
+    {"id": 3, "type": "message", "date": "2026-10-30T10:02:00", "date_unixtime": "1793354520", "from": "Ayşe", "from_id": "user111",
+     "text": ["Bak şu linke ", {"type": "link", "text": "https://example.com"}, " ve ", {"type": "bold", "text": "önemli"}]},
+    {"id": 4, "type": "message", "date": "2026-10-30T10:03:00", "date_unixtime": "1793354580", "from": "Arda", "from_id": "user5", "text": "", "photo": "photos/photo_1.jpg"}
+  ]},
+  {"name": "Grup", "type": "private_group", "id": 9, "messages": [
+    {"id": 1, "type": "message", "date": "2026-10-31T08:00:00", "date_unixtime": "1793433600", "from": "Ece", "from_id": "user7", "text": "Günaydın"}
+  ]}]}}

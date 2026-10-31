@@ -58,6 +58,32 @@ CREATE TABLE IF NOT EXISTS state (
     key   TEXT PRIMARY KEY,
     value TEXT
 );
+CREATE TABLE IF NOT EXISTS items (                -- Faz 1: mesaj olmayan kaynaklar (Kindle, YouTube/Spotify geçmişi, tarayıcı, RSS, GitHub, fatura, kargo...)
+    source   TEXT NOT NULL,                       -- kaynak adı: kindle, youtube, spotify, browser, rss, arxiv, zotero, github, invoice, cargo ...
+    id       TEXT NOT NULL,                       -- kaynakta tekil kimlik (yoksa içerik özeti)
+    date_ms  INTEGER,                             -- epoch milisaniye (bilinmiyorsa NULL)
+    kind     TEXT,                                -- alt tür: highlight, watch, play, visit, bookmark, article, paper, issue, pr, commit, invoice, shipment
+    title    TEXT,
+    url      TEXT,
+    body     TEXT,                                -- aranacak metin (vurgu, özet, yorum...)
+    meta     TEXT,                                -- JSON: kaynağa özgü alanlar (yazar, tutar, kargo durumu...)
+    fetched_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (source, id)
+);
+CREATE INDEX IF NOT EXISTS ix_items_date ON items(source, date_ms);
+CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
+    title, body, content='items', content_rowid='rowid', tokenize='unicode61 remove_diacritics 2'
+);
+CREATE TRIGGER IF NOT EXISTS items_ai AFTER INSERT ON items BEGIN
+    INSERT INTO items_fts(rowid, title, body) VALUES (new.rowid, new.title, new.body);
+END;
+CREATE TRIGGER IF NOT EXISTS items_ad AFTER DELETE ON items BEGIN
+    INSERT INTO items_fts(items_fts, rowid, title, body) VALUES ('delete', old.rowid, old.title, old.body);
+END;
+CREATE TRIGGER IF NOT EXISTS items_au AFTER UPDATE ON items BEGIN
+    INSERT INTO items_fts(items_fts, rowid, title, body) VALUES ('delete', old.rowid, old.title, old.body);
+    INSERT INTO items_fts(rowid, title, body) VALUES (new.rowid, new.title, new.body);
+END;
 CREATE TABLE IF NOT EXISTS extractions (
     account    TEXT NOT NULL,
     id         TEXT NOT NULL,
@@ -102,3 +128,17 @@ def get_state(con: sqlite3.Connection, key: str) -> str | None:
 
 def set_state(con: sqlite3.Connection, key: str, value: str) -> None:
     con.execute("INSERT INTO state(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", (key, value))
+
+
+ITEM_FIELDS = ("source", "id", "date_ms", "kind", "title", "url", "body", "meta")
+
+
+def insert_item(con: sqlite3.Connection, item: dict, update: bool = False) -> bool:
+    """Mesaj olmayan kaynak kaydı. update=False: varsa dokunma (True döner yalnız yeni eklenince). update=True: üzerine yaz."""
+    row = {k: item.get(k) for k in ITEM_FIELDS}
+    if row["meta"] is not None and not isinstance(row["meta"], str):
+        row["meta"] = json.dumps(row["meta"], ensure_ascii=False)
+    verb = "INSERT OR REPLACE" if update else "INSERT OR IGNORE"
+    cur = con.execute(f"{verb} INTO items ({', '.join(ITEM_FIELDS)}) VALUES ({', '.join('?' * len(ITEM_FIELDS))})",
+                      [row[k] for k in ITEM_FIELDS])
+    return cur.rowcount > 0

@@ -1,0 +1,9 @@
+# Arama kalite testi fikstürü: soru → beklenen (doc_id öneki ya da başlık parçası; liste ise biri yeter)
+- q: iğne kırığı akustik sensör
+  expect: ["note:a.md"]
+- q: laravel kuyruk worker
+  expect: ["Laravel kuyruk"]
+- q: mülakat tarihi ACME
+  expect: ["mail:main:"]
+- q: olmayan bir şey xyzzy
+  expect: ["note:yok.md"]

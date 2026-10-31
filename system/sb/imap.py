@@ -26,13 +26,40 @@ LIST_RE = re.compile(r'\((?P<flags>[^)]*)\) "(?P<sep>[^"]*)" (?P<name>.+)')
 CHUNK = 50
 
 
+PRESETS = {
+    "outlook": {"host": "outlook.office365.com", "port": 993},
+    "icloud": {"host": "imap.mail.me.com", "port": 993},
+}
+LOGIN_HINTS = {
+    "outlook": ("Outlook/Microsoft 365 girişi reddedildi. Kişisel hesapta IMAP açık olmalı ve (2 adımlı doğrulama varsa) "
+                "uygulama şifresi kullanılmalı. Kurumsal M365'te temel kimlik doğrulama (şifre ile IMAP) çoğunlukla kapalıdır; "
+                "OAuth2 gerekir ve bu henüz desteklenmiyor."),
+    "icloud": ("iCloud girişi reddedildi. iCloud normal Apple Kimliği şifresiyle çalışmaz; appleid.apple.com → "
+               "Oturum Açma ve Güvenlik → Uygulamaya Özel Şifreler'den üretilen şifre gerekir (sb set-secret imap-<ad>)."),
+}
+
+
+def resolve(acc: dict) -> dict:
+    """`preset: outlook|icloud` verilmişse host/port öntanımlarını doldurur (açık yazılan değer ön ayarı ezer)."""
+    preset = acc.get("preset")
+    if not preset:
+        return acc
+    if preset not in PRESETS:
+        raise SystemExit(f"Bilinmeyen IMAP ön ayarı: {preset} (geçerli: {', '.join(PRESETS)})")
+    return {**PRESETS[preset], **acc}
+
+
 def _connect(alias: str) -> imaplib.IMAP4_SSL:
-    acc = accounts()["imap"][alias]
+    acc = resolve(accounts()["imap"][alias])
     password = keyring.get_password(KEYRING_SERVICE, f"imap-{alias}")
     if not password:
         raise SystemExit(f"{alias} şifresi yok. Çalıştır: uv run python -m sb set-secret imap-{alias}")
     conn = imaplib.IMAP4_SSL(acc["host"], acc.get("port", 993))
-    conn.login(acc["email"], password)
+    try:
+        conn.login(acc["email"], password)
+    except imaplib.IMAP4.error as e:
+        hint = LOGIN_HINTS.get(acc.get("preset", ""), "")
+        raise SystemExit(f"[{alias}] IMAP girişi başarısız: {e}. {hint}".strip())
     return conn
 
 

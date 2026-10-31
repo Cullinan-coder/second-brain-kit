@@ -143,6 +143,11 @@ def run(src: str, since: str = "", until: str = "", exclude: str = "", private: 
                    exclude.split(",") if exclude else [])
     if not convs:
         return "İçe aktarılacak sohbet bulunamadı (biçim tanınmadı ya da hepsi elendi)."
+    return write_convs(convs, apply, private)
+
+
+def write_convs(convs: list[dict], apply: bool = True, private: bool = False) -> str:
+    """Sohbetleri kaynak+ay başına not olarak yazar. Aynı ay notunda daha önce yazılmış sohbetler korunur (birleşir)."""
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for c in convs:
         groups[(c["src"], f"{c['when']:%Y-%m}")].append(c)
@@ -156,6 +161,7 @@ def run(src: str, since: str = "", until: str = "", exclude: str = "", private: 
     written = []
     for (s, m), v in sorted(groups.items()):
         p = folder / f"{s} {m}.md"
+        v = sorted({(c["when"], c["title"]): c for c in v}.values(), key=lambda c: c["when"])
         fm = {"type": "kaynak", "status": "aktif", "tags": ["sohbet-gecmisi", s.lower()], "source": "manual",
               "source_id": f"gecmis:{s.lower()}:{m}", "created": date.today(), "updated": date.today(), "due": None,
               "visibility": "private" if private else "internal"}

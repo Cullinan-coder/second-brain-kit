@@ -55,6 +55,13 @@ DAILY_REST = [
     ("bağlantılar", ["links"], 900),
     ("mail notları", ["mail-index"], 900),
     ("rehber (SMS bağlantısı)", ["contacts-sync"], 900),
+    ("fatura/kargo", ["derive", "--days", "30"], 600),
+    ("github derin", ["github-deep", "--days", "14"], 900),
+    ("beyin dizini", ["index"], 7200),                            # yeni/değişen belgeler parçalanır ve gömülür
+    ("kişi bağlantıları", ["mentions"], 1800),
+    ("sohbet bağlantıları", ["chat-links"], 600),
+    ("kişi birleştirme (otomatik)", ["merge-people", "--auto"], 900),
+    ("kayıtlı aramalar", ["search2", "--saved"], 600),
     ("araçlar notu", ["arsenal"], 300),                         # Araçlar ve erişimler.md (doctor + kaynak sayımı)
 ]
 
@@ -213,6 +220,11 @@ def weekly() -> int:
         log(f"haftalık çalışma başladı {datetime.now():%F %T}")
         con = maildb.connect(DATA / "mail.db")
         text = digest.build_weekly(con, VAULT, date.today(), lint_errors())
+        from . import features
+        if features.enabled("brain"):
+            for name, args, to in (("kümeleme", ["clusters"], 3600), ("bağlantı önerileri", ["suggest-links"], 1800),
+                                   ("analizler", ["analyze", "all"], 3600)):
+                run_step(name, args, to, log)
         try:
             from . import hygiene, memory
             text += "\n\n🧾 Bu hafta (makbuzlar)\n" + memory.recap(7)

@@ -127,3 +127,19 @@ def import_calls(path: Path, con: sqlite3.Connection) -> int:
         el.clear()
     con.commit()
     return _count(con, "SELECT COUNT(*) FROM calls") - before
+
+
+def freshness(con: sqlite3.Connection, now_ms: int | None = None) -> dict:
+    """SMS yedeğinin tazeliği: {"last_ms", "last", "days_ago", "count"}. Hiç SMS yoksa last_ms=None.
+
+    `sb doctor` bunu kullanabilir (telefondaki zamanlanmış yedek durmuş mu?).
+    """
+    import time
+    from datetime import datetime
+    row = con.execute("SELECT MAX(date_ms), COUNT(*) FROM messages WHERE account = 'sms'").fetchone()
+    last, count = row[0], row[1]
+    if not last:
+        return {"last_ms": None, "last": None, "days_ago": None, "count": 0}
+    now = now_ms if now_ms is not None else int(time.time() * 1000)
+    return {"last_ms": last, "last": datetime.fromtimestamp(last / 1000).strftime("%Y-%m-%d %H:%M"),
+            "days_ago": max(0, (now - last) // 86_400_000), "count": count}

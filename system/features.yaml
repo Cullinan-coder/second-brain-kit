@@ -626,7 +626,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 77
   ad: Telefondan paylaş → Beyne at
   kategori: mobil
@@ -714,7 +714,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 88
   ad: Outlook / Microsoft 365
   kategori: kaynak
@@ -722,7 +722,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 89
   ad: iCloud mail, takvim, kişiler
   kategori: kaynak
@@ -730,7 +730,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 90
   ad: Telegram mesaj arşivi
   kategori: kaynak
@@ -738,7 +738,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 91
   ad: Discord arşivi
   kategori: kaynak
@@ -802,7 +802,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 99
   ad: GitLab, Bitbucket
   kategori: kaynak
@@ -818,7 +818,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 101
   ad: Kindle / e-kitap vurguları
   kategori: kaynak
@@ -826,7 +826,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 102
   ad: Okuma listesi (Pocket, Raindrop)
   kategori: kaynak
@@ -842,7 +842,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 104
   ad: Spotify dinleme geçmişi
   kategori: kaynak
@@ -850,7 +850,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 105
   ad: Google Fotoğraflar meta verisi
   kategori: kaynak
@@ -914,7 +914,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 113
   ad: Google Scholar, arXiv, Zotero
   kategori: kaynak
@@ -922,7 +922,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 114
   ad: Coursera, Udemy ilerleme
   kategori: kaynak
@@ -946,7 +946,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 117
   ad: Kargo takibi
   kategori: kaynak
@@ -954,7 +954,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 118
   ad: Derin yeniden aktarım modu
   kategori: beyin
@@ -962,7 +962,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 119
   ad: Varlık çıkarımı (kişi, kurum, proje, yer, tarih, para)
   kategori: beyin
@@ -970,7 +970,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 120
   ad: Kişi birleştirme
   kategori: beyin
@@ -978,7 +978,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 121
   ad: Yapay zekayla kümeleme ve küme notları
   kategori: beyin
@@ -986,7 +986,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 122
   ad: Anlam tabanlı arama dizini (yerel gömme)
   kategori: beyin
@@ -994,7 +994,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 123
   ad: Otomatik bağlantı önerisi (onayla/reddet)
   kategori: beyin
@@ -1002,7 +1002,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 124
   ad: Konu zaman çizelgesi
   kategori: beyin
@@ -1010,7 +1010,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 125
   ad: Proje ilişki haritası
   kategori: beyin
@@ -1018,7 +1018,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 126
   ad: Belge sınıflandırma
   kategori: beyin
@@ -1026,7 +1026,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 127
   ad: Tekrar belge tespiti
   kategori: beyin
@@ -1034,7 +1034,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 128
   ad: Yaşlanan bilgi politikası
   kategori: beyin
@@ -1042,7 +1042,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 129
   ad: Bilgi tazeliği kontrolü
   kategori: beyin
@@ -1050,7 +1050,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 130
   ad: Çelişki tespiti
   kategori: beyin
@@ -1058,7 +1058,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 131
   ad: Yetenek profili
   kategori: beyin
@@ -1066,7 +1066,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 132
   ad: Kişisel sözlük
   kategori: beyin
@@ -1074,7 +1074,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 133
   ad: Etiket düzenleyici
   kategori: beyin
@@ -1082,7 +1082,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 134
   ad: Not kalite puanı
   kategori: beyin
@@ -1090,7 +1090,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 135
   ad: Kaynak güven puanı
   kategori: beyin
@@ -1098,7 +1098,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 136
   ad: Görsel küme haritası
   kategori: beyin
@@ -1106,7 +1106,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 137
   ad: Veri hattı panosu
   kategori: beyin
@@ -1114,7 +1114,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 138
   ad: Karma arama (kelime + anlam + süzgeç)
   kategori: arama
@@ -1122,7 +1122,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 139
   ad: Kaynaklı cevap (cümle başına dayanak)
   kategori: arama
@@ -1130,7 +1130,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 140
   ad: Doğal dil süzgeçleri
   kategori: arama
@@ -1138,7 +1138,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 141
   ad: Kayıtlı aramalar ve uyarılar
   kategori: arama
@@ -1146,7 +1146,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 142
   ad: Çok adımlı araştırma (kasa + internet)
   kategori: arama
@@ -1154,7 +1154,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 143
   ad: Yarım hatırlananı bulma
   kategori: arama
@@ -1162,7 +1162,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 144
   ad: Ek dosya içinde arama
   kategori: arama
@@ -1170,7 +1170,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 145
   ad: Görsel arama
   kategori: arama
@@ -1178,7 +1178,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 146
   ad: Benzer belge bulma
   kategori: arama
@@ -1186,7 +1186,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 147
   ad: Soru geçmişinden SSS
   kategori: arama
@@ -1194,7 +1194,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 148
   ad: Aramayı not/rapor olarak kaydetme
   kategori: arama
@@ -1202,7 +1202,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 149
   ad: Arama kalite testi
   kategori: arama
@@ -1210,7 +1210,7 @@ ozellikler:
   surum: 0.5.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 150
   ad: Asistan adı ve kimliği (Core/Soul)
   kategori: hafiza

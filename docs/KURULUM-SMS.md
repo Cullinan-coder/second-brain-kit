@@ -17,3 +17,13 @@ uygulaması mesajları ve arama kaydını düzenli olarak Drive'a XML dosyası o
    **Otomatik başlatma: Açık**. Yoksa MIUI zamanlanmış yedeği öldürür.
 
 Bitince Claude'a "yedek tamam" yaz.
+
+## Zamanlanmış yedek (otomatik) — kısa kontrol listesi
+
+1. SMS Backup & Restore → sol menü **Yedekleme ve geri yükleme** → **Yedeklemeyi ayarla** (ya da **Zamanlanmış yedeklemeler**).
+2. **Google Drive** hedefi seçili ve hesap `ornek@gmail.com` olsun.
+3. **Zamanlama** açık: sıklık **Günlük** (ya da en kısa seçenek), saat **06:30**; **Mesajlar** ve **Telefon görüşmeleri** işaretli.
+4. **Yalnız Wi-Fi'de yedekle** açıksa telefonun geceleri Wi-Fi'ye bağlı olduğundan emin ol.
+5. **Şimdi yedekle** ile bir deneme yap; Drive'da yeni `sms-….xml` görünmeli.
+6. Kontrol: `sb sms-sync` sonrası bilgisayarda `sms.freshness` son SMS tarihini gösterir; 2 günden eskiyse yedek durmuş demektir
+   (pil kısıtlaması / Drive oturumu düşmüş olabilir).

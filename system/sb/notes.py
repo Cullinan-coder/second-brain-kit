@@ -8,6 +8,7 @@ Kurallar (CLAUDE.md ile aynı):
 """
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -31,6 +32,7 @@ class NoteSpec:
     # Sahip olunan bir alan değişince sıfırlanacak alanlar, ör. {"due": {"status": "acik"}}
     # (tekrarlayan ödevde yeni hafta gelince "tamamlandi" tekrar "acik" olur).
     reset_on_change: dict[str, dict] = field(default_factory=dict)
+    rename: bool = False             # kaynakta ad değişince notun dosya adı ve H1'i de değişsin (eski ad takma ad olur)
 
     @property
     def key(self) -> tuple[str, str]:
@@ -85,7 +87,8 @@ class Vault:
         self.root = root
         self.dry_run = dry_run
         self.index: dict[tuple[str, str], Path] = {}
-        self.stats = {"created": 0, "updated": 0, "unchanged": 0}
+        self.stats = {"created": 0, "updated": 0, "unchanged": 0, "renamed": 0}
+        self.renamed: list[tuple[str, str]] = []           # (eski ad, yeni ad)
         for p in root.rglob("*.md"):
             if any(part in SKIP_DIRS for part in p.relative_to(root).parts[:-1]):
                 continue
@@ -100,6 +103,8 @@ class Vault:
             return self._create(spec, today)
         text = path.read_text(encoding="utf-8")
         fm, body = split_note(text)
+        if spec.rename and "90-Arşiv" not in path.parts:
+            path, fm, body = self._maybe_rename(path, fm, body, spec)
         for k in spec.owned:
             if k in spec.frontmatter:
                 if fm.get(k) != spec.frontmatter[k]:
@@ -115,6 +120,46 @@ class Vault:
         self._write(path, dump_note(fm, body))
         self.stats["updated"] += 1
         return path
+
+    def _maybe_rename(self, path: Path, fm: dict, body: str, spec: NoteSpec):
+        """Kaynaktaki ad değiştiyse (ör. rehberde düzeltilen isim) dosyayı yeni ada taşır; eski ad takma ad olarak kalır."""
+        new = safe_filename(spec.title)
+        old = re.sub(r" \(\d+\)$", "", path.stem)
+        if not new or new == old:
+            return path, fm, body
+        target = path.with_name(f"{new}.md")
+        if target.exists() and not os.path.samefile(target, path):  # aynı adlı başka not var: dokunma (birleştirme önerisine kalır)
+            return path, fm, body
+        fm["aliases"] = sorted(set(fm.get("aliases") or []) | {path.stem})
+        body = re.sub(rf"^# {re.escape(path.stem)}\s*$", f"# {spec.title}", body, count=1, flags=re.M)
+        if not self.dry_run:
+            path.rename(target)
+        else:
+            print(f"[dry-run] yeniden adlandır: {path.stem} → {new}")
+        self.index[spec.key] = target
+        self.renamed.append((path.stem, new))
+        self.stats["renamed"] += 1
+        return target, fm, body
+
+    def relink(self, pairs: list[tuple[str, str]] | None = None) -> list[Path]:
+        """Kasadaki [[Eski]] / [[Eski|...]] bağlantılarını [[Yeni]]'ye çevirir (yeniden adlandırma sonrası)."""
+        pairs = pairs if pairs is not None else self.renamed
+        if not pairs or self.dry_run:
+            return []
+        rx = {old: re.compile(r"\[\[" + re.escape(old) + r"(\|[^\]]*)?\]\]") for old, _ in pairs}
+        changed = []
+        for p in self.root.rglob("*.md"):
+            if any(part in SKIP_DIRS for part in p.relative_to(self.root).parts[:-1]):
+                continue
+            text = p.read_text(encoding="utf-8")
+            new_text = text
+            for old, new in pairs:
+                if f"[[{old}" in new_text:
+                    new_text = rx[old].sub(lambda m, n=new: f"[[{n}{m.group(1) or ''}]]", new_text)
+            if new_text != text:
+                p.write_text(new_text, encoding="utf-8", newline="\n")
+                changed.append(p)
+        return changed
 
     def _create(self, spec: NoteSpec, today: date) -> Path:
         folder = self.root / spec.folder

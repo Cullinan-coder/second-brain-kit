@@ -31,7 +31,7 @@ FREE_TYPES = {"dashboard", "inbox"}
 
 SOURCES = {
     "manual", "gcal", "gmail-main", "gmail-side", "gdrive",
-    "github", "workspace", "contacts", "sms", "linkedin", "obs", "telegram", "mail", "derived", "web",
+    "github", "workspace", "contacts", "sms", "linkedin", "obs", "telegram", "mail", "derived", "web", "keep",
 }
 
 SKIP_DIRS = {".obsidian", ".git", ".trash", "_system", ".venv", "node_modules"}

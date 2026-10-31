@@ -108,10 +108,15 @@ def cmd_contacts_sync(args) -> int:
     for spec in specs:
         vault.upsert(spec, today)
     s = vault.stats
+    relinked = vault.relink()
     if args.dry_run:
-        print(f"DENEME: {s['created']} not oluşturulacak, {s['updated']} güncellenecek (hiçbir şey yazılmadı)")
+        print(f"DENEME: {s['created']} not oluşturulacak, {s['updated']} güncellenecek, {s['renamed']} yeniden adlandırılacak "
+              "(hiçbir şey yazılmadı)")
     else:
-        print(f"kişiler: {s['created']} yeni, {s['updated']} güncellendi, {s['unchanged']} değişmedi")
+        print(f"kişiler: {s['created']} yeni, {s['updated']} güncellendi, {s['renamed']} yeniden adlandırıldı "
+              f"({len(relinked)} notta bağlantı güncellendi), {s['unchanged']} değişmedi")
+    for old, new in vault.renamed[:40]:
+        print(f"  {old} → {new}")
     return 0
 
 
@@ -1030,6 +1035,112 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("embed-test", help="yapılandırılmış gömme modeliyle tek metni göm (boyut + ilk 5 değer)")
     g.add_argument("text")
     g.set_defaults(func=cmd_embed_test)
+
+    B = lambda: __import__("sb.brain", fromlist=["x"])
+    g = sub.add_parser("index", help="beyin dizinini güncelle (notlar, mailler/mesajlar, belgeler, diğer kaynaklar + gömme)")
+    g.add_argument("--sources", default="notes,mail,files,items")
+    g.add_argument("--days", type=int, default=730, help="mesajlar için geriye kaç gün")
+    g.add_argument("--no-embed", action="store_true")
+    g.add_argument("--stats", action="store_true")
+    g.set_defaults(func=lambda a: print(B().stats() if a.stats else B().index(tuple(a.sources.split(",")), a.days, not a.no_embed)) or 0)
+
+    g = sub.add_parser("find", help="karma arama (kelime + anlam) bütün kaynaklarda")
+    g.add_argument("query")
+    g.add_argument("-k", type=int, default=10)
+    g.add_argument("--kind", action="append", default=None, help="note | mail | chat | file | item")
+    g.add_argument("--since", default=None)
+    g.add_argument("--until", default=None)
+    g.set_defaults(func=lambda a: print("\n".join(
+        f"{h['score']:.3f} [{h['kind']}] {h['date']} {h['title']} — {h['ref']}\n    {' '.join(h['text'].split())[:160]}"
+        for h in B().find(a.query, a.k, a.kind, a.since, a.until)) or "Sonuç yok.") or 0)
+
+    g = sub.add_parser("answer", help="beyin dizininden kaynak numaralı cevap")
+    g.add_argument("question")
+    g.add_argument("--kind", action="append", default=None)
+    g.set_defaults(func=lambda a: print(B().answer(a.question, kinds=a.kind)) or 0)
+
+    g = sub.add_parser("similar", help="bir belgeye benzeyen belgeler (doc_id: note:<yol> | mail:<hesap>:<id> ...)")
+    g.add_argument("doc_id")
+    g.set_defaults(func=lambda a: print("\n".join(f"[{h['kind']}] {h['title']} — {h['ref']}" for h in B().similar(a.doc_id)) or "Yok.") or 0)
+
+    g = sub.add_parser("github-deep", help="GitHub repolarında son N gün issue/PR/yorum/commit/release → items")
+    g.add_argument("--days", type=int, default=90)
+    g.add_argument("--repo", default="", help="tek repo (ad ya da sahip/ad)")
+    g.add_argument("--dry-run", action="store_true", help="yalnız say, yazma")
+    g.set_defaults(func=lambda a: __import__("sb.github_deep", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("derive", help="mail/SMS'ten fatura ve kargo çıkar → items (kural tabanlı)")
+    g.add_argument("--days", type=int, default=365)
+    g.add_argument("--dry-run", action="store_true", help="yalnız say, yazma")
+    g.set_defaults(func=lambda a: __import__("sb.derived", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("caldav-sync", help="iCloud CalDAV/CardDAV (ve Outlook ICS) takvim+kişileri → items")
+    g.add_argument("alias", help="accounts.yaml imap takma adı")
+    g.set_defaults(func=lambda a: __import__("sb.caldav", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("import", help="dışa aktarım dosyasından içe aktar (whatsapp, telegram, kindle, youtube, spotify, browser, rss, arxiv, zotero, bibtex, auto)")
+    g.add_argument("source")
+    g.add_argument("path", nargs="?")
+    g.add_argument("--me", help="kendi adın (WhatsApp/Telegram: mesajların from_addr='me' olur)")
+    g.add_argument("--days", type=int, default=365, help="tarayıcı geçmişi: kaç gün geriye (varsayılan 365)")
+    g.add_argument("--dry-run", action="store_true", help="yazmadan say: kayıt sayısı, tarih aralığı, 3 örnek başlık")
+    g.add_argument("--discover", action="store_true", help="browser: bu bilgisayardaki tarayıcı profillerini listele")
+    g.set_defaults(func=lambda a: __import__("sb.connectors", fromlist=["x"]).cli(a))
+
+    E = lambda: __import__("sb.entities", fromlist=["x"])
+    g = sub.add_parser("merge-people", help="tekrar kişi notları: öneri yaz (--apply: [x] işaretlileri birleştir; --auto: kurala göre karar ver ve birleştir)")
+    g.add_argument("--apply", action="store_true")
+    g.add_argument("--auto", action="store_true")
+    g.set_defaults(func=lambda a: print(E().auto_merge() if a.auto else
+                                        "\n".join(E().apply_merges()) or "İşaretli öneri yok." if a.apply
+                                        else E().write_merge_proposals()) or 0)
+
+    g = sub.add_parser("mentions", help="kişi notlarına 'Bahsedildiği yerler' bölümü (beyin dizininden)")
+    g.set_defaults(func=lambda a: print(E().write_mentions()) or 0)
+
+    g = sub.add_parser("chat-links", help="WhatsApp/Telegram sohbetlerini kişi ve proje notlarına bağla")
+    g.set_defaults(func=lambda a: print(E().write_chat_links()) or 0)
+
+    g = sub.add_parser("clusters", help="notları anlamına göre kümele ve adlandır (40-Kaynaklar/Kümeler)")
+    g.add_argument("-k", type=int, default=None)
+    g.set_defaults(func=lambda a: print(E().clusters(a.k)) or 0)
+
+    g = sub.add_parser("suggest-links", help="anlamca yakın ama bağlı olmayan notlar (--apply: [x] işaretlilere bağlantı)")
+    g.add_argument("--apply", action="store_true")
+    g.add_argument("--threshold", type=float, default=0.83)
+    g.set_defaults(func=lambda a: print("\n".join(E().apply_links()) or "İşaretli öneri yok." if a.apply
+                                        else E().suggest_links(a.threshold)) or 0)
+
+    g = sub.add_parser("analyze", help="beyin analizleri (40-Kaynaklar/Analiz): zaman çizelgesi, proje haritası, sınıflar, tekrarlar...")
+    g.add_argument("what", nargs="?", default="all", choices=["all", "timeline", "projects", "classify", "duplicates", "aging", "freshness",
+                                                              "conflicts", "skills", "glossary", "tags", "quality", "trust", "map", "pipeline"])
+    g.add_argument("topic", nargs="?", help="timeline için konu")
+    g.add_argument("--dry-run", action="store_true", help="kasaya yazma, özet bas")
+    g.set_defaults(func=lambda a: __import__("sb.analysis", fromlist=["x"]).cli(a.what, a.topic, a.dry_run))
+
+    g = sub.add_parser("search2", help="gelişmiş arama: doğal dil süzgeçleri, kayıtlı aramalar, araştırma, hatırlama, ek/görsel, SSS")
+    g.add_argument("query", nargs="?", default=None, help="doğal dil sorgu ('geçen ay hocadan gelen mailler')")
+    g.add_argument("--save", action="store_true", help="sonuçları 40-Kaynaklar/Aramalar'a not olarak kaydet")
+    g.add_argument("--recall", default=None, help="yarım hatırlanan şeyi bul")
+    g.add_argument("--research", default=None, help="çok adımlı araştırma → 40-Kaynaklar/Araştırmalar")
+    g.add_argument("--web", action="store_true", help="--research: alt soruları DuckDuckGo'da da ara (kasa içeriği gitmez)")
+    g.add_argument("--attachments", default=None, help="mail ekleri + belge içeriği içinde ara")
+    g.add_argument("--images", default=None, help="görsellerin OCR metninde ara")
+    g.add_argument("--index", action="store_true", help="görsel OCR dizinini güncelle")
+    g.add_argument("--saved", action="store_true", help="kayıtlı aramaları kontrol et (yeni eşleşmeler)")
+    g.add_argument("--faq", action="store_true", help="soru günlüğünden 40-Kaynaklar/SSS.md üret")
+    g.add_argument("--eval", default=None, help="arama kalite testi YAML'ı (hit@5, MRR)")
+    g.set_defaults(func=lambda a: __import__("sb.search", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("takeout", help="Google Takeout zip'lerinden Gemini, Keep, Chrome, YouTube, etkinlik geçmişi, Play")
+    g.add_argument("paths", nargs="+", help="zip dosyaları ya da içinde takeout-*.zip olan klasör")
+    g.add_argument("--account", default="google", help="hangi hesap (ör. main, side) — Keep notlarının kimliği için")
+    g.add_argument("--dry-run", action="store_true")
+    g.set_defaults(func=lambda a: (lambda t, m: print(t.run(
+        [str(z) for x in a.paths for z in (sorted(__import__("pathlib").Path(x).glob("takeout-*.zip"))
+                                         if __import__("pathlib").Path(x).is_dir() else [x])],
+        m.connect(__import__("sb.config", fromlist=["x"]).MAIL_DB), a.account, a.dry_run)) or 0)(
+        __import__("sb.connectors.takeout", fromlist=["x"]), __import__("sb.maildb", fromlist=["x"])))
 
     g = sub.add_parser("asistan-undo", help="asistanın son kasa değişikliğini geri al")
     g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).undo_last(actor="kullanici")) or 0)

@@ -1,0 +1,3 @@
+[{"ts": "2026-10-31T11:05:00Z", "ms_played": 200000, "master_metadata_track_name": "Şarkı Bir", "master_metadata_album_artist_name": "Sanatçı X", "master_metadata_album_album_name": "Albüm Y", "spotify_track_uri": "spotify:track:4uLU6hMCjMI75M1A2tKUQC"},
+ {"ts": "2026-10-31T11:10:00Z", "ms_played": 5000, "master_metadata_track_name": "Atlanan", "master_metadata_album_artist_name": "Sanatçı X", "master_metadata_album_album_name": "Albüm Y", "spotify_track_uri": "spotify:track:aaaa"},
+ {"ts": "2026-10-31T11:15:00Z", "ms_played": 90000, "master_metadata_track_name": null, "master_metadata_album_artist_name": null, "master_metadata_album_album_name": null, "spotify_track_uri": null}]
