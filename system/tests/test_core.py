@@ -1594,3 +1594,22 @@ def test_history_import_chatgpt_claude_gemini(tmp_path, monkeypatch):
     assert "**Ben:** Laravel queue nasıl kurulur?" in text and "queue:work" in text and "doktor" not in text
     assert history.run(str(z), apply=True, private=True)
     assert notes.is_private(v / history.FOLDER / "Claude 2025-12.md")
+
+
+def test_night_commands_via_assistant(tmp_path, monkeypatch):
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    (v / "00-Inbox").mkdir(exist_ok=True)
+    from sb import chat, worker
+    monkeypatch.setattr(chat, "retrieve", lambda t: ("", ""))
+    no_model = lambda m, c: (_ for _ in ()).throw(AssertionError("model çağrılmamalı"))
+    s = chat.Session()
+    assert "boş" in chat.respond(s, "gece koşusunu başlat", chat_fn=no_model)["reply"] or "yok" in chat.respond(s, "gece koşusunu başlat", chat_fn=no_model)["reply"]
+    r = chat.respond(s, "Geceye ekle: tekstil raporunun taslağını yaz @C:/proje/tekstil", chat_fn=no_model)
+    assert "Gece listesine eklendi: tekstil raporunun taslağını yaz (C:/proje/tekstil)" in r["reply"]
+    assert worker.night_tasks()[0][1:] == ("tekstil raporunun taslağını yaz", "C:/proje/tekstil")
+    assert "tekstil" in chat.respond(s, "gece işleri neler", chat_fn=no_model)["reply"]
+    started = []
+    monkeypatch.setattr(worker, "night_start", lambda: started.append(1) or "başladı")
+    r = chat.respond(s, "gece koşusunu başlat", chat_fn=no_model)
+    assert r["proposals"] and not started                    # onay kartı; onaysız başlamaz
+    assert chat.decide(s, r["proposals"][0]["id"], True) == "başladı" and started == [1]

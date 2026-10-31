@@ -32,7 +32,6 @@ JOBS = {
               "StartCalendarInterval": {"Hour": 13, "Minute": 0}},
     "weekly": {"ProgramArguments": _job("weekly"), "StartCalendarInterval": {"Weekday": 0, "Hour": 15, "Minute": 0}},
     "chat": {"ProgramArguments": _job("chat"), "RunAtLoad": True, "KeepAlive": True},
-    "night": {"ProgramArguments": _job("night") + ["--run"], "StartCalendarInterval": {"Hour": 2, "Minute": 0}},
 }
 
 

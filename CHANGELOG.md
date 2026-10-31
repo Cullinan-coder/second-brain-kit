@@ -2,6 +2,11 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.3.1 — 2026-10-31
+- **Gece koşusu yalnız sen istediğinde:** otomatik saat yok. Asistana (Obsidian ya da telefon) `geceye ekle: iş @klasör`,
+  `gece işleri neler`, `gece koşusunu başlat` (onay kartı) yaz; arka planda sırayla yapılır, bitince bildirim gelir.
+  Komut satırı: `sb night --add "..." --where <klasör>`, `--plan`, `--start`.
+
 ## 0.3.0 — 2026-10-31 (hafıza kendi kendine birikir)
 - **Makbuz + son günler:** iş bitince `sb receipt` kaynak bağlantılı tek satır yazar (`50-Günlük/Makbuzlar`, günlük notta özet);
   `sb recap --days 7` / asistana "son günlerde ne yaptık" / MCP `brain_recap`.

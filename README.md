@@ -97,7 +97,7 @@ Kod güncellemesi için repoyu `git pull` edip kurucuyu yeniden çalıştırman 
 | "Neler bağlı, ne eksik?" | Kasada `Araçlar ve erişimler` notu (her gün yenilenir) ya da `sb doctor` |
 | Dosya (PDF, Word, fatura) | Sağ tık › Gönder › **Beyne At**: özetlenir, `40-Kaynaklar/Belgeler`'e bağlanır |
 | "Son günlerde ne yaptık?" | Asistan ya da Claude Code (`sb recap`): iş sonu makbuzlarından gün gün |
-| Gece uzun iş | `00-Inbox/Gece işleri.md`'ye `- [ ] iş @klasör` yaz → `sb night --run` (ya da 02:00 görevi) |
+| Gece uzun iş | Asistana `geceye ekle: iş @klasör`, yatarken `gece koşusunu başlat` (onay kartı; bitince bildirim) |
 | Büyük iş, çok ajan | Claude Code'a "orkestrasyon" de: şef + alt ajanlar + yerel Qwen işçisi |
 
 Komut satırı: `sb --help` (60+ komut). Hafıza: `receipt`, `recap`, `concept`, `connect`, `learn`, `trace`, `task`, `person`, `rule`,

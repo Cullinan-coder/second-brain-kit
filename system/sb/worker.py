@@ -22,6 +22,7 @@ from .config import DATA
 MAX_INPUT = 60_000
 NIGHT_NOTE = "00-Inbox/Gece işleri.md"
 NIGHT_STATE = DATA / "night.json"
+HEADER = 'Gece koşusu yalnız sen istediğinde başlar (otomatik saat yok). Asistana (Obsidian ya da telefon) yaz:\n- `geceye ekle: ne yapılacak @C:/çalışma/klasörü` (klasör yazmazsan kasada çalışır)\n- `gece işleri neler` (listeyi gösterir)\n- `gece koşusunu başlat` (onay kartına bas; Claude Code sırayla yapar, bitince bildirim gelir)\n\nBiten `[x]`, hata veren `[!]` olur, sonucu altına yazılır. Yalnız buraya yazılan maddeler çalışır.'
 TASK_RE = re.compile(r"^- \[ \] (.+?)(?:\s+@(\S.*))?$")
 
 
@@ -86,10 +87,42 @@ def ensure_note() -> Path:
     p = vault_ops.VAULT / NIGHT_NOTE
     if not p.exists():
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text("---\ntype: inbox\ntags: [inbox, gece]\n---\n# Gece işleri\n\nGece (bilgisayar açıksa 02:00) Claude Code'un "
-                     "sırayla yapacağı işler. Her satır: `- [ ] ne yapılacak @C:/çalışma/klasörü` (klasör yoksa kasa). Biten `[x]`, "
-                     "hata veren `[!]` olur, sonucu altına yazılır. Yalnız buraya senin yazdığın maddeler çalışır.\n\n", encoding="utf-8")
+        p.write_text("---\ntype: inbox\ntags: [inbox, gece]\n---\n# Gece işleri\n\n" + HEADER + "\n\n", encoding="utf-8")
     return p
+
+
+def night_add(task: str, where: str = "") -> str:
+    """'geceye ekle: ...' — listeye madde ekler (çalıştırmaz)."""
+    task = " ".join(task.split()).strip(" .:-")
+    if not task:
+        return "Hata: ne yapılacağını yaz (ör. 'geceye ekle: tekstil raporunun taslağını yaz @C:/Users/.../tekstil')."
+    if vault_ops.SENSITIVE_RE.search(task):
+        return "Hassas veri gece işine yazılmaz."
+    p = ensure_note()
+    line = f"- [ ] {task}" + (f" @{where.strip()}" if where.strip() else "")
+    p.write_text(p.read_text(encoding="utf-8").rstrip("\n") + "\n" + line + "\n", encoding="utf-8")
+    vault_ops.commit([NIGHT_NOTE], f"gece işi eklendi: {task[:50]}")
+    return f"Gece listesine eklendi: {task}" + (f" ({where})" if where else " (kasada)") + f". Listede {len(night_tasks())} iş var."
+
+
+def night_start() -> str:
+    """Gece koşusunu ARKA PLANDA başlatır (asistan/telefon beklemez); bitince bildirim gelir."""
+    import os
+    import sys
+    tasks = night_tasks()
+    if not tasks:
+        return "Gece listesi boş; önce 'geceye ekle: ...' de."
+    if NIGHT_STATE.exists():
+        return f"Gece koşusu zaten çalışıyor: {json.loads(NIGHT_STATE.read_text(encoding='utf-8')).get('current', '?')}"
+    from .config import SYSTEM
+    py = Path(sys.executable).with_name("pythonw.exe") if os.name == "nt" else Path(sys.executable)
+    flags = 0x00000008 | 0x00000200 | 0x08000000 if os.name == "nt" else 0
+    log = open(DATA / "logs" / f"night-{datetime.now():%Y%m%d-%H%M}.log", "a", encoding="utf-8") \
+        if (DATA / "logs").is_dir() else subprocess.DEVNULL
+    subprocess.Popen([str(py if py.exists() else sys.executable), "-X", "utf8", "-m", "sb", "night", "--run"], cwd=str(SYSTEM),
+                     env=dict(os.environ, PYTHONPATH=str(SYSTEM), SB_NO_HOOK="1"), stdout=log, stderr=log,
+                     stdin=subprocess.DEVNULL, creationflags=flags, start_new_session=os.name != "nt")
+    return f"Gece koşusu başladı: {len(tasks)} iş sırayla yapılacak. Bitince bildirim gelir; sonuçlar 'Gece işleri' notunda ve sabah raporunda."
 
 
 def night_plan() -> str:
@@ -150,4 +183,10 @@ def night_run(claude: str | None = None, dry: bool = False) -> str:
     NIGHT_STATE.unlink(missing_ok=True)
     if done:
         vault_ops.commit([NIGHT_NOTE], f"gece koşusu: {done} iş")
+        if not dry:
+            try:
+                from .actions import toast
+                toast("Gece koşusu bitti", "; ".join(report)[:280])
+            except Exception:
+                pass
     return "\n".join(report) or "Gece işi yok."

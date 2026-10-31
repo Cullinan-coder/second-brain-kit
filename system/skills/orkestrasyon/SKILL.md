@@ -30,9 +30,11 @@ Ana oturum **şeftir**: plan, mimari, karar, sentez, birleştirme. İşçilik al
 - Tekrarlayan sorun → `sb error-log "hata" --fix "çözüm"` (ikinci tekrarda kural olur) ya da skill/CLAUDE.md kuralı.
 
 ## Gece koşusu (uzun, gözetimsiz iş)
-- Plan + kurallar baştan net olmalı. Kullanıcı `00-Inbox/Gece işleri.md`'ye `- [ ] ` satırları yazar (çalışma klasörü: `@<yol>`).
-- `sb night --plan` ne çalışacağını gösterir; gece görevi (`sb night --run`) her maddeyi `claude -p` ile sırayla çalıştırır,
-  sonucu nota ve makbuza yazar, kesintide kaldığı maddeden devam eder. Yalnız kullanıcının yazdığı maddeler çalışır.
+- Plan + kurallar baştan net olmalı. Liste `00-Inbox/Gece işleri.md` (`- [ ] iş @<klasör>`). Otomatik saat YOK: kullanıcı ne zaman
+  yatacağını bilmediği için yalnız kendisi başlatır — asistana `geceye ekle: ...` / `gece işleri neler` / `gece koşusunu başlat`
+  (onay kartı), ya da `sb night --add "..." --where <klasör>`, `sb night --plan`, `sb night --start` (arka plan, bitince bildirim).
+- Her madde `claude -p` ile sırayla çalışır; sonuç nota ve makbuza yazılır. Kullanıcı "gece için şunu sıraya al" derse
+  `sb night --add` ile listeye ekle, kendin başlatma.
 
 ## Codex'i alt ajan yapmak (kuruluysa)
 - Kurulum (kullanıcı onayıyla): `npm i -g @openai/codex` sonra `codex login` (abonelikle; API anahtarı gerekmez).

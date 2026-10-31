@@ -939,8 +939,12 @@ def main(argv: list[str] | None = None) -> int:
 
     g = sub.add_parser("night", help="gece koşusu: 00-Inbox/Gece işleri.md maddelerini claude -p ile sırayla çalıştır")
     g.add_argument("--plan", action="store_true", help="yalnız ne çalışacağını göster")
-    g.add_argument("--run", action="store_true")
-    g.set_defaults(func=lambda a: print(W().night_run() if a.run else (W().ensure_note() and W().night_plan())) or 0)
+    g.add_argument("--run", action="store_true", help="şimdi çalıştır (bu pencerede, sırayla)")
+    g.add_argument("--start", action="store_true", help="arka planda başlat (bitince bildirim)")
+    g.add_argument("--add", default="", help="listeye iş ekle")
+    g.add_argument("--where", default="", help="--add için çalışma klasörü")
+    g.set_defaults(func=lambda a: print(W().night_run() if a.run else W().night_start() if a.start else
+                                        W().night_add(a.add, a.where) if a.add else (W().ensure_note() and W().night_plan())) or 0)
 
     g = sub.add_parser("asistan-undo", help="asistanın son kasa değişikliğini geri al")
     g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).undo_last(actor="kullanici")) or 0)

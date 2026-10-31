@@ -4,7 +4,7 @@
 # bilgisayar acilinca / oturum acilinca yapilir (StartWhenAvailable). Cift calisma sb icindeki kilitle engellenir.
 param([switch]$Remove)
 $ErrorActionPreference = "Stop"
-$tasks = @("SecondBrain-Daily", "SecondBrain-Weekly", "SecondBrain-Night")
+$tasks = @("SecondBrain-Daily", "SecondBrain-Weekly")
 if ($Remove) {
     foreach ($t in ($tasks + "SecondBrain-Syncthing", "SecondBrain-Chat")) { Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue }
     & (Join-Path $PSScriptRoot "hotkey.ps1") -Remove
@@ -35,8 +35,7 @@ $noon = New-ScheduledTaskTrigger -Daily -At "13:00"
 Register-Brain "SecondBrain-Daily" "daily" @($logon, $noon) "Second Brain: tum kaynaklari guncelle, ozet maili gonder"
 Register-Brain "SecondBrain-Weekly" "weekly" (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "15:00") "Second Brain: haftalik denetim ve ozet"
 # Yerel asistan sunucusu (Obsidian > Asistan.md): oturum acilinca arka planda baslar.
-# Gece kosusu: 00-Inbox/Gece isleri.md'de madde yoksa hicbir sey yapmaz; bilgisayari uyandirmaz (acik degilse atlanir).
-Register-Brain "SecondBrain-Night" "night --run" (New-ScheduledTaskTrigger -Daily -At "02:00") "Second Brain: gece isleri (claude -p)" 10
+# Gece kosusu zamanlanmaz: kullanici asistana "gece kosusunu baslat" deyince baslar (sb night --start).
 Register-Brain "SecondBrain-Chat" "chat" (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME) "Second Brain: yerel asistan sunucusu" 0
 $tasks += "SecondBrain-Chat"
 # Syncthing (telefon eslemesi): oturum acilinca arka planda baslar, surekli calisir.

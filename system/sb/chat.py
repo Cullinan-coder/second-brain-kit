@@ -692,6 +692,28 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             session.messages.append({"role": "assistant", "content": reply})
             return {"reply": reply, "trace": [f"otomatik getirme: {label or 'son mailler'}", "son mailler [kod cevapladı]"],
                     "proposals": pending(session)}
+    low = text.lower().strip()
+    if (m := re.match(r"^(?:geceye|gece listesine|gece işlerine|gece islerine) ekle\s*:?\s*(.+?)(?:\s+@(\S.*))?$", text.strip(), re.S | re.I)):
+        from . import worker                                  # yalnız listeye yazar (çalıştırmaz): telefondan da onaysız
+        reply = worker.night_add(m.group(1), (m.group(2) or "").strip())
+        session.messages.append({"role": "assistant", "content": reply})
+        return {"reply": reply, "trace": ["gece listesi [kod]"], "proposals": pending(session)}
+    if re.search(r"gece (koşusu|kosusu|işleri|isleri|listesi)\w*\s+(başlat|baslat|çalıştır|calistir|başla|basla)|"
+                 r"(başlat|baslat|çalıştır|calistir)\w*\s+gece (koşusu|kosusu|işleri|isleri)", low):
+        from . import worker                                  # claude -p gözetimsiz çalışır: her zaman onay kartı
+        plan = worker.night_plan()
+        if not worker.night_tasks():
+            reply = plan
+        else:
+            reply = add_proposal(session, "gece", "🌙 Gece koşusunu başlat", plan, worker.night_start)
+            reply = f"{plan}\n\nBaşlatmak için kartta Onayla'ya bas."
+        session.messages.append({"role": "assistant", "content": reply})
+        return {"reply": reply, "trace": ["gece koşusu [kod]"], "proposals": pending(session)}
+    if re.search(r"gece (işleri|isleri|listesi|koşusu|kosusu)\w*\s*(ne|neler|göster|goster|var mı|var mi|\?|$)", low):
+        from . import worker
+        reply = worker.night_plan()
+        session.messages.append({"role": "assistant", "content": reply})
+        return {"reply": reply, "trace": ["gece listesi [kod]"], "proposals": pending(session)}
     if not hint and re.search(r"(son|geçen|gecen|bu) (günlerde|gunlerde|hafta|\d+ gün|\d+ gun)\w*.*\b(ne|neler)\b.*(yaptık|yaptik|yaptım|yaptim|yapıldı|yapildi)",
                               text.lower()):
         from .memory import recap
