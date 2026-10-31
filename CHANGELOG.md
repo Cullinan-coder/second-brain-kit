@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.4.1 — 2026-10-31
+- Özellik kataloğu (`features.yaml`) pakete, kurulum güncellemesine ve güncelleme yedeğine eklendi (0.4.0'da eksikti; `sb roadmap` boş görünüyordu).
+
 ## 0.4.0 — 2026-10-31 (Faz 0: temel altyapı · yol haritası `ROADMAP.md`)
 - **Yol haritası:** 250 özellik, 6 faz (`features.yaml`); ilerleme `sb roadmap`.
 - **Özellik anahtarları:** `sb features --on/--off <modül>` — kapalı modülün günlük adımı çalışmaz, asistan aracı modele gösterilmez.

@@ -1,0 +1,2021 @@
+# Second Brain özellik kataloğu: yol haritası, özellik anahtarları ve kurulum paneli bu dosyayı okur.
+# durum: planlandi | yapiliyor | tamamlandi | ertelendi. uygulayan: kodu yazan model; denetleyen: her çıktıyı onaylayan.
+kategoriler:
+  kurulum: Kurulum paneli ve ürünleşme
+  model: Model katmanı
+  ses: Ses ve çok kipli kullanım
+  arayuz: Asistan arayüzü ve deneyim
+  mobil: Mobil
+  kaynak: Yeni veri kaynakları
+  beyin: Beyni yeniden kurma
+  arama: Arama ve soru-cevap
+  hafiza: Hafıza ve öğrenme
+  verim: Görev, takvim ve verimlilik
+  iletisim: İletişim
+  akademik: Öğrenci ve akademik
+  kariyer: Kariyer ve iş
+  ajan: Ajanlar ve otomasyon
+  yasam: Kişisel yaşam
+  guvenlik: Güvenlik ve gizlilik
+  kalite: Kalite, test ve gözlemlenebilirlik
+ozellikler:
+- id: 1
+  ad: Tek satırla kurulum (irm|iex, curl|sh)
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 2
+  ad: Tarayıcıda açılan yerel kurulum paneli
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 3
+  ad: Özellik kataloğu (features.yaml) ve özellik anahtarları
+  kategori: kurulum
+  faz: 0
+  surum: 0.4.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 4
+  ad: 'Hazır seçimler: Tam, Bulut, Minimal, Öğrenci, Ajans'
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 5
+  ad: Her özellik için açıklama ve gereksinim etiketi
+  kategori: kurulum
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 6
+  ad: Donanım tarayıcı ve model/hazır seçim önerisi
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 7
+  ad: Panelde bilgi girişi; şifreler işletim sistemi kasasına
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 8
+  ad: Canlı kurulum günlüğü ve ilerleme
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 9
+  ad: Bağlantıyı test et düğmeleri
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 10
+  ad: Kurulum profilini dışa/içe aktarma
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 11
+  ad: Komut satırından sessiz kurulum (preset/config)
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 12
+  ad: Seçili özellikleri geri alma
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 13
+  ad: İlk 10 dakika turu
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 14
+  ad: Google Cloud kurulum sihirbazı
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 15
+  ad: Spotify, Telegram, Tailscale sihirbazları
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 16
+  ad: Güncelleme sekmesi
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 17
+  ad: Temiz kaldırma
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 18
+  ad: Çok dilli panel (TR/EN)
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 19
+  ad: Yarıda kalan kurulumu sürdürme
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 20
+  ad: Sistem sağlığı sekmesi
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 21
+  ad: İmzalı sürüm paketi ve SHA-256
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 22
+  ad: Kurumsal toplu kurulum
+  kategori: kurulum
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 23
+  ad: API sağlayıcıları (OpenAI, Anthropic, Gemini, OpenRouter, Groq, Mistral, DeepSeek)
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 24
+  ad: Model yönlendirici (yerel/bulut, kural/maliyet)
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 25
+  ad: Görev başına model seçimi
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 26
+  ad: Maliyet takibi ve bütçe sınırı
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 27
+  ad: Yedek zinciri (bulut↔yerel)
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 28
+  ad: Yerel model yöneticisi
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 29
+  ad: LM Studio, llama.cpp, vLLM desteği
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 30
+  ad: Küçük ekran kartı modu
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 31
+  ad: Kullanıcı verisiyle model sınavı ve öneri
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 32
+  ad: Gizlilik etiketine göre yönlendirme
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 33
+  ad: Cevap önbelleği
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 34
+  ad: Akış (streaming) cevap
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: yapiliyor
+- id: 35
+  ad: Düşünme modu düğmesi
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 36
+  ad: Uzun bağlam modu (parça parça okuma)
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 37
+  ad: Gömme (embedding) modeli seçimi
+  kategori: model
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 38
+  ad: Konuşmayı yazıya çevirme (Whisper, yerel)
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 39
+  ad: Sesli cevap (TTS) ve ses seçimi
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 40
+  ad: Uyandırma sözcüğü
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 41
+  ad: Bas-konuş kısayolu ve mikrofon düğmesi
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 42
+  ad: Telefonda sesli not
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 43
+  ad: 'Toplantı/ders kaydı: döküm, özet, görev, karar'
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 44
+  ad: Video ve podcast dökümü
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 45
+  ad: Fotoğrafla soru (belge, tahta, fiş)
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 46
+  ad: El yazısı ve tahta fotoğrafını metne çevirme
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 47
+  ad: Ekran izleme modu (izinli)
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 48
+  ad: PDF'e sayfa atıflı soru
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 49
+  ad: Görsel üretme
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 50
+  ad: Konuşma kesme (barge-in)
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 51
+  ad: Çok dilli ses
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 52
+  ad: Telaffuz ve konuşma koçu
+  kategori: ses
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 53
+  ad: Tasarım sistemi (renk, yazı tipi, tema)
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 54
+  ad: Sohbet geçmişi listesi, arama, sabitleme
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 55
+  ad: Kaynak kartları (tıklanabilir dayanak)
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 56
+  ad: Onay kartları yeniden tasarım
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 57
+  ad: Ana panel (dashboard)
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 58
+  ad: Komut paleti (Ctrl+K)
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 59
+  ad: Eğik çizgi komutları
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 60
+  ad: Mesaj düzenle, yeniden üret, nota çevir
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 61
+  ad: Sohbete dosya sürükle-bırak
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 62
+  ad: Bildirim merkezi
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 63
+  ad: Masaüstü uygulaması (tepsi simgesi)
+  kategori: arayuz
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 64
+  ad: Mini sohbet balonu
+  kategori: arayuz
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 65
+  ad: Obsidian eklentisi
+  kategori: arayuz
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 66
+  ad: Tarayıcı eklentisi
+  kategori: arayuz
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 67
+  ad: Bilgi grafiği görünümü
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 68
+  ad: Zaman çizelgesi görünümü
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 69
+  ad: Kişi sayfası
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 70
+  ad: Proje sayfası
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 71
+  ad: Erişilebilirlik
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 72
+  ad: Asistan kişiliği ayarı
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 73
+  ad: Ses + metin karışık sohbet
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 74
+  ad: Hızlı tepki düğmeleri
+  kategori: arayuz
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 75
+  ad: Telefon uygulaması (PWA iyileştirme)
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 76
+  ad: Android SMS/arama otomatik eşitleme
+  kategori: mobil
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 77
+  ad: Telefondan paylaş → Beyne at
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 78
+  ad: Telefon push bildirimleri
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 79
+  ad: Telefon widget'ı
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 80
+  ad: Çevrimdışı kuyruk
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 81
+  ad: Konum tabanlı hatırlatma
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 82
+  ad: Obsidian mobil eşitleme kurulumu
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 83
+  ad: iOS Kestirmeler / Android Tasker
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 84
+  ad: Saat üzerinden sesli not
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 85
+  ad: Telefon ekran görüntüsü otomatik okuma
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 86
+  ad: Güvenli tünel seçeneği (Cloudflare Tunnel)
+  kategori: mobil
+  faz: 5
+  surum: 0.9.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 87
+  ad: WhatsApp mesaj arşivi
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 88
+  ad: Outlook / Microsoft 365
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 89
+  ad: iCloud mail, takvim, kişiler
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 90
+  ad: Telegram mesaj arşivi
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 91
+  ad: Discord arşivi
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 92
+  ad: Slack
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 93
+  ad: Notion içe aktarma
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 94
+  ad: Google Keep, Apple Notlar, OneNote
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 95
+  ad: Evernote içe aktarma
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 96
+  ad: Todoist, To Do, TickTick
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 97
+  ad: Trello, Jira, Linear
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 98
+  ad: GitHub derin (issue, PR, yorum, commit, release)
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 99
+  ad: GitLab, Bitbucket
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 100
+  ad: Tarayıcı geçmişi ve yer imleri
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 101
+  ad: Kindle / e-kitap vurguları
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 102
+  ad: Okuma listesi (Pocket, Raindrop)
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 103
+  ad: YouTube izleme geçmişi ve abonelikler
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 104
+  ad: Spotify dinleme geçmişi
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 105
+  ad: Google Fotoğraflar meta verisi
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 106
+  ad: Google Haritalar zaman çizelgesi
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 107
+  ad: Banka ekstresi CSV (numarasız özet)
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 108
+  ad: e-Devlet / e-Okul belgeleri
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 109
+  ad: Instagram, X arşivi
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 110
+  ad: Sağlık uygulaması özeti (gizli)
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 111
+  ad: Ekran süresi / uygulama kullanımı
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 112
+  ad: RSS ve haber bültenleri
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 113
+  ad: Google Scholar, arXiv, Zotero
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 114
+  ad: Coursera, Udemy ilerleme
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 115
+  ad: İş ilanı takibi
+  kategori: kaynak
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 116
+  ad: Fatura ve e-arşiv faturaları
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 117
+  ad: Kargo takibi
+  kategori: kaynak
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 118
+  ad: Derin yeniden aktarım modu
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 119
+  ad: Varlık çıkarımı (kişi, kurum, proje, yer, tarih, para)
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 120
+  ad: Kişi birleştirme
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 121
+  ad: Yapay zekayla kümeleme ve küme notları
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 122
+  ad: Anlam tabanlı arama dizini (yerel gömme)
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 123
+  ad: Otomatik bağlantı önerisi (onayla/reddet)
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 124
+  ad: Konu zaman çizelgesi
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 125
+  ad: Proje ilişki haritası
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 126
+  ad: Belge sınıflandırma
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 127
+  ad: Tekrar belge tespiti
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 128
+  ad: Yaşlanan bilgi politikası
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 129
+  ad: Bilgi tazeliği kontrolü
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 130
+  ad: Çelişki tespiti
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 131
+  ad: Yetenek profili
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 132
+  ad: Kişisel sözlük
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 133
+  ad: Etiket düzenleyici
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 134
+  ad: Not kalite puanı
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 135
+  ad: Kaynak güven puanı
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 136
+  ad: Görsel küme haritası
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 137
+  ad: Veri hattı panosu
+  kategori: beyin
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 138
+  ad: Karma arama (kelime + anlam + süzgeç)
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 139
+  ad: Kaynaklı cevap (cümle başına dayanak)
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 140
+  ad: Doğal dil süzgeçleri
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 141
+  ad: Kayıtlı aramalar ve uyarılar
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 142
+  ad: Çok adımlı araştırma (kasa + internet)
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 143
+  ad: Yarım hatırlananı bulma
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 144
+  ad: Ek dosya içinde arama
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 145
+  ad: Görsel arama
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 146
+  ad: Benzer belge bulma
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 147
+  ad: Soru geçmişinden SSS
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 148
+  ad: Aramayı not/rapor olarak kaydetme
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 149
+  ad: Arama kalite testi
+  kategori: arama
+  faz: 1
+  surum: 0.5.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 150
+  ad: Asistan adı ve kimliği (Core/Soul)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 151
+  ad: Ortak günlük (Journal)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 152
+  ad: Tercih öğrenme (onaylı)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 153
+  ad: Hafıza düzenleyici arayüz
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 154
+  ad: Unutma isteği (her yerden, onaylı)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 155
+  ad: Bağlamsal hafıza (proje/kişi/konum)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 156
+  ad: Günlük yansıma
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 157
+  ad: Haftalık "beni tanı" özeti
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 158
+  ad: Bilgi kartları (flashcard)
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 159
+  ad: Aralıklı tekrar planı
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 160
+  ad: Öğrenme yolu
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 161
+  ad: Hata panosu
+  kategori: hafiza
+  faz: 2
+  surum: 0.6.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 162
+  ad: Görev panosu (kanban)
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 163
+  ad: Akıllı günlük plan
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 164
+  ad: Zaman bloklama (onaylı)
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 165
+  ad: Pomodoro / odak modu
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 166
+  ad: Alışkanlık takibi
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 167
+  ad: Hedefler (OKR)
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 168
+  ad: Haftalık gözden geçirme sihirbazı
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 169
+  ad: Tekrarlayan görevler
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 170
+  ad: Bağımlı görevler
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 171
+  ad: Mail → görev
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 172
+  ad: Toplantı hazırlık notu
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 173
+  ad: Toplantı sonrası karar/görev çıkarma
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 174
+  ad: Teslim risk uyarısı
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 175
+  ad: Enerji/ruh hali ile plan uyarlama
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 176
+  ad: Akıllı hatırlatma zamanı
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 177
+  ad: Takvim çakışma tespiti
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 178
+  ad: Sınav takvimi ve çalışma planı
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 179
+  ad: Bugün en önemli 3 iş
+  kategori: verim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 180
+  ad: Mail taslağı (göndermeden)
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 181
+  ad: Mail zinciri özeti
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 182
+  ad: Cevap bekleyenler listesi
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 183
+  ad: Takip hatırlatması
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 184
+  ad: WhatsApp taslak → onaylı gönderme (gelişmiş)
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 185
+  ad: Kişiye özel ton
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 186
+  ad: Doğum günü ve önemli tarihler
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 187
+  ad: İlişki sağlığı
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 188
+  ad: Toplu mesaj taslağı (tek tek onaylı)
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 189
+  ad: Bülten temizliği önerisi
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 190
+  ad: Arama sonrası not hatırlatması
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 191
+  ad: Mail çevirisi ve yabancı dilde taslak
+  kategori: iletisim
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 192
+  ad: Ders panosu
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 193
+  ad: Ders notu üretici
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 194
+  ad: Sınav hazırlık modu
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 195
+  ad: Ödev yardımcısı (öğretici kip)
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 196
+  ad: Kaynakça yöneticisi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 197
+  ad: Tez/proje yazım asistanı
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 198
+  ad: GANO hesaplama ve senaryo
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 199
+  ad: Ders programı ve duyuru takibi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 200
+  ad: Hoca/asistan iletişim geçmişi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 201
+  ad: Grup projesi takibi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 202
+  ad: Burs, staj, yarışma takibi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 203
+  ad: Okul belgeleri arşivi
+  kategori: akademik
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 204
+  ad: Mini CRM
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 205
+  ad: Teklif ve fatura taslağı
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 206
+  ad: Proje saat takibi ve müşteri raporu
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 207
+  ad: Başvuru takibi panosu
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 208
+  ad: CV ve ön yazı üretici
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 209
+  ad: Mülakat hazırlığı (sesli prova)
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 210
+  ad: Portfolyo üretici
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 211
+  ad: LinkedIn gönderi taslağı
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 212
+  ad: Rakip ve pazar takibi
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 213
+  ad: Sözleşme arşivi ve bitiş uyarısı
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 214
+  ad: Gelir/gider özeti ve vergi hatırlatma
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 215
+  ad: Müşteri iletişim geçmişi
+  kategori: kariyer
+  faz: 3
+  surum: 0.7.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 216
+  ad: Otomasyon oluşturucu (her X olduğunda Y)
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 217
+  ad: Ajan pazarı (hazır ajanlar)
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 218
+  ad: Zamanlanmış rapor ajanları
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 219
+  ad: Web araştırma ajanı
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 220
+  ad: Tarayıcı otomasyonu (izinli)
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 221
+  ad: Kod ajanı köprüsü (Claude Code/Codex)
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 222
+  ad: Ajan izleme paneli
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 223
+  ad: Webhook ve e-posta tetikleyicileri
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 224
+  ad: Zapier / n8n / Make
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 225
+  ad: Ajan kum havuzu (izinler)
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 226
+  ad: Çok ajanlı akış şablonları
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 227
+  ad: Akış ortasında insan onayı
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 228
+  ad: Gece koşusu raporu ve sabah onayı
+  kategori: ajan
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 229
+  ad: Harcama özeti ve bütçe
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 230
+  ad: Abonelik takibi
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 231
+  ad: Seyahat planlayıcı
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 232
+  ad: Garanti ve fatura takibi
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 233
+  ad: Sağlık randevusu ve ilaç hatırlatma
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 234
+  ad: Okuma ve izleme listesi
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 235
+  ad: Tarif ve yemek planı
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 236
+  ad: Ev ve araç bakım hatırlatmaları
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 237
+  ad: Hediye fikirleri defteri
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 238
+  ad: Günlük ve ruh hali
+  kategori: yasam
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 239
+  ad: Gizlilik paneli
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 240
+  ad: Bulut gönderim süzgeci (maskeleme)
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 241
+  ad: Kasa şifreleme (isteğe bağlı)
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 242
+  ad: Denetim günlüğü arayüzü
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 243
+  ad: İzin profilleri
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 244
+  ad: Yedek ve geri yükleme sihirbazı
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 245
+  ad: Veri dışa aktarma ve silme
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: planlandi
+- id: 246
+  ad: İstem enjeksiyonu kalkanı testleri
+  kategori: guvenlik
+  faz: 4
+  surum: 0.8.0
+  uygulayan: opus
+  denetleyen: opus
+  durum: planlandi
+- id: 247
+  ad: Gerçek veriyle uçtan uca test paketi
+  kategori: kalite
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 248
+  ad: Hata ve çökme raporlama
+  kategori: kalite
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 249
+  ad: Performans panosu
+  kategori: kalite
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi
+- id: 250
+  ad: Sürüm içi Yenilikler ekranı
+  kategori: kalite
+  faz: 0
+  surum: 0.4.0
+  uygulayan: sonnet
+  denetleyen: opus
+  durum: tamamlandi

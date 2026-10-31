@@ -80,7 +80,7 @@ def copy_missing(src: Path, dst: Path) -> int:
 
 def sync_code(src: Path, dst: Path) -> None:
     """Kodu (sb/, tools/, tests/, docs/, pyproject, kit örnek ayarları) güncelle; config/*.yaml (kişisel) korunur."""
-    for item in ("sb", "tools", "tests", "docs", "skills", "pyproject.toml", "uv.lock", ".python-version", "VERSION"):
+    for item in ("sb", "tools", "tests", "docs", "skills", "pyproject.toml", "uv.lock", ".python-version", "VERSION", "features.yaml"):
         s, d = src / item, dst / item
         if not s.exists():
             continue
