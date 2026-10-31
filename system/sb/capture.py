@@ -15,6 +15,7 @@ import subprocess
 import urllib.parse
 import urllib.request
 from datetime import date
+from pathlib import Path
 
 from . import inbox, llm, vault_ops
 from .actions import IS_MAC, NO_WINDOW
@@ -91,7 +92,7 @@ def _existing(folder: str, url: str):
     return None
 
 
-def save(folder: str, url: str, title: str, d: dict, extra: str, kind_tag: str) -> str:
+def save(folder: str, url: str, title: str, d: dict, extra: str, kind_tag: str, attach: str = "") -> str:
     if (old := _existing(folder, url)):
         return f"Zaten kasada: {vault_ops._rel(old)}"
     root = vault_ops.VAULT / folder
@@ -105,10 +106,11 @@ def save(folder: str, url: str, title: str, d: dict, extra: str, kind_tag: str) 
     fm = {"type": "kaynak", "status": "aktif", "tags": [kind_tag, *[t for t in tags if t and t != kind_tag]],
           "source": "web", "source_id": url, "created": today, "updated": today, "due": None}
     points = "\n".join(f"- {x}" for x in d.get("points", []))
-    body = f"# {title}\n\n{url}\n\n## Özet\n{d.get('summary', '').strip()}\n\n## Önemli noktalar\n{points}\n{extra}"
+    link = f"{url}\n\n" if url.startswith("http") else ""
+    body = f"# {title}\n\n{link}## Özet\n{d.get('summary', '').strip()}\n\n## Önemli noktalar\n{points}\n{extra}"
     p.write_text(dump_note(fm, body), encoding="utf-8")
     rel = vault_ops._rel(p)
-    sha = vault_ops.commit([rel], f"beyne at: {title[:50]}")
+    sha = vault_ops.commit([rel] + ([attach] if attach else []), f"beyne at: {title[:50]}")
     vault_ops.log("beyne-at", "kaydet", rel, url, sha)
     return f"Kasaya eklendi: {rel}"
 
@@ -117,6 +119,9 @@ def capture(text: str) -> str:
     text = text.strip()
     if not text:
         return "Pano boş."
+    urls = re.findall(r"https?://\S+", text)
+    if len(urls) > 1 and len(" ".join(urls)) >= len(text) * 0.6:   # yalnız bağlantılardan oluşan pano: her biri ayrı
+        return "\n".join(capture(u) for u in dict.fromkeys(urls[:10]))
     if (m := YT_RE.search(text)) and len(text) < 300:
         vid = m.group(1)
         title, author, tr = youtube(vid)
@@ -138,10 +143,84 @@ def capture(text: str) -> str:
     return inbox.add(text, source="beyne-at")
 
 
-def run() -> int:
+FILE_EXT = {".pdf", ".docx", ".pptx", ".xlsx", ".txt", ".md", ".csv", ".png", ".jpg", ".jpeg", ".ipynb"}
+
+
+def _attach(src: Path, sub: str) -> Path:
+    """Dosyayı kasanın _attachments/<sub>/ klasörüne kopyalar (aynı ad varsa numara ekler)."""
+    import shutil
+    dest_dir = vault_ops.VAULT / "_attachments" / sub
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest, n = dest_dir / src.name, 2
+    while dest.exists():
+        dest, n = dest_dir / f"{src.stem} ({n}){src.suffix}", n + 1
+    shutil.copy2(src, dest)
+    return dest
+
+
+def capture_file(path: str) -> str:
+    """Sağ tık › Gönder › Beyne At: dosya _attachments/Gelen'e kopyalanır; metni (PDF/Office/görselde OCR) özetlenip
+    40-Kaynaklar/Belgeler altında not olur. Metni çıkmayan dosya kutuya bağlantı olarak düşer."""
+    src = Path(path)
+    if not src.is_file():
+        return f"Dosya yok: {path}"
+    if src.suffix.lower() not in FILE_EXT:
+        return f"Bu tür desteklenmiyor ({src.suffix}); desteklenen: {', '.join(sorted(FILE_EXT))}"
+    if src.stat().st_size > 50_000_000:
+        return "Dosya 50 MB'tan büyük; kasaya kopyalanmadı."
+    if (old := _existing("40-Kaynaklar/Belgeler", f"dosya:{src.name}:{src.stat().st_size}")):
+        return f"Zaten kasada: {vault_ops._rel(old)}"
+    dest = _attach(src, "Gelen")
+    rel = dest.relative_to(vault_ops.VAULT).as_posix()
+    if src.suffix.lower() in (".png", ".jpg", ".jpeg"):
+        from .actions import ocr
+        text = ocr(dest.read_bytes())
+    else:
+        from .content import extract
+        try:
+            text = extract(dest)
+        except Exception:
+            text = ""
+    if len(text.strip()) < 200:
+        vault_ops.commit([rel], f"gelen dosya: {src.name}")
+        return inbox.add(f"Gelen dosya: ![[{rel}]] {text.strip()[:500]}", source="beyne-at")
+    d = summarize("belge", src.stem, text)
+    extra = f"\nDosya: ![[{rel}]]\n"
+    return save("40-Kaynaklar/Belgeler", f"dosya:{src.name}:{src.stat().st_size}", src.stem, d, extra, "belge", attach=rel)
+
+
+def capture_image() -> str:
+    """Panoda görsel varsa (ekran görüntüsü): _attachments/Yakala'ya PNG + OCR metniyle kutuya not."""
+    import os
+    import tempfile
+    if IS_MAC:
+        return "Pano boş."
+    tmp = Path(tempfile.gettempdir()) / f"sb-yakala-{os.getpid()}.png"
+    ps = ("Add-Type -AssemblyName System.Windows.Forms; $i=[Windows.Forms.Clipboard]::GetImage(); "
+          f"if($i){{$i.Save('{tmp}',[Drawing.Imaging.ImageFormat]::Png); 'ok'}}")
+    r = subprocess.run(["powershell", "-NoProfile", "-STA", "-NonInteractive", "-Command", ps], capture_output=True, text=True,
+                       timeout=20, creationflags=NO_WINDOW)
+    if "ok" not in r.stdout or not tmp.exists():
+        return "Pano boş."
+    from datetime import datetime
+    from .actions import ocr
+    shot = tmp.with_name(f"Ekran {datetime.now():%Y-%m-%d %H%M%S}.png")
+    tmp.rename(shot)
+    dest = _attach(shot, "Yakala")
+    shot.unlink(missing_ok=True)
+    rel = dest.relative_to(vault_ops.VAULT).as_posix()
+    text = ocr(dest.read_bytes()).strip()
+    return inbox.add(f"Ekran görüntüsü: ![[{rel}]]\n\n{text[:3000]}", source="beyne-at")
+
+
+def run(file: str = "") -> int:
     from .actions import toast
     try:
-        msg = capture(clipboard())
+        if file:
+            msg = capture_file(file)
+        else:
+            text = clipboard()
+            msg = capture(text) if text.strip() else capture_image()
     except Exception as e:
         msg = f"Beyne atılamadı: {type(e).__name__}: {str(e)[:120]}"
     toast("Beyne at", msg)

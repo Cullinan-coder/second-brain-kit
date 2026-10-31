@@ -14,7 +14,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 
 from .config import MAIL_DB, VAULT
-from .notes import SKIP_DIRS, split_note
+from .notes import SKIP_DIRS, is_private, split_note
 from .redact import redact
 from .config import FULL_NAME
 
@@ -32,7 +32,8 @@ def _norm(s: str) -> str:
 
 def _notes(folder: str) -> list[Path]:
     base = VAULT / folder
-    return sorted(p for p in base.rglob("*.md") if not any(part in SKIP_DIRS for part in p.relative_to(VAULT).parts[:-1])) if base.is_dir() else []
+    return sorted(p for p in base.rglob("*.md") if not any(part in SKIP_DIRS for part in p.relative_to(VAULT).parts[:-1])
+                  and not is_private(p)) if base.is_dir() else []
 
 
 def _find(folder: str, query: str) -> list[Path]:
@@ -90,6 +91,23 @@ def brain_course(name_or_code: str) -> str:
 
 
 @mcp.tool()
+def brain_recap(days: int = 7, project: str = "") -> str:
+    """Son günlerde ne yapıldı: makbuzlardan (ajanların yazdığı iş sonuçları, kaynak bağlantılı) gün gün liste.
+    Satırlar beyandır; önemliyse kaynak notunu brain_note ile aç."""
+    from .memory import recap
+    return redact(recap(max(1, min(days, 90)), project))
+
+
+@mcp.tool()
+def local_work(instruction: str, paths: list[str] | None = None, text: str = "") -> str:
+    """Ücretsiz yerel işçi (Qwen, bu bilgisayarda): büyük log/belge/metin yığınını okuyup kısa sonuç döndürür; Claude'un
+    bağlamını ve limitini korur. paths: ev klasörü altındaki dosyalar (pdf/docx/xlsx/txt/md...). Sonuç özet/çıkarımdır;
+    kritik bilgiyi kaynaktan doğrula. Hiçbir şey yazmaz."""
+    from .worker import run
+    return run(instruction, paths or [], text)
+
+
+@mcp.tool()
 def brain_person(name: str) -> str:
     """Bir kişinin notu (rehber): telefon, şirket, son mesaj ve aramalar."""
     return _pick("60-Kişiler", name, "kişi")
@@ -101,6 +119,8 @@ def brain_note(path: str) -> str:
     p = (VAULT / path).resolve()
     if VAULT.resolve() not in p.parents or p.suffix != ".md" or not p.is_file():
         return "Geçersiz yol: sadece kasa içindeki .md notları okunabilir."
+    if is_private(p):
+        return "Bu not gizli (visibility: private); otomatik okunmaz. Kullanıcı açıkça isterse kendisi açar."
     return _read(p, 60_000)
 
 

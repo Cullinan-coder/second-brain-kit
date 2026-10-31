@@ -80,7 +80,7 @@ def copy_missing(src: Path, dst: Path) -> int:
 
 def sync_code(src: Path, dst: Path) -> None:
     """Kodu (sb/, tools/, tests/, docs/, pyproject, kit örnek ayarları) güncelle; config/*.yaml (kişisel) korunur."""
-    for item in ("sb", "tools", "tests", "docs", "pyproject.toml", "uv.lock", ".python-version", "VERSION"):
+    for item in ("sb", "tools", "tests", "docs", "skills", "pyproject.toml", "uv.lock", ".python-version", "VERSION"):
         s, d = src / item, dst / item
         if not s.exists():
             continue
@@ -111,6 +111,10 @@ def update(vault: Path) -> int:
     sync_code(KIT / "system", system)
     say(f"  kod güncellendi: {system} (şablondan {n} yeni dosya)")
     run(["uv", "sync"], cwd=system)
+    run(["uv", "run", "--directory", str(system), "python", str(system / "tools" / "install_cli.py")])
+    py = system / ".venv" / ("Scripts/python.exe" if WIN else "bin/python")
+    if (Path.home() / ".claude" / "skills").exists() or shutil.which("claude"):
+        run([str(py), str(system / "tools" / "install_skills.py")])
     if WIN and (system / "tools" / "hotkey.ps1").exists():
         run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(system / "tools" / "hotkey.ps1")])
     remember(vault)
@@ -182,8 +186,9 @@ def main() -> int:
     write_yaml(cfg / "accounts.yaml", acc, "# Hesaplar (gizli bilgi YOK). Ek Gmail/IMAP için accounts.example.yaml'daki örneklere bak.\n")
     say("  profil ve hesaplar yazıldı (config/profile.yaml, config/accounts.yaml)")
 
-    head(4, "Python ortamı (uv sync)")
+    head(4, "Python ortamı (uv sync) + `sb` komutu")
     run(["uv", "sync"], cwd=system)
+    run(["uv", "run", "--directory", str(system), "python", str(system / "tools" / "install_cli.py")])
     sb = ["uv", "run", "--directory", str(system), "python", "-X", "utf8", "-m", "sb"]
 
     head(5, "Google bağlantısı")
@@ -216,13 +221,18 @@ def main() -> int:
             shutil.copy2(st, st.with_suffix(".json.bak"))
         cur["cleanupPeriodDays"] = max(int(cur.get("cleanupPeriodDays", 30)), 365)
         hooks = cur.setdefault("hooks", {})
-        for ev, arg, to in (("SessionStart", "start", 20), ("UserPromptSubmit", "prompt", 10), ("SessionEnd", "end", 10)):
+        for ev, arg, to in (("SessionStart", "start", 20), ("UserPromptSubmit", "prompt", 10), ("PreCompact", "precompact", 10),
+                            ("SessionEnd", "end", 10)):
             lst = [h for h in hooks.get(ev, []) if "cc_hook.py" not in json.dumps(h)]
             lst.append({"hooks": [{"type": "command", "command": py.as_posix(), "args": ["-X", "utf8", hook.as_posix(), arg], "timeout": to}]})
             hooks[ev] = lst
+        if "statusLine" not in cur or "statusline.py" in json.dumps(cur.get("statusLine")):
+            cur["statusLine"] = {"type": "command", "command": f"{py.as_posix()} -X utf8 {(system / 'tools' / 'statusline.py').as_posix()}",
+                                 "padding": 0}
         st.parent.mkdir(parents=True, exist_ok=True)
         st.write_text(json.dumps(cur, indent=2, ensure_ascii=False), encoding="utf-8")
-        say(f"  kancalar ve 365 gün saklama yazıldı ({st}; yedek: settings.json.bak)")
+        say(f"  kancalar, durum çubuğu ve 365 gün saklama yazıldı ({st}; yedek: settings.json.bak)")
+        run([str(py), str(system / "tools" / "install_skills.py")])
         gmd = Path.home() / ".claude" / "CLAUDE.md"
         snippet = (KIT / "claude-global.md").read_text(encoding="utf-8").replace("{{VAULT}}", str(vault)).replace("{{NAME}}", name)
         if "<!-- second-brain-kit -->" not in (gmd.read_text(encoding="utf-8") if gmd.exists() else ""):

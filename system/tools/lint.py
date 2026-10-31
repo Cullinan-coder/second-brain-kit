@@ -24,6 +24,7 @@ STATUSES = {
     "gunluk": {"acik"},
     "akademik": {"aktif", "arsiv"},
     "kaynak": {"aktif", "arsiv"},
+    "gorev": {"inbox", "aktif", "bekliyor", "engelli", "tamamlandi", "iptal"},
 }
 # Şemanın dışında kalan, ortak alan zorunluluğu olmayan yardımcı notlar.
 FREE_TYPES = {"dashboard", "inbox"}
@@ -100,7 +101,7 @@ def lint_file(path: Path, vault: Path, seen: dict[tuple[str, str], Path]) -> lis
 
     m = FRONTMATTER_RE.match(text)
     if not m:
-        if rel in ("CLAUDE.md",) or rel.startswith("_") or rel.startswith("00-Inbox/"):   # kutu: ham, düzensiz not serbest
+        if rel in ("CLAUDE.md", "AGENTS.md") or rel.startswith("_") or rel.startswith("00-Inbox/"):   # kutu: ham, düzensiz not serbest
             return errors
         return errors + [f"{rel}: frontmatter yok"]
 
@@ -136,6 +137,18 @@ def lint_file(path: Path, vault: Path, seen: dict[tuple[str, str], Path]) -> lis
     due_time = fm.get("due_time")
     if due_time not in (None, "") and not TIME_RE.match(str(due_time)):
         errors.append(f"{rel}: due_time HH:MM olmalı, bulunan: {due_time!r}")
+    if fm.get("visibility") not in (None, "internal", "private"):
+        errors.append(f"{rel}: visibility internal ya da private olmalı, bulunan: {fm.get('visibility')!r}")
+    if ntype == "gorev":
+        if not fm.get("owner"):
+            errors.append(f"{rel}: görevin sorumlusu (owner) yok")
+        if status == "tamamlandi" and fm.get("completion_criterion"):
+            ev = fm.get("evidence") or []
+            if not ev:
+                errors.append(f"{rel}: bitiş ölçütü olan görev kanıtsız tamamlanmış")
+            for e in ev:
+                if not (vault / str(e)).exists():
+                    errors.append(f"{rel}: kanıt dosyası yok: {e}")
 
     sid = fm.get("source_id")
     if sid not in (None, "") and not is_template:

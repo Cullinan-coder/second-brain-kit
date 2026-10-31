@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "Beyne at",
+  "behavior": "create",
+  "noteContentFormat": "# {{title}}\n\n{{url}}\n\n## Seçim\n{{selection|blockquote}}\n\n## Sayfa\n{{content|slice:0,4000}}",
+  "properties": [
+    {"name": "type", "value": "inbox", "type": "text"},
+    {"name": "tags", "value": "inbox, web", "type": "multitext"},
+    {"name": "source", "value": "web-clipper", "type": "text"},
+    {"name": "url", "value": "{{url}}", "type": "text"},
+    {"name": "created", "value": "{{date|date:\"YYYY-MM-DD\"}}", "type": "date"}
+  ],
+  "triggers": [],
+  "noteNameFormat": "{{date|date:\"YYYY-MM-DD HHmmss\"}} {{title|safe_name|slice:0,60}}",
+  "path": "00-Inbox/Dump"
+}

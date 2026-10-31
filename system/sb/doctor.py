@@ -97,6 +97,11 @@ def checks() -> list[tuple[str, str, str]]:
     from .spotify_api import client_id
     add(OK if client_id() and _kr("spotify-refresh") else WARN, "Spotify doğrudan çalma (isteğe bağlı)", "docs/KURULUM-SPOTIFY.md")
     add(OK if (DATA / "remote_tokens.json").exists() else WARN, "Telefon erişimi (isteğe bağlı, Tailscale)", "docs/KURULUM-TELEFON.md")
+    from .update import PENDING
+    if PENDING.exists():
+        add(FAIL, "Yarım kalan güncelleme", "sb update --recover (ya da sb update --rollback)")
+    codex = shutil.which("codex")
+    add(OK if codex else WARN, "Codex (isteğe bağlı alt ajan)", "npm i -g @openai/codex ve codex login")
     gitdir = VAULT / ".git"
     add(OK if gitdir.exists() else WARN, "Kasa git deposu (geri alma + yedek)", "cd kasa && git init (özel GitHub reposuna bağla)")
     return out

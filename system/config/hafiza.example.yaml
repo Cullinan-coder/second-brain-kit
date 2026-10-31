@@ -1,0 +1,14 @@
+# Claude Code hafıza kancaları ayarı (tools/cc_hook.py okur). `sb mode normal|ekonomik|manuel` ile değiştir.
+#  normal  : oturum başı tam bağlam (≤ context_chars), 15 mesajda bir hatırlatma, sıkıştırma öncesi/oturum sonu yerel özet
+#  ekonomik: daha kısa bağlam (economy_chars), 30 mesajda bir hatırlatma, yerel özet yalnız sıkıştırma öncesi
+#  manuel  : otomatik bağlam ve özet yok; yalnız uyarılar (komutlar elle: sb recap, sb receipt ...)
+profile: normal
+context_chars: 9500          # Claude Code 10.000 karakteri aşan kanca bağlamını kesiyor; altında kal
+economy_chars: 4000
+parallel_warning: true       # aynı anda açık başka Claude Code oturumu varsa ilk mesajda uyar
+flush_min_prompts: 4         # bundan kısa oturumlar özetlenmez
+# Gece koşusu (sb night --run; 00-Inbox/Gece işleri.md). Varsayılan: dosya düzenleyebilir, komut çalıştıramaz.
+night_permission_mode: acceptEdits
+night_allowed_tools: []      # ör. ["Bash(git status)", "Bash(git commit:*)", "Bash(uv run pytest:*)"]
+night_timeout_min: 120
+night_max_tasks: 8

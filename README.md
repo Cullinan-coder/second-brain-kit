@@ -95,8 +95,17 @@ Kod güncellemesi için repoyu `git pull` edip kurucuyu yeniden çalıştırman 
 | Kod/proje işi | Claude Code: oturum başında hafıza kendiliğinden gelir |
 | Video, makale, aklına gelen bir şey | Kopyala → **Ctrl+Alt+B** (Beyne at): video/sayfa özetlenir, metin not kutusuna düşer |
 | "Neler bağlı, ne eksik?" | Kasada `Araçlar ve erişimler` notu (her gün yenilenir) ya da `sb doctor` |
+| Dosya (PDF, Word, fatura) | Sağ tık › Gönder › **Beyne At**: özetlenir, `40-Kaynaklar/Belgeler`'e bağlanır |
+| "Son günlerde ne yaptık?" | Asistan ya da Claude Code (`sb recap`): iş sonu makbuzlarından gün gün |
+| Gece uzun iş | `00-Inbox/Gece işleri.md`'ye `- [ ] iş @klasör` yaz → `sb night --run` (ya da 02:00 görevi) |
+| Büyük iş, çok ajan | Claude Code'a "orkestrasyon" de: şef + alt ajanlar + yerel Qwen işçisi |
 
-Komut satırı: `sb --help` (40+ komut: `daily`, `doctor`, `search`, `add-event`, `chat`, `linkedin-import`, `housekeep`, …).
+Komut satırı: `sb --help` (60+ komut). Hafıza: `receipt`, `recap`, `concept`, `connect`, `learn`, `trace`, `task`, `person`, `rule`,
+`error-log`, `hygiene`, `mode`. Aktarım: `capture`, `history-import`, `linkedin-import`. Bakım: `doctor`, `update`, `version`.
+
+Claude Code tarafı (kurucu ekler): hafıza kancaları (oturum başı / mesaj / sıkıştırma öncesi / oturum sonu), `second-brain` MCP
+sunucusu, 6 skill (`beyin`, `beyin-doktor`, `beyin-guncelle`, `gecmis-import`, `form-doldur`, `orkestrasyon`), durum çubuğu.
+Kasa kökündeki `AGENTS.md` sayesinde Codex, Gemini ve OpenCode da aynı kasayı kurallarıyla kullanır.
 
 ## Klasörler
 

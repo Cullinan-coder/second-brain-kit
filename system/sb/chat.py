@@ -535,7 +535,8 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
     people = ms._notes("60-Kişiler")
     full = next((p for p in people if " " in (n := ms._norm(p.stem)) and len(n) >= 5 and n in nt), None)
     if full:
-        parts.append(f"## kişi notu: {full.stem}\n{full.read_text(encoding='utf-8')[:2500]}")
+        from .tasks import strip_rejected
+        parts.append(f"## kişi notu: {full.stem}\n{strip_rejected(full.read_text(encoding='utf-8'))[:2500]}")
         labels.append(full.stem)
     elif (cands := person_candidates(text)):
         parts.append(f"## Adı geçen kişiler ({len(cands)})\n" + "\n".join(f"- {person_line(p)}" for p in cands))
@@ -587,6 +588,12 @@ def person_candidates(text: str) -> list:
     if full:                                                  # tam ad söylendi: yalnız o (en uzun eşleşme)
         return [max(full, key=lambda p: len(p.stem))]
     cands = [p for p in people if set(ms._norm(p.stem).split()) & words]
+    if not cands:                                             # takma ad (aliases): "Ayşe hoca" gibi
+        from .notes import split_note
+        for p in people:
+            head = p.read_text(encoding="utf-8")[:1500]
+            if "aliases:" in head and any(ms._norm(str(x)) in nt for x in split_note(head)[0].get("aliases") or []):
+                cands.append(p)
     return cands if len(cands) <= 8 else []
 
 
@@ -685,6 +692,13 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             session.messages.append({"role": "assistant", "content": reply})
             return {"reply": reply, "trace": [f"otomatik getirme: {label or 'son mailler'}", "son mailler [kod cevapladı]"],
                     "proposals": pending(session)}
+    if not hint and re.search(r"(son|geçen|gecen|bu) (günlerde|gunlerde|hafta|\d+ gün|\d+ gun)\w*.*\b(ne|neler)\b.*(yaptık|yaptik|yaptım|yaptim|yapıldı|yapildi)",
+                              text.lower()):
+        from .memory import recap
+        days = int(m.group(1)) if (m := re.search(r"(\d+) g[üu]n", text.lower())) else 7
+        reply = recap(days)                                  # makbuzlardan; model uydurmasın diye kod cevaplar
+        session.messages.append({"role": "assistant", "content": reply})
+        return {"reply": reply, "trace": ["makbuzlar [kod cevapladı]"], "proposals": pending(session)}
     if not hint and (reply := person_reply(text)):
         session.messages.append({"role": "assistant", "content": reply})
         return {"reply": reply, "trace": [f"otomatik getirme: {label}", "kişi adayları [kod cevapladı]"], "proposals": pending(session)}

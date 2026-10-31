@@ -1417,3 +1417,180 @@ def test_person_and_rule_intents(tmp_path, monkeypatch):
     assert chat.person_reply("selam") == "" and chat.person_reply("Ahmet kim") == ""
     assert chat.action_hint("bundan sonra bana hep kısa cevap ver") == ["rule_add"]
     assert chat.action_hint("hafta sonu ne yapıyorum") == []
+
+
+def test_memory_receipts_recap_learn_concepts_trace_errors(tmp_path, monkeypatch):
+    from datetime import datetime
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    from sb import memory
+    monkeypatch.setattr(ops, "RULES_NOTE", v / "Asistan kuralları.md")
+    (v / "20-Projeler").mkdir()
+    (v / "20-Projeler" / "proje-a.md").write_text("---\ntype: proje\n---\n# A\n", encoding="utf-8")
+    assert "kaynak bulunamadı" in memory.receipt("iş", refs=["yok/boyle.md"])
+    out = memory.receipt("Kurulum bitti, testler geçti", refs=["20-Projeler/proje-a.md"], links=["https://x.com/pr/1"],
+                         learned="uv sync önce gelir", project="proje-a", session="abcdef123456", event_id="e1",
+                         when=datetime(2026, 10, 31, 14, 5))
+    assert out.startswith("Makbuz yazıldı")
+    assert memory.receipt("Kurulum bitti", event_id="e1", when=datetime(2026, 10, 31, 14, 6)).startswith("Zaten kayıtlı")
+    assert "Hassas" in memory.receipt("şifrem 1234")
+    rows = memory.receipts()
+    assert len(rows) == 1 and rows[0]["project"] == "proje-a" and "[[20-Projeler/proje-a]]" in rows[0]["text"]
+    assert "Öğrenilen: uv sync önce gelir" in rows[0]["text"] and "https://x.com/pr/1" in rows[0]["text"]
+    daily = (v / "50-Günlük" / "2026-10-31.md").read_text(encoding="utf-8")
+    assert "14:05 · proje-a · Kurulum bitti" in daily and "type: gunluk" in daily
+    d2 = __import__("datetime").date(2026, 11, 2)
+    assert "Kurulum bitti" in memory.recap(7, today=d2) and "makbuz yok" in memory.recap(7, project="baska", today=d2)
+    assert "makbuz yok" in memory.recap(1, today=d2)
+    assert "eklendi" in memory.learn("Hook bağlamı 10 bin karakteri geçmemeli", scope="second-brain")
+    assert "zaten" in memory.learn("hook bağlamı 10 bin karakteri geçmemeli")
+    assert "10 bin" in memory.learn_list()
+    assert "oluşturuldu" in memory.concept("Bağlam bütçesi", "Claude Code hook bağlamını 10 bin karakterde keser.", ["kısa tut"])
+    assert "güncellendi" in memory.concept("Bağlam bütçesi", "Codex 10 bin baytta keser.")
+    idx = (v / memory.CONCEPTS / "_Dizin.md").read_text(encoding="utf-8")
+    assert "[[Bağlam bütçesi]] — Claude Code hook bağlamını" in idx
+    (v / "40-Kaynaklar" / "Notlar").mkdir(parents=True, exist_ok=True)
+    (v / "40-Kaynaklar" / "Notlar" / "Hook.md").write_text("---\ntype: kaynak\n---\n# Hook\nOlayla tetiklenen kod.\n", encoding="utf-8")
+    assert "gerekçe" in memory.connect("Bağlam bütçesi", "Hook", "kısa")
+    assert "Bağlantı notu" in memory.connect("Bağlam bütçesi", "Hook", "Hook bağlamı bu bütçeyle sınırlı olduğu için ikisi birlikte düşünülmeli.")
+    assert "en fazla 450" in memory.trace("x" * 500)
+    assert "kaydedildi" in memory.trace("Spotify neden telefonda çalıyor diye konuştuk; cihaz seçimi PC'ye sabitlendi.")
+    assert "Hata kataloğuna eklendi" in memory.error_log("git reset başka oturumun işini sildi")
+    out = memory.error_log("Git reset başka oturumun işini sildi!", fix="git reset yerine git stash kullan, başkasının dosyasına dokunma")
+    assert "kalıcı kural" in out
+    assert "git stash" in (v / "Asistan kuralları.md").read_text(encoding="utf-8")
+    assert "(x2)" in (v / memory.ERRORS).read_text(encoding="utf-8")
+
+
+def test_tasks_people_private_and_scoped_rules(tmp_path, monkeypatch):
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    from sb import notes, tasks
+    assert "sorumlu" in tasks.add("Rapor yaz")
+    assert tasks.add("Rapor yaz", "Ara rapor", owner="Ayşe", project="tekstil", criterion="rapor PDF'i kasada").startswith("Görev oluşturuldu")
+    assert "zaten var" in tasks.add("Rapor yaz", owner="Ayşe")
+    assert "Bitirilemez" in tasks.update("Rapor yaz", status="tamamlandi")
+    assert "kasada yok" in tasks.update("Rapor yaz", status="tamamlandi", evidence=["40-Kaynaklar/rapor.md"])
+    assert "kendi dosyası" in tasks.update("Rapor yaz", evidence=["25-Görevler/Rapor yaz.md"])
+    (v / "40-Kaynaklar").mkdir(exist_ok=True)
+    (v / "40-Kaynaklar" / "rapor.md").write_text("# r\n", encoding="utf-8")
+    assert "Çakışma" in tasks.update("Rapor yaz", status="tamamlandi", evidence=["40-Kaynaklar/rapor.md"], expected_revision=5)
+    assert "rev 2" in tasks.update("Rapor yaz", status="tamamlandi", evidence=["40-Kaynaklar/rapor.md"], expected_revision=1)
+    fm = notes.split_note((v / "25-Görevler" / "Rapor yaz.md").read_text(encoding="utf-8"))[0]
+    assert fm["status"] == "tamamlandi" and fm["evidence"] == ["40-Kaynaklar/rapor.md"] and fm["revision"] == 2
+    assert "Açık görev yok" in tasks.listing() and "Rapor yaz" in tasks.listing("tamamlandi")
+    (v / "60-Kişiler").mkdir()
+    (v / "60-Kişiler" / "Ayşe Yılmaz.md").write_text("---\ntype: kisi\nstatus: aktif\n---\n# Ayşe Yılmaz\n\n## Bağlam\n", encoding="utf-8")
+    assert "beyan" in tasks.person_fact("Ayşe Yılmaz", "Bölümde danışman hocam")
+    assert "çıkarım" in tasks.person_fact("Ayşe Yılmaz", "Burak ile aynı projede", inference=True)
+    assert "Hassas" in tasks.person_fact("Ayşe Yılmaz", "sağlık sorunu var")
+    assert "takma ad" in tasks.person_fact("Ayşe Yılmaz", "", alias="Ayşe hoca")
+    assert "reddedildi" in tasks.person_fact("Ayşe Yılmaz", "Burak ile aynı", reject=True)
+    text = (v / "60-Kişiler" / "Ayşe Yılmaz.md").read_text(encoding="utf-8")
+    assert "(kullanıcı): Bölümde danışman hocam" in text and "~~" in text and "Ayşe hoca" in text
+    assert "Burak ile" not in tasks.strip_rejected(text)
+    priv = v / "60-Kişiler" / "Gizli.md"
+    priv.write_text("---\ntype: kisi\nvisibility: private\n---\n# Gizli\n", encoding="utf-8")
+    assert notes.is_private(priv) and not notes.is_private(v / "60-Kişiler" / "Ayşe Yılmaz.md")
+    from sb import mcp_server as ms
+    monkeypatch.setattr(ms, "VAULT", v)
+    assert [p.stem for p in ms._notes("60-Kişiler")] == ["Ayşe Yılmaz"]
+    assert "gizli" in ms.brain_note("60-Kişiler/Gizli.md")
+    from sb import chat
+    monkeypatch.setattr(ms, "_notes", lambda folder: sorted(p for p in (v / folder).glob("*.md") if not notes.is_private(p)))
+    assert chat.person_candidates("ayşe hoca kim")[0].stem == "Ayşe Yılmaz"
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cc_hook", __import__("pathlib").Path(__file__).parents[1] / "tools" / "cc_hook.py")
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    assert hook._in_scope("- [kapsam: tekstil] ölçümü 48 kHz al", "tekstil")
+    assert not hook._in_scope("- [kapsam: tekstil] ölçümü 48 kHz al", "second-brain")
+    assert hook._in_scope("- [kapsam: genel] kısa yaz", "x") and hook._in_scope("- kısa yaz", "")
+
+
+def test_update_backup_rollback_mode_and_hygiene(tmp_path, monkeypatch, capsys):
+    from datetime import date
+    from sb import hygiene, update
+    sysd = tmp_path / "sys"
+    (sysd / "sb").mkdir(parents=True)
+    (sysd / "sb" / "a.py").write_text("eski", encoding="utf-8")
+    (sysd / "VERSION").write_text("0.1.0\n", encoding="utf-8")
+    (sysd / "config").mkdir()
+    (sysd / "config" / "profile.yaml").write_text("name: x\n", encoding="utf-8")
+    dest = tmp_path / "bk"
+    monkeypatch.setattr(update, "PENDING", tmp_path / "pending")
+    z = update.backup(sysd, dest)
+    assert z.name.startswith("system-0.1.0-")
+    (sysd / "sb" / "a.py").write_text("yeni", encoding="utf-8")
+    (sysd / "sb" / "b.py").write_text("yeni dosya", encoding="utf-8")
+    (sysd / "VERSION").write_text("0.2.0\n", encoding="utf-8")
+    (sysd / "config" / "profile.yaml").write_text("name: degisti\n", encoding="utf-8")
+    assert update.rollback(sysd, dest, sync=False) == 0
+    assert (sysd / "sb" / "a.py").read_text(encoding="utf-8") == "eski" and not (sysd / "sb" / "b.py").exists()
+    assert update.version(sysd) == "0.1.0" and "degisti" in (sysd / "config" / "profile.yaml").read_text(encoding="utf-8")
+    assert update.rollback(sysd, tmp_path / "yok", sync=False) == 1
+    cfg = tmp_path / "hafiza.yaml"
+    cfg.write_text("# not\nprofile: normal\ncontext_chars: 9500\n", encoding="utf-8")
+    assert "normal → ekonomik" in update.set_mode("ekonomik", cfg) and "profile: ekonomik" in cfg.read_text(encoding="utf-8")
+    assert update.set_mode(None, cfg) == "Hafıza modu: ekonomik"
+    v = tmp_path / "v"
+    (v / "60-Kişiler").mkdir(parents=True)
+    (v / "20-Projeler").mkdir()
+    (v / "60-Kişiler" / "Oguz Kordon.md").write_text("# a\n", encoding="utf-8")
+    (v / "60-Kişiler" / "Oğuz Kordon.md").write_text("# b\n[[Yok Böyle]] `[[kod içi]]` [[Oguz Kordon]]\n", encoding="utf-8")
+    (v / "20-Projeler" / "p.md").write_text("---\ntype: proje\nstatus: aktif\nupdated: 2026-01-01\n---\n# p\n", encoding="utf-8")
+    r = hygiene.report(v, today=date(2026, 10, 31))
+    assert len(r["duplicates"]) == 1 and r["broken_links"] == ["60-Kişiler/Oğuz Kordon.md → [[Yok Böyle]]"]
+    assert r["stale"] == ["20-Projeler/p.md (303 gün)"] and "1 tekrar başlık" in hygiene.summary_line(r)
+
+
+def test_capture_multi_links_and_file(tmp_path, monkeypatch):
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    from sb import capture, inbox
+    monkeypatch.setattr(inbox, "DUMP", v / "00-Inbox" / "Dump")
+    (v / "00-Inbox").mkdir(exist_ok=True)
+    seen = []
+    real = capture.capture
+    monkeypatch.setattr(capture, "summarize", lambda k, t, x: {"summary": "Özet.", "points": ["a"], "tags": ["t"]})
+    monkeypatch.setattr(capture, "_get", lambda url: seen.append(url) or "<title>S</title><p>" + "uzun metin burada yazıyor. " * 20 + "</p>")
+    out = real("https://a.com/1\nhttps://b.com/2\nhttps://a.com/1")
+    assert seen == ["https://a.com/1", "https://b.com/2"] and out.count("Kasaya eklendi") + out.count("Zaten") == 2
+    doc = tmp_path / "rapor.txt"
+    doc.write_text("Bu belge proje raporudur. " * 20, encoding="utf-8")
+    out = capture.capture_file(str(doc))
+    assert out.startswith("Kasaya eklendi: 40-Kaynaklar/Belgeler/rapor")
+    assert (v / "_attachments" / "Gelen" / "rapor.txt").exists()
+    note = next((v / "40-Kaynaklar" / "Belgeler").glob("*.md")).read_text(encoding="utf-8")
+    assert "![[_attachments/Gelen/rapor.txt]]" in note and "dosya:rapor.txt" not in note.split("---", 2)[2]
+    assert capture.capture_file(str(doc)).startswith("Zaten kasada")
+    assert "desteklenmiyor" in capture.capture_file(str(tmp_path / "x.exe")) or "Dosya yok" in capture.capture_file(str(tmp_path / "x.exe"))
+
+
+def test_history_import_chatgpt_claude_gemini(tmp_path, monkeypatch):
+    import json
+    import zipfile
+    ops, v = _ops_vault(tmp_path, monkeypatch)
+    from sb import history, notes
+    gpt = [{"title": "Laravel kuyruk", "create_time": 1767225600, "current_node": "c", "mapping": {
+        "a": {"message": None, "parent": None},
+        "b": {"message": {"author": {"role": "user"}, "content": {"parts": ["Laravel queue nasıl kurulur?"]}}, "parent": "a"},
+        "c": {"message": {"author": {"role": "assistant"}, "content": {"parts": ["php artisan queue:work ile."]}}, "parent": "b"}}},
+        {"title": "Özel konu", "create_time": 1767225700, "current_node": "x", "mapping": {
+            "x": {"message": {"author": {"role": "user"}, "content": {"parts": ["doktor randevum hakkında"]}}, "parent": None}}}]
+    claude = [{"name": "Tez fikri", "created_at": "2025-12-03T10:00:00Z", "chat_messages": [
+        {"sender": "human", "text": "Tez için akustik iz tespiti?"}, {"sender": "assistant", "text": "Santoni makinede MEMS mikrofon..."}]}]
+    gem = [{"header": "Gemini Apps", "title": "Prompted Transformer nedir", "time": "2025-11-01T09:00:00Z",
+            "safeHtmlItem": [{"html": "<p>Dikkat mekanizması...</p>"}]}]
+    z = tmp_path / "exp.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        zf.writestr("chatgpt/conversations.json", json.dumps(gpt))
+        zf.writestr("claude/conversations.json", json.dumps(claude))
+        zf.writestr("Takeout/My Activity/Gemini Apps/MyActivity.json", json.dumps(gem))
+    dry = history.run(str(z))
+    assert dry.startswith("DENEME") and "4 sohbet" in dry and not (v / history.FOLDER).exists()
+    out = history.run(str(z), exclude="doktor", apply=True)
+    assert "3 sohbet" in out
+    files = sorted(p.name for p in (v / history.FOLDER).glob("*.md"))
+    assert files == ["ChatGPT 2026-01.md", "Claude 2025-12.md", "Gemini 2025-11.md"]
+    text = (v / history.FOLDER / "ChatGPT 2026-01.md").read_text(encoding="utf-8")
+    assert "**Ben:** Laravel queue nasıl kurulur?" in text and "queue:work" in text and "doktor" not in text
+    assert history.run(str(z), apply=True, private=True)
+    assert notes.is_private(v / history.FOLDER / "Claude 2025-12.md")

@@ -21,7 +21,7 @@ LOG = DATA / "asistan_log.jsonl"
 ARCHIVE = "90-Arşiv"
 RULES_NOTE = VAULT / "Asistan kuralları.md"
 MEMORY_NOTE = VAULT / "Asistan hafızası.md"
-WRITABLE = ("00-Inbox", "10-Dersler", "20-Projeler", "30-Kariyer", "40-Kaynaklar", "50-Günlük", "60-Kişiler")
+WRITABLE = ("00-Inbox", "10-Dersler", "20-Projeler", "25-Görevler", "30-Kariyer", "40-Kaynaklar", "50-Günlük", "60-Kişiler")
 GRACE_DAYS = 14          # süresi geçen açık iş bu kadar gün sonra arşive
 DONE = {"tamamlandi", "iptal", "yapildi", "red", "vazgecildi"}
 

@@ -19,7 +19,8 @@ TITLES = {
 
 
 def _cell(s: str | None, n: int) -> str:
-    s = redact((s or "").replace("\n", " ").replace("|", "\\|").replace("[[", "[ [").strip())
+    # köşeli parantez kaçışlanır: "[ARBİS] ..." konusu bağlantı metninde "[[ARBİS]" olup sahte wikilink üretiyordu
+    s = redact((s or "").replace("\n", " ").replace("|", "\\|").replace("[", "\\[").replace("]", "\\]").strip())
     return s if len(s) <= n else s[: n - 1] + "…"
 
 

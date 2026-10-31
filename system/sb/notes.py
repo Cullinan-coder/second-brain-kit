@@ -41,6 +41,19 @@ def safe_filename(name: str) -> str:
     return re.sub(r"\s+", " ", UNSAFE_FILENAME.sub("", name)).strip()
 
 
+PRIVATE_RE = re.compile(r"\A---\r?\n(?:(?!---).*\r?\n)*?visibility:\s*private\s*\r?\n")
+
+
+def is_private(path: Path) -> bool:
+    """`visibility: private` notlar hiçbir otomatik bağlama (Claude MCP, asistan getirmesi, kanca) girmez."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            head = f.read(2000)
+    except OSError:
+        return False
+    return bool(PRIVATE_RE.match(head))
+
+
 def split_note(text: str) -> tuple[dict, str]:
     m = FRONTMATTER_RE.match(text)
     if not m:

@@ -13,9 +13,16 @@ relation:
 email:
 phone:
 linkedin:
+aliases: []
 ---
 # {{title}}
 
 ## Bağlam
+
+## Beyan
+
+## Çıkarım (onay bekliyor)
+
+## Temaslar
 
 ## Etkileşimler

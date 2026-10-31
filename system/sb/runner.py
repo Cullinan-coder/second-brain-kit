@@ -207,6 +207,12 @@ def weekly() -> int:
         log(f"haftalık çalışma başladı {datetime.now():%F %T}")
         con = maildb.connect(DATA / "mail.db")
         text = digest.build_weekly(con, VAULT, date.today(), lint_errors())
+        try:
+            from . import hygiene, memory
+            text += "\n\n🧾 Bu hafta (makbuzlar)\n" + memory.recap(7)
+            text += "\n\n🧹 Hafıza hijyeni\n" + hygiene.render(hygiene.report(limit=8))
+        except Exception as e:                                   # rapor eki haftalık özeti düşürmesin
+            log(f"hijyen/recap eklenemedi: {e}")
         iso = date.today().isocalendar()
         _write_note(f"{iso[0]}-W{iso[1]:02d} Haftalık", f"hafta:{iso[0]}-W{iso[1]:02d}", text)
         log(git_sync(log))

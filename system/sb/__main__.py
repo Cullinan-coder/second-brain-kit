@@ -806,7 +806,8 @@ def main(argv: list[str] | None = None) -> int:
 
     g = sub.add_parser("capture", help="Beyne at: panodaki bağlantı/metni kasaya kaydet (Ctrl+Alt+B)")
     g.add_argument("text", nargs="?", help="pano yerine bu metni/bağlantıyı kaydet")
-    g.set_defaults(func=lambda a: (lambda c: print(c.capture(a.text)) or 0 if a.text else c.run())(
+    g.add_argument("--file", default="", help="dosyayı kaydet (Sağ tık › Gönder › Beyne At bunu kullanır)")
+    g.set_defaults(func=lambda a: (lambda c: print(c.capture(a.text)) or 0 if a.text else c.run(a.file))(
         __import__("sb.capture", fromlist=["x"])))
 
     g = sub.add_parser("arsenal", help="kasada 'Araçlar ve erişimler' notunu güncelle")
@@ -814,10 +815,132 @@ def main(argv: list[str] | None = None) -> int:
 
     g = sub.add_parser("update", help="kit kurulumunu son sürüme getir (notlara ve ayarlara dokunmaz)")
     g.add_argument("--check", action="store_true", help="yalnız yeni sürüm var mı bak")
-    g.set_defaults(func=lambda a: __import__("sb.update", fromlist=["x"]).run(check_only=a.check))
+    g.add_argument("--rollback", action="store_true", help="son güncellemeden önceki yedeğe dön")
+    g.add_argument("--recover", action="store_true", help="yarım kalan güncellemeyi tamamla (kodu kitten yeniden kur)")
+    g.set_defaults(func=lambda a: (lambda u: u.rollback() if a.rollback else u.recover() if a.recover else u.run(check_only=a.check))(
+        __import__("sb.update", fromlist=["x"])))
 
     g = sub.add_parser("version", help="kurulu sürüm")
     g.set_defaults(func=lambda a: print(__import__("sb.update", fromlist=["x"]).version()) or 0)
+
+    M = lambda: __import__("sb.memory", fromlist=["x"])
+    g = sub.add_parser("receipt", help="iş sonucu makbuzu (kaynak bağlantılı tek satır; günlük nota da düşer)")
+    g.add_argument("--summary", required=True)
+    g.add_argument("--ref", action="append", default=[], help="kasa içi göreli yol (tekrarlanabilir)")
+    g.add_argument("--link", action="append", default=[], help="https bağlantı (PR, sayfa)")
+    g.add_argument("--learned", default="", help="kalıcı öğrenim (tek cümle); yoksa boş")
+    g.add_argument("--project", default="")
+    g.add_argument("--session", default="")
+    g.add_argument("--event-id", default="")
+    g.set_defaults(func=lambda a: print(M().receipt(a.summary, a.ref, a.link, a.learned, a.project, a.session, a.event_id)) or 0)
+
+    g = sub.add_parser("recap", help="son günlerde ne yapıldı (makbuzlardan)")
+    g.add_argument("--days", type=int, default=7)
+    g.add_argument("--project", default="")
+    g.set_defaults(func=lambda a: print(M().recap(a.days, a.project)) or 0)
+
+    g = sub.add_parser("learn", help="öğrenim adayı defteri")
+    g.add_argument("candidate", nargs="?")
+    g.add_argument("--source", default="")
+    g.add_argument("--scope", default="")
+    g.add_argument("--list", action="store_true")
+    g.set_defaults(func=lambda a: print(M().learn_list() if a.list or not a.candidate else M().learn(a.candidate, a.source, a.scope)) or 0)
+
+    g = sub.add_parser("concept", help="kavram notu oluştur/güncelle (40-Kaynaklar/Kavramlar)")
+    g.add_argument("title")
+    g.add_argument("--text", required=True)
+    g.add_argument("--point", action="append", default=[])
+    g.add_argument("--limits", default="")
+    g.add_argument("--source", action="append", default=[])
+    g.set_defaults(func=lambda a: print(M().concept(a.title, a.text, a.point, a.limits, a.source)) or 0)
+
+    g = sub.add_parser("connect", help="iki not arasında gerekçeli bağlantı notu")
+    g.add_argument("a")
+    g.add_argument("b")
+    g.add_argument("--why", required=True)
+    g.set_defaults(func=lambda a: print(M().connect(a.a, a.b, a.why)) or 0)
+
+    g = sub.add_parser("trace", help="dosya değişmeyen anlamlı sohbetin ≤450 karakterlik izi")
+    g.add_argument("text")
+    g.add_argument("--session", default="")
+    g.add_argument("--project", default="")
+    g.set_defaults(func=lambda a: print(M().trace(a.text, a.session, a.project)) or 0)
+
+    g = sub.add_parser("error-log", help="hata kataloğu; aynı hata ikinci kez gelince çözüm kural olur")
+    g.add_argument("error")
+    g.add_argument("--fix", default="")
+    g.set_defaults(func=lambda a: print(M().error_log(a.error, a.fix)) or 0)
+
+    g = sub.add_parser("knowledge-index", help="Kavramlar/_Dizin.md'yi yenile")
+    g.set_defaults(func=lambda a: print(M().knowledge_index()) or 0)
+
+    g = sub.add_parser("hook-flush", help="(kanca içi) oturum dökümünü yerel modelle özetleyip günlük nota yaz")
+    g.add_argument("--transcript", required=True)
+    g.add_argument("--session", required=True)
+    g.add_argument("--project", default="")
+    g.add_argument("--reason", default="end", choices=["end", "precompact"])
+    g.set_defaults(func=lambda a: print(__import__("sb.hookwork", fromlist=["x"]).flush(a.transcript, a.session, a.project, a.reason)) or 0)
+
+    T = lambda: __import__("sb.tasks", fromlist=["x"])
+    g = sub.add_parser("task", help="görevler (25-Görevler): add | update | list")
+    g.add_argument("action", choices=["add", "update", "list"])
+    g.add_argument("title", nargs="?", default="")
+    g.add_argument("--text", default="")
+    g.add_argument("--owner", default="")
+    g.add_argument("--project", default="")
+    g.add_argument("--due", default=None)
+    g.add_argument("--criterion", default="", help="gözlenebilir bitiş ölçütü (verilirse bitirmek için kanıt gerekir)")
+    g.add_argument("--status", default="")
+    g.add_argument("--evidence", action="append", default=[], help="kanıt dosyası (kasa içi yol)")
+    g.add_argument("--note", default="")
+    g.add_argument("--expected-revision", type=int, default=None)
+    g.set_defaults(func=lambda a: print(
+        T().add(a.title, a.text, a.owner, a.project, a.due, a.criterion, a.status or "aktif") if a.action == "add" else
+        T().update(a.title, a.status, a.evidence, a.note, a.expected_revision) if a.action == "update" else
+        T().listing(a.status)) or 0)
+
+    g = sub.add_parser("person", help="kişi notuna beyan / çıkarım / takma ad (60-Kişiler)")
+    g.add_argument("name")
+    g.add_argument("fact", nargs="?", default="")
+    g.add_argument("--inference", action="store_true", help="modelin tahmini: onay bekleyen çıkarım")
+    g.add_argument("--reject", action="store_true", help="bu metni içeren çıkarımı reddet")
+    g.add_argument("--alias", default="")
+    g.set_defaults(func=lambda a: print(T().person_fact(a.name, a.fact, a.inference, a.reject, a.alias)) or 0)
+
+    g = sub.add_parser("rule", help="kalıcı kural ekle (--scope proje: yalnız o projede yüklenir)")
+    g.add_argument("text")
+    g.add_argument("--scope", default="")
+    g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).add_rule(
+        (f"[kapsam: {a.scope}] " if a.scope else "") + a.text, actor="claude")) or 0)
+
+    g = sub.add_parser("hygiene", help="hafıza hijyeni raporu (tekrar, kopuk bağlantı, bayat, büyüyen dosya)")
+    g.set_defaults(func=lambda a: print((lambda h: h.render(h.report()))(__import__("sb.hygiene", fromlist=["x"]))) or 0)
+
+    g = sub.add_parser("mode", help="Claude Code hafıza modu: normal | ekonomik | manuel (config/hafiza.yaml)")
+    g.add_argument("profile", nargs="?", choices=["normal", "ekonomik", "manuel"])
+    g.set_defaults(func=lambda a: print(__import__("sb.update", fromlist=["x"]).set_mode(a.profile)) or 0)
+
+    g = sub.add_parser("history-import", help="ChatGPT / Claude.ai / Gemini geçmişini içe aktar (önce --apply olmadan dene)")
+    g.add_argument("src", help="dışa aktarım zip'i, klasörü ya da conversations.json")
+    g.add_argument("--since", default="")
+    g.add_argument("--until", default="")
+    g.add_argument("--exclude", default="", help="virgülle ayrılmış kelimeler: geçen sohbet alınmaz")
+    g.add_argument("--private", action="store_true", help="notları gizli yap (otomatik bağlama girmez)")
+    g.add_argument("--apply", action="store_true")
+    g.set_defaults(func=lambda a: print(__import__("sb.history", fromlist=["x"]).run(
+        a.src, a.since, a.until, a.exclude, a.private, a.apply)) or 0)
+
+    W = lambda: __import__("sb.worker", fromlist=["x"])
+    g = sub.add_parser("qwen", help="yerel Qwen'e iş ver (büyük metin/log/belge özeti; Claude limiti harcanmaz)")
+    g.add_argument("instruction")
+    g.add_argument("--file", action="append", default=[])
+    g.add_argument("--text", default="")
+    g.set_defaults(func=lambda a: print(W().run(a.instruction, a.file, a.text)) or 0)
+
+    g = sub.add_parser("night", help="gece koşusu: 00-Inbox/Gece işleri.md maddelerini claude -p ile sırayla çalıştır")
+    g.add_argument("--plan", action="store_true", help="yalnız ne çalışacağını göster")
+    g.add_argument("--run", action="store_true")
+    g.set_defaults(func=lambda a: print(W().night_run() if a.run else (W().ensure_note() and W().night_plan())) or 0)
 
     g = sub.add_parser("asistan-undo", help="asistanın son kasa değişikliğini geri al")
     g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).undo_last(actor="kullanici")) or 0)

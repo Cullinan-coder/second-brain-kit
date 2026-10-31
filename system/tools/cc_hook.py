@@ -1,11 +1,13 @@
 """Claude Code hafıza kancaları (kullanıcı geneli, her proje): oturum başında Second Brain'den kısa bağlam enjekte eder.
 
-Kullanım (~/.claude/settings.json hooks): python cc_hook.py start | prompt | end   (stdin: kanca JSON'u)
-- start : kurallar, kullanıcı hakkında hafıza, açık konular, son oturum kartları, bu klasörün projesi, yaklaşan tarihler
-          + önceki oturum kartsız kapandıysa uyarı. Toplam ≤ 10.000 karakter.
-- prompt: mesaj sayacı; her 15 mesajda "devir kartını unutma" hatırlatması.
-- end   : ≥5 mesajlık oturum `Son oturum.md`'ye dokunmadan bittiyse işaret bırakır (sonraki açılışta uyarı).
-Model çağırmaz, ağa çıkmaz, hata olursa sessizce çıkar (Claude Code'u asla bozmaz). SB_NO_HOOK=1 iken hiçbir şey yapmaz.
+Kullanım (~/.claude/settings.json hooks): python cc_hook.py start | prompt | precompact | end   (stdin: kanca JSON'u)
+- start     : kurallar (projeye kapsamlı olanlar süzülür), hafıza, açık konular, son oturum kartları, bu klasörün projesi
+              (+ projenin "## Kurallar" bölümü), yaklaşan tarihler, uyarılar (kartsız kapanan oturum).
+              Bütçe config/hafiza.yaml: normal 9.500 / ekonomik 4.000 karakter / manuel yalnız uyarı.
+- prompt    : mesaj sayacı; 15 (ekonomikte 30) mesajda bir "kart/makbuz" hatırlatması; ilk mesajda paralel oturum uyarısı.
+- precompact: konuşma sıkıştırılmadan önce yerel model özetini ARKA PLANDA günlük nota yazdırır (sb hook-flush).
+- end       : kartı/makbuzu yazılmadan biten ≥4 mesajlık oturumu arka planda özetletir + sonraki açılışta uyarır.
+Kancanın kendisi model çağırmaz, ağa çıkmaz, beklemez; hata olursa sessizce çıkar. SB_NO_HOOK=1 iken hiçbir şey yapmaz.
 """
 from __future__ import annotations
 
@@ -26,6 +28,7 @@ MEMORY = VAULT / "Asistan hafızası.md"
 WORKSPACE = Path.home() / "Workspace" / "projects"   # profil (workspace) okunursa aşağıda değişir
 BUDGET = 10_000
 NUDGE_EVERY = 15
+PARALLEL_HOURS = 12
 
 
 def _user() -> str:
@@ -53,6 +56,19 @@ def _profile_value(key: str, default: str) -> str:
     return default
 
 
+def _settings() -> dict:
+    defaults = {"profile": "normal", "context_chars": 9500, "economy_chars": 4000, "parallel_warning": True, "flush_min_prompts": 4}
+    try:
+        import yaml
+        cfg = VAULT / "_system" / "config"
+        for n in ("hafiza.yaml", "hafiza.example.yaml"):
+            if (cfg / n).exists():
+                return {**defaults, **(yaml.safe_load((cfg / n).read_text(encoding="utf-8")) or {})}
+    except Exception:
+        pass
+    return defaults
+
+
 USER = _user()
 WORKSPACE = Path(os.path.expanduser(_profile_value("workspace", str(WORKSPACE))))
 
@@ -64,8 +80,20 @@ def _read(p: Path) -> str:
         return ""
 
 
-def _bullets(p: Path, cap: int) -> str:
-    text = "\n".join(l for l in _read(p).splitlines() if l.startswith("- "))
+SCOPE_RE = re.compile(r"\[(?:kapsam|scope):\s*([^\]]+)\]", re.I)
+
+
+def _in_scope(line: str, project: str) -> bool:
+    """`[kapsam: a, b]` etiketli kural yalnız o projelerde; etiketsiz ya da genel/global her yerde."""
+    m = SCOPE_RE.search(line)
+    if not m:
+        return True
+    names = {x.strip().lower() for x in m.group(1).split(",")}
+    return bool(names & {"genel", "global"}) or (project.lower() in names if project else False)
+
+
+def _bullets(p: Path, cap: int, project: str = "") -> str:
+    text = "\n".join(l for l in _read(p).splitlines() if l.startswith("- ") and _in_scope(l, project))
     return text if len(text) <= cap else text[:cap].rsplit("\n", 1)[0] + f"\n[kırpıldı — tamamı: {p.name}]"
 
 
@@ -108,7 +136,11 @@ def _project(cwd: str) -> tuple[str, str]:
     text = _read(note)
     status = _section(text, "Durum, eksikler ve açık işler") or _section(text, "Özet")
     status = re.sub(r"<!--.*?-->\s*", "", status)               # otomatik bölüm işaretleri bağlama gerekmez
-    return name, f"Not: 20-Projeler/{name}.md\n{status[:1500]}"
+    if re.search(r"^visibility:\s*private", text, re.M):
+        return name, f"Not: 20-Projeler/{name}.md (gizli not; içerik bağlama alınmadı)"
+    rules = _section(text, "Kurallar")
+    rules = f"\nProje kuralları (bu projede uy):\n{rules[:1200]}" if rules else ""
+    return name, f"Not: 20-Projeler/{name}.md\n{status[:1500]}{rules}"
 
 
 def _upcoming() -> str:
@@ -128,14 +160,41 @@ def _warnings() -> str:
     return "\n".join(f"⚠️ {w}" for w in out if w)
 
 
+def _others(key: str, project: str) -> str:
+    """Aynı anda açık başka oturumlar (son 12 saatte başlamış, kapanmamış)."""
+    out, now = [], time.time()
+    for f in STATE.glob("active.*"):
+        if f.name == f"active.{key}":
+            continue
+        try:
+            d = json.loads(_read(f))
+        except ValueError:
+            continue
+        age = (now - float(d.get("t", 0))) / 3600
+        if age > PARALLEL_HOURS:
+            f.unlink(missing_ok=True)
+            continue
+        same = " (AYNI PROJE)" if project and d.get("project") == project else ""
+        out.append(f"{d.get('id', '?')[:8]} · {d.get('project') or 'genel'}{same} · {int(age * 60)} dk önce açıldı")
+    if not out:
+        return ""
+    return ("⚠️ Aynı anda açık başka Claude Code oturumu var: " + "; ".join(out) + ". Aynı dosyaya dokunmadan önce diskten "
+            "yeniden oku; git reset/checkout/stash ile başkasının işine dokunma; commit öncesi `git status` bak.")
+
+
 def build_context(session_id: str, cwd: str) -> str:
+    cfg = _settings()
     project, project_status = _project(cwd)
+    if cfg["profile"] == "manuel":
+        return _warnings()
+    budget = int(cfg["economy_chars"] if cfg["profile"] == "ekonomik" else cfg["context_chars"])
+    eco = cfg["profile"] == "ekonomik"
     sections = [
         ("", _warnings()),
-        (f"Second Brain kuralları (kullanıcının ({USER}) öğrettikleri — uy)", _bullets(RULES, 2500)),
+        (f"Second Brain kuralları (kullanıcının ({USER}) öğrettikleri — uy)", _bullets(RULES, 1500 if eco else 2500, project)),
         (f"{USER} hakkında hafıza", _bullets(MEMORY, 1200)),
-        ("Açık konular", _active_threads(2000)),
-        ("Son oturum kartları", _cards(project, 2500)),
+        ("Açık konular", _active_threads(1000 if eco else 2000)),
+        ("Son oturum kartları", _cards(project, 1000 if eco else 2500)),
         (f"Bu klasörün projesi: {project}", project_status),
         ("7 gün içindeki teslim/sınav/başvuru", _upcoming()),
     ]
@@ -143,10 +202,37 @@ def build_context(session_id: str, cwd: str) -> str:
             f"EN ÜSTÜNE (başlığın altına) kart yaz/güncelle: `## {datetime.now():%Y-%m-%d %H:%M} · {project or 'genel'} · "
             f"{session_id[:8]}` + Ne yapıldı / Kararlar / Nerede kaldık / Sıradaki. Yalnız kendi kartını düzenle. Yarım kalan, "
             f"sonraki oturumlara taşınan işleri `{THREADS}` içinde '## Aktif' altında yerinde güncelle; biten konuyu '## Kapanan'a taşı. "
-            "Kasa ayrıntısı gerekiyorsa second-brain MCP araçlarını (brain_project, brain_search...) kullan.")
+            "Kasa ayrıntısı gerekiyorsa second-brain MCP araçlarını (brain_project, brain_search, brain_recap...) kullan. "
+            "İş bitince `sb receipt --summary \"...\" --ref <kasa-yolu> --learned \"...\" --project <p> --session "
+            f"{session_id[:8]}` ile makbuz yaz (öğrenim yoksa --learned boş). Kalıcı öğrenim → `sb concept`, olgunlaşmamış → `sb learn`. "
+            "Dosya değişmeyen anlamlı sohbette `sb trace \"≤450 karakter\"`. Aynı hata ikinci kez → `sb error-log \"hata\" --fix \"çözüm\"`.")
     out = "\n\n".join(f"[{h}]\n{t}" if h else t for h, t in sections if t)
     out = (out + "\n\n" + tail).strip()
-    return out if len(out) <= BUDGET else out[:BUDGET - len(tail) - 30] + "\n[bağlam kırpıldı]\n\n" + tail
+    budget = min(budget, BUDGET)
+    return out if len(out) <= budget else out[:budget - len(tail) - 30] + "\n[bağlam kırpıldı]\n\n" + tail
+
+
+def _spawn_flush(payload: dict, key: str, reason: str) -> None:
+    """Yerel model özetini ARKA PLANDA başlat (kanca beklemez; Claude Code kapanabilir)."""
+    import subprocess
+    tr = str(payload.get("transcript_path") or "")
+    if not tr or not Path(tr).is_file():
+        return
+    project = _project(str(payload.get("cwd") or ""))[0]
+    sysdir = VAULT / "_system"
+    py = sysdir / ".venv" / ("Scripts/pythonw.exe" if os.name == "nt" else "bin/python")
+    args = [str(py), "-X", "utf8", "-m", "sb", "hook-flush", "--transcript", tr, "--session", key, "--project", project,
+            "--reason", reason]
+    env = dict(os.environ, SB_NO_HOOK="1", PYTHONPATH=str(sysdir))
+    log = open(STATE / f"flush.{key[:8]}.log", "a", encoding="utf-8")
+    flags = 0x00000008 | 0x00000200 | 0x08000000 if os.name == "nt" else 0     # DETACHED | NEW_GROUP | NO_WINDOW
+    subprocess.Popen(args, cwd=str(sysdir), env=env, stdout=log, stderr=log, stdin=subprocess.DEVNULL,
+                     creationflags=flags, start_new_session=os.name != "nt")
+
+
+def _receipt_written(key: str, since: float) -> bool:
+    folder = VAULT / "50-Günlük" / "Makbuzlar"
+    return any(f.stat().st_mtime > since and f" · {key[:8]} · " in _read(f) for f in folder.glob("*.md")) if folder.exists() else False
 
 
 def _key(payload: dict) -> str:
@@ -162,29 +248,45 @@ def main(event: str) -> None:
         payload = {}
     STATE.mkdir(parents=True, exist_ok=True)
     key = _key(payload)
+    cfg = _settings()
     if event == "start":
+        cwd = str(payload.get("cwd") or os.getcwd())
         if key:
             (STATE / f"start.{key}").write_text(str(time.time()), encoding="utf-8")
             (STATE / f"count.{key}").write_text("0", encoding="utf-8")
-        ctx = build_context(key or "bilinmiyor", str(payload.get("cwd") or os.getcwd()))
+            (STATE / f"active.{key}").write_text(json.dumps({"id": key, "t": time.time(), "cwd": cwd,
+                                                             "project": _project(cwd)[0]}), encoding="utf-8")
+        ctx = build_context(key or "bilinmiyor", cwd)
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": ctx}}, ensure_ascii=False))
     elif event == "prompt" and key:
         f = STATE / f"count.{key}"
         n = int(_read(f).strip() or 0) + 1
         f.write_text(str(n), encoding="utf-8")
-        if n % NUDGE_EVERY == 0:
-            msg = f"[Hafıza] {n}. mesaj. Anlamlı iş bittiyse `{CARDS.name}` kartını ve `{THREADS.name}`ı güncelle."
+        msgs = []
+        if n == 1 and cfg["parallel_warning"] and cfg["profile"] != "manuel":
+            cwd = str(payload.get("cwd") or os.getcwd())
+            msgs.append(_others(key, _project(cwd)[0]))
+        every = NUDGE_EVERY * (2 if cfg["profile"] == "ekonomik" else 1)
+        if n % every == 0 and cfg["profile"] != "manuel":
+            msgs.append(f"[Hafıza] {n}. mesaj. Anlamlı iş bittiyse `{CARDS.name}` kartını, `{THREADS.name}`ı ve `sb receipt` makbuzunu yaz.")
+        msg = "\n".join(m for m in msgs if m)
+        if msg:
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": msg}}, ensure_ascii=False))
+    elif event == "precompact" and key:
+        if cfg["profile"] != "manuel":
+            _spawn_flush(payload, key, "precompact")
     elif event == "end" and key:
         start = float(_read(STATE / f"start.{key}").strip() or 0)
         n = int(_read(STATE / f"count.{key}").strip() or 0)
-        touched = CARDS.exists() and CARDS.stat().st_mtime > start
+        touched = (CARDS.exists() and CARDS.stat().st_mtime > start) or _receipt_written(key, start)
+        if n >= int(cfg["flush_min_prompts"]) and not touched and cfg["profile"] == "normal":
+            _spawn_flush(payload, key, "end")
         if n >= 5 and not touched:
             where = str(payload.get("cwd") or "")
             (STATE / f"needs_card.{key}").write_text(
                 f"Önceki oturum ({key[:8]}, {n} mesaj, {where}) devir kartı yazılmadan kapandı. Önemli bir şey olduysa "
                 f"oturum günlüğünden (sessions-sync) ya da kullanıcıya sorarak `{CARDS.name}`'a kısa kart ekle.", encoding="utf-8")
-        for f in (STATE / f"start.{key}", STATE / f"count.{key}"):
+        for f in (STATE / f"start.{key}", STATE / f"count.{key}", STATE / f"active.{key}"):
             f.unlink(missing_ok=True)
 
 
