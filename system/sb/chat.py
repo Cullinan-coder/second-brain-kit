@@ -13,6 +13,7 @@ import threading
 import uuid
 from datetime import date, datetime, time as dtime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 from . import llm, vault_ops
 from .gcal_api import RULES, Calendar, NewEvent, build_body, match_tag
@@ -154,7 +155,17 @@ def system_prompt(now: datetime | None = None) -> str:
         + (f"\nkullanıcının ({USER}) sana öğrettiği kurallar (HER ZAMAN uy):\n{vault_ops.rules_text()}" if vault_ops.rules_text() else "")
         + (f"\n{USER} hakkında hatırladıkların:\n{vault_ops.rules_text(2500, vault_ops.MEMORY_NOTE)}"
            if vault_ops.rules_text(2500, vault_ops.MEMORY_NOTE) else "")
+        + _persona_addendum()
     )
+
+
+def _persona_addendum() -> str:
+    """Asistan kimliği ve kişilik ayarı (Faz 2; persona modülü yoksa boş)."""
+    try:
+        from . import features, persona
+        return ("\n" + persona.system_addendum()) if features.enabled("memory_ui") else ""
+    except Exception:                                        # noqa: BLE001 — kimlik notu bozuksa sohbet sürer
+        return ""
 
 
 class Session:
@@ -590,6 +601,14 @@ def retrieve(text: str, budget: int = 14000) -> tuple[str, str]:
                     labels.append(f"anlam {len(hits)}")
         except Exception:
             pass                                                # dizin yoksa/bozuksa sohbet yine çalışır
+    try:                                                        # Faz 2: soruda geçen proje/kişiye bağlı hafıza satırları
+        from . import features, persona
+        mem = persona.context_memory(text) if features.enabled("memory_ui") else ""
+        if mem:
+            parts.insert(0, "## Bağlamsal hafıza\n" + mem)
+            labels.append("hafıza")
+    except Exception:                                           # noqa: BLE001
+        pass
     return redact("\n\n".join(parts))[:budget], ", ".join(labels)
 
 
@@ -847,6 +866,22 @@ body:JSON.stringify({pin:document.getElementById('pin').value})});const j=await 
 
 MODEL_LOCK = threading.Lock()      # bilgisayar ve telefon aynı anda tek model çağrısı
 
+WEB = Path(__file__).parent / "web"     # Faz 2 arayüzü (derleme adımı yok: düz HTML/CSS/JS)
+STATIC_TYPES = {".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml",
+                ".png": "image/png", ".json": "application/json; charset=utf-8", ".woff2": "font/woff2",
+                ".webmanifest": "application/manifest+json"}
+
+
+def static_file(name: str) -> tuple[bytes, str] | None:
+    """web/ altındaki düz dosya (alt klasör, '..' ve bilinmeyen uzantı yok)."""
+    if not re.fullmatch(r"[\w.-]{1,80}", name) or name.startswith(".") or ".." in name:
+        return None
+    p = WEB / name
+    ctype = STATIC_TYPES.get(p.suffix.lower())
+    if not ctype or not p.is_file():
+        return None
+    return p.read_bytes(), ctype
+
 
 class RemoteAuth:
     """Telefon eşlemesi: bilgisayarda görünen 6 haneli kod → telefona 30 günlük HttpOnly çerez. Diskte yalnız çerezin SHA-256'sı durur.
@@ -966,10 +1001,21 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     msg = "yok"
                 html = f"<!doctype html><meta charset=utf-8><body style='font:18px system-ui;padding:40px'>{msg}</body>"
                 return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
-            if route in ("/", "/index.html"):
+            if route.startswith("/static/"):
+                if not self._authed():
+                    return self._send(401, b'{"error":"eslenmemis"}')
+                f = static_file(route[len("/static/"):])
+                if not f:
+                    return self._send(404, b'{"error":"yok"}')
+                return self._send(200, f[0], f[1])
+            if route.startswith("/api/v2/"):
+                return self._v2("GET")
+            if route in ("/", "/index.html", "/classic"):
                 if not self._authed():
                     return self._send(200, PAIR_PAGE.encode("utf-8"), "text/html; charset=utf-8")
-                page = PAGE.replace("__MODEL__", llm.config()["ollama"]["model"]).replace("__LOCAL__", "0" if is_remote else "1")
+                index = WEB / "index.html"
+                tpl = index.read_text(encoding="utf-8") if route != "/classic" and index.exists() else PAGE
+                page = tpl.replace("__MODEL__", llm.config()["ollama"]["model"]).replace("__LOCAL__", "0" if is_remote else "1")
                 cookie = ""
                 if is_remote:                                       # kayan süre: telefonda her açılışta 180 gün yeniden başlar
                     import re as _re
@@ -978,9 +1024,67 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 return self._send(200, page.encode("utf-8"), "text/html; charset=utf-8", cookie=cookie)
             self._send(404, b'{"error":"yok"}')
 
+        def _v2(self, method: str):
+            """Faz 2 API: webroutes kayıt defterine dağıtır (kimlik, yerel-yalnız, model kilidi, yükleme sınırı burada)."""
+            from urllib.parse import parse_qs, urlparse
+            from . import webroutes
+            if not self._authed():
+                return self._send(401, b'{"error":"eslenmemis"}')
+            r = webroutes.find(method, self.path)
+            if r is None:
+                return self._send(404, b'{"error":"yok"}')
+            if r.local_only and is_remote:
+                return self._send(403, b'{"error":"yalniz bilgisayardan"}')
+            query = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+            data, raw, ctype = {}, b"", self.headers.get("Content-Type", "")
+            if method == "POST":
+                n = int(self.headers.get("Content-Length", "0") or 0)
+                limit = webroutes.MAX_UPLOAD if r.upload else 200_000
+                if n > limit:
+                    return self._send(413, b'{"error":"cok buyuk"}')
+                body = self.rfile.read(n) if n else b""
+                if r.upload:
+                    raw = body
+                else:
+                    try:
+                        data = json.loads(body or b"{}")
+                    except json.JSONDecodeError:
+                        return self._send(400, b'{"error":"gecersiz"}')
+                    if not isinstance(data, dict):
+                        return self._send(400, b'{"error":"gecersiz"}')
+            sid = str(data.get("sid") or query.get("sid") or "x")[:40]
+            s = sessions.setdefault(sid, Session(remote=is_remote))
+
+            def _respond(text: str) -> dict:
+                try:
+                    from . import telemetry
+                    with telemetry.timed("chat", "respond"):
+                        return respond(s, str(text)[:12000], chat_fn)        # ekli dosya metni (≤6000) sığsın
+                except Exception as e:                                # noqa: BLE001
+                    return {"reply": f"Hata: {type(e).__name__}: {str(e)[:200]}", "trace": [], "proposals": pending(s)}
+
+            ctx = webroutes.Ctx(method, self.path.split("?")[0], data, query, raw, ctype, sid, is_remote, s, _respond, calendar)
+            if r.model:
+                with lock:
+                    code, body, ct, fname = webroutes.call(r, ctx)
+            else:
+                code, body, ct, fname = webroutes.call(r, ctx)
+            if fname:
+                self.send_response(code)
+                self.send_header("Content-Type", ct)
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Content-Disposition", f'attachment; filename="{fname}"')
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            return self._send(code, body, ct)
+
         def do_POST(self):
             if not self._ok_host() or self.headers.get("X-SB") != "1" or not self._ok_origin():
                 return self._send(403, b'{"error":"yasak"}')
+            if self.path.startswith("/api/v2/"):
+                return self._v2("POST")
             try:
                 n = int(self.headers.get("Content-Length", "0"))
                 data = json.loads(self.rfile.read(min(n, 200_000)) or b"{}")

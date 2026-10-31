@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="sb-local" content="__LOCAL__">
+<meta name="sb-model" content="__MODEL__">
+<title>Asistan</title>
+<link rel="stylesheet" href="/static/design.css">
+<link rel="stylesheet" href="/static/views.css">
+<script defer src="/static/app.js"></script>
+<script defer src="/static/views.js"></script>
+<script defer src="/static/memory.js"></script>
+<script defer src="/static/voice.js"></script>
+</head>
+<body>
+<a class="skip" href="#q">Mesaj alanına geç</a>
+<div id="shell">
+  <aside id="side" aria-label="Kenar çubuğu">
+    <div class="side-head">
+      <div class="brand"><span class="logo" aria-hidden="true"></span><span>Asistan</span></div>
+      <button class="ibtn only-mobile" id="side-close" aria-label="Kenar çubuğunu kapat" data-icon="x"></button>
+    </div>
+    <button class="btn primary block" id="new-chat"><span data-icon="plus"></span>Yeni sohbet</button>
+    <div class="search">
+      <span data-icon="search" aria-hidden="true"></span>
+      <input id="conv-search" type="search" placeholder="Sohbetlerde ara" aria-label="Sohbetlerde ara" autocomplete="off">
+    </div>
+    <div class="tabs" role="tablist" aria-label="Sohbet listesi">
+      <button role="tab" id="tab-active" aria-selected="true">Sohbetler</button>
+      <button role="tab" id="tab-archive" aria-selected="false">Arşiv</button>
+    </div>
+    <nav id="conv-list" class="conv-list" aria-label="Sohbet geçmişi"></nav>
+    <div class="side-sec">
+      <button class="side-sec-h" id="views-toggle" aria-expanded="true" aria-controls="views-menu"><span data-icon="grid"></span>Görünümler<span class="chev" data-icon="chev"></span></button>
+      <div id="views-menu" class="views-menu"></div>
+    </div>
+    <div class="side-foot">
+      <button class="btn ghost" id="open-settings"><span data-icon="settings"></span>Görünüm ve cihazlar</button>
+    </div>
+  </aside>
+  <div id="scrim" hidden></div>
+
+  <main id="main">
+    <header id="top">
+      <button class="ibtn only-mobile" id="side-open" aria-label="Kenar çubuğunu aç" data-icon="menu"></button>
+      <button class="ibtn" id="view-back" aria-label="Sohbete dön" data-icon="back" hidden></button>
+      <div class="titles">
+        <h1 id="title">Yeni sohbet</h1>
+        <div id="subtitle" class="sub"></div>
+      </div>
+      <div class="top-actions">
+        <button class="ibtn" id="btn-palette" aria-label="Komut paleti (Ctrl+K)" title="Komut paleti (Ctrl+K)" data-icon="command"></button>
+        <button class="ibtn" id="btn-phone" aria-label="Telefon eşleme" title="Telefon eşleme" data-icon="phone" hidden></button>
+        <button class="ibtn" id="btn-theme" aria-label="Tema" title="Tema" data-icon="sun"></button>
+        <span class="bell-wrap">
+          <button class="ibtn" id="btn-bell" aria-label="Bildirimler" aria-haspopup="dialog" aria-expanded="false" data-icon="bell" hidden></button>
+          <span id="bell-badge" class="badge" hidden></span>
+        </span>
+      </div>
+    </header>
+
+    <section id="chat" aria-label="Sohbet">
+      <div id="log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesajlar" tabindex="-1"></div>
+      <div id="chips" class="chips" aria-label="Hızlı cevaplar"></div>
+      <form id="composer" autocomplete="off">
+        <div id="slash" class="slash" role="listbox" aria-label="Komutlar" hidden></div>
+        <div id="atts" class="att-row"></div>
+        <div class="comp-box">
+          <button type="button" class="ibtn" id="btn-attach" aria-label="Dosya ekle" title="Dosya ekle" data-icon="clip" hidden></button>
+          <input type="file" id="file-in" multiple hidden>
+          <textarea id="q" rows="1" aria-label="Mesaj" placeholder="Sor ya da söyle  ( / komutlar )" enterkeyhint="send"></textarea>
+          <button type="button" class="ibtn" id="mic-btn" data-voice-mic aria-label="Sesle konuş" aria-pressed="false" title="Sesle konuş" data-icon="mic" hidden></button>
+          <button type="submit" class="ibtn send" id="btn-send" aria-label="Gönder" title="Gönder (Enter)" data-icon="send"></button>
+        </div>
+        <div class="hint" aria-hidden="true">Enter gönderir · Shift+Enter yeni satır · Ctrl+K palet</div>
+      </form>
+    </section>
+
+    <section id="view" aria-label="Görünüm" hidden></section>
+  </main>
+</div>
+
+<div id="palette" class="overlay" hidden>
+  <div class="dialog pal" role="dialog" aria-modal="true" aria-label="Komut paleti">
+    <input id="pal-q" type="text" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-autocomplete="list" placeholder="Not, kişi, proje, komut ya da sohbet ara..." autocomplete="off">
+    <div id="pal-list" role="listbox" aria-label="Sonuçlar"></div>
+    <div class="hint">↑↓ gezin · Enter seç · Esc kapat</div>
+  </div>
+</div>
+
+<div id="notif" class="popover" role="dialog" aria-label="Bildirimler" hidden>
+  <div class="pop-head"><strong>Bildirimler</strong><button class="btn ghost sm" id="notif-all">Hepsini okundu yap</button></div>
+  <div id="notif-list"></div>
+</div>
+
+<div id="settings" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="set-h">
+    <div class="pop-head"><strong id="set-h">Görünüm ve cihazlar</strong><button class="ibtn" id="set-close" aria-label="Kapat" data-icon="x"></button></div>
+    <div class="set-body">
+      <div class="field"><span class="lbl" id="l-theme">Tema</span>
+        <div class="seg" role="radiogroup" aria-labelledby="l-theme" id="seg-theme"></div></div>
+      <div class="field"><span class="lbl" id="l-accent">Vurgu rengi</span>
+        <div class="seg swatches" role="radiogroup" aria-labelledby="l-accent" id="seg-accent"></div></div>
+      <div class="field"><span class="lbl" id="l-font">Yazı boyutu</span>
+        <div class="seg" role="radiogroup" aria-labelledby="l-font" id="seg-font"></div></div>
+      <div class="field" id="pair-box" hidden><span class="lbl">Telefon</span>
+        <div id="pair-info" class="pair"></div></div>
+      <div class="field"><span class="lbl">Sunucu</span><div id="srv-info" class="sub"></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div id="drop" hidden><div>Dosyayı bırak, mesaja eklensin</div></div>
+</body>
+</html>

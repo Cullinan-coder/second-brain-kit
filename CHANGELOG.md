@@ -2,6 +2,23 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.6.0 — 2026-11-01 (Faz 2: asistan, ses, arayüz)
+- **Yeni asistan arayüzü** (`http://127.0.0.1:8765/`; eskisi `/classic`): açık/koyu tema, vurgu rengi, yazı boyutu; sohbet geçmişi
+  (arama, sabitleme, yeniden adlandırma, arşiv); tıklanabilir kaynak kartları; yeniden tasarlanmış onay kartları; Ctrl+K komut paleti;
+  `/` komutları (`/ara /not /gorev /ozet /hatirla /unut /bugun /kisi /proje /kart /foto /tara /toplanti /dokum /telaffuz`);
+  mesajı düzenle / yeniden üret / nota çevir; sürükle-bırak ve yapıştırarak dosya ekleme; bildirim merkezi; hızlı tepki düğmeleri;
+  klavyeyle tam kullanım. Telefonda (Tailscale) aynı arayüz, kenar çubuğu çekmece.
+- **Görünümler:** pano, bilgi grafiği (yakınlaştır/kaydır/sürükle), zaman çizelgesi, kişi sayfası, proje sayfası.
+- **Ses:** yerel Whisper ile konuşma → yazı (dil otomatik), basılı tut-konuş (`Ctrl+Space`), sesli cevap, konuşma kesme,
+  uyandırma sözcüğü (varsayılan kapalı), telefonda sesli not, toplantı/ders kaydı → döküm + özet + karar + görev, video/podcast dökümü,
+  telaffuz koçu. Kurulum: `uv pip install "faster-whisper>=1.1" "av>=15,<18"`; durum `sb voice --setup`.
+- **Görüntü:** fotoğrafla soru, el yazısı/tahta → metin, PDF'e sayfa atıflı soru, izinli ekran izleme (varsayılan kapalı, görüntü saklanmaz),
+  görsel üretme (varsayılan kapalı, bulut anahtarı gerekir).
+- **Hafıza ve kişilik:** asistan kimliği (`Asistan kimliği.md`), kişilik ayarı (ton, uzunluk, sen/siz), ortak günlük, onaylı tercih öğrenme,
+  hafıza düzenleyici, her yerden unutma isteği (onaylı; unutulan bir daha dizinlenmez), proje/kişiye bağlı hafıza, günlük yansıma,
+  haftalık "beni tanı", bilgi kartları + aralıklı tekrar, öğrenme yolu, hata panosu. `sb persona --reflect|--weekly|--prefs`.
+- **Güvenlik:** kasaya giden metinde API anahtarı ve `*_PASSWORD/SECRET/TOKEN` atamaları da maskelenir.
+
 ## 0.5.0 — 2026-10-31 (Faz 1: derin beyin)
 - **Beyin dizini:** notlar, mailler, dosyalar, Drive, sohbetler tek dizinde; kelime + anlam (yerel `nomic-embed-text`) karma arama.
   `sb index`, `sb find "..."`, `sb answer "..."` (kaynaklı cevap), `sb similar <not>`; MCP `brain_find` / `brain_answer`.

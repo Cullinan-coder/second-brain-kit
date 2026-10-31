@@ -176,15 +176,36 @@ def _embed_model() -> str | None:
     return ((llm.config().get("embedding") or {}).get("model")) or None
 
 
+def forgotten() -> set[str]:
+    """Kullanıcının unutturduğu belge kimlikleri (DATA/forgotten.json)."""
+    import json
+    from . import config
+    try:
+        return set(json.loads((config.DATA / "forgotten.json").read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        return set()
+
+
+def forget_docs(ids: list[str]) -> None:
+    import json
+    from . import config
+    p = config.DATA / "forgotten.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(sorted(forgotten() | set(ids)), ensure_ascii=False), encoding="utf-8")
+
+
 def index(sources: tuple[str, ...] = SOURCES, days: int = 730, embed: bool = True, limit: int | None = None,
           log=print, con: sqlite3.Connection | None = None, docs=None) -> dict:
     """Artımlı: yeni/değişen belgeleri parçalar; silinenleri çıkarır; gömmesi olmayan parçaları gömer."""
     con = con or connect()
     seen, new, changed = set(), 0, 0
     old = {r["doc_id"]: r["sha"] for r in con.execute("SELECT doc_id, sha FROM docs")}
+    gone = forgotten()
     for i, (doc_id, kind, title, date_ms, ref, text) in enumerate(docs if docs is not None else _docs(sources, days)):
         if limit and i >= limit:
             break
+        if doc_id in gone:                                   # "unut" isteğiyle çıkarıldı: bir daha dizinlenmez
+            continue
         seen.add(doc_id)
         sha = _sha(text)
         if old.get(doc_id) == sha:

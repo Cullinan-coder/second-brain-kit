@@ -30,6 +30,10 @@ dependencies = [
     "youtube-transcript-api>=1.2",
 ]
 
+[project.optional-dependencies]
+voice = ["faster-whisper>=1.1", "av>=15,<18"]   # yerel konuşma → yazı (sb voice --setup); av 19 faster-whisper ile uyumsuz
+media = ["yt-dlp>=2025.1"]               # video/podcast dökümü (altyazısı olmayanlar)
+
 [tool.uv]
 package = false
 [tool.pytest.ini_options]

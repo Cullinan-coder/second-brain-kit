@@ -62,6 +62,7 @@ DAILY_REST = [
     ("sohbet bağlantıları", ["chat-links"], 600),
     ("kişi birleştirme (otomatik)", ["merge-people", "--auto"], 900),
     ("kayıtlı aramalar", ["search2", "--saved"], 600),
+    ("günlük yansıma", ["persona", "--reflect"], 900),           # dünün makbuz/takvim/görevlerinden 5 satır (yerel model)
     ("araçlar notu", ["arsenal"], 300),                         # Araçlar ve erişimler.md (doctor + kaynak sayımı)
 ]
 
@@ -224,6 +225,9 @@ def weekly() -> int:
         if features.enabled("brain"):
             for name, args, to in (("kümeleme", ["clusters"], 3600), ("bağlantı önerileri", ["suggest-links"], 1800),
                                    ("analizler", ["analyze", "all"], 3600)):
+                run_step(name, args, to, log)
+        if features.enabled("memory_ui"):
+            for name, args, to in (("beni tanı", ["persona", "--weekly"], 1800), ("tercih adayları", ["persona", "--prefs"], 1800)):
                 run_step(name, args, to, log)
         try:
             from . import hygiene, memory

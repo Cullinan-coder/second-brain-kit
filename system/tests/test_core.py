@@ -898,7 +898,7 @@ def test_chat_http_security_and_flow(monkeypatch):
         req = urllib.request.Request(base + path, data=json.dumps(body).encode(), headers={k: v for k, v in h.items() if v})
         return urllib.request.urlopen(req)
     try:
-        page = urllib.request.urlopen(base + "/")
+        page = urllib.request.urlopen(base + "/classic")
         assert b"Yerel asistan" in page.read() and "app://obsidian.md" in page.headers["Content-Security-Policy"]
         assert json.loads(post("/api/chat", {"sid": "a", "text": "selam"}).read())["reply"] == "Merhaba Ayşe"
         for headers in ({"X-SB": ""}, {"Origin": "https://kotu.example"}, {"Host": "kotu.example"}):      # başlıksız / yabancı origin / yabancı host
@@ -1654,3 +1654,11 @@ def test_contact_rename_follows_source_and_relinks(tmp_path):
     assert fm["aliases"] == ["burcu abla"] and body.startswith("# Burcu Yılmaz") and "not" in body
     assert (v / "20-Projeler" / "p.md").read_text(encoding="utf-8") == "# p\n[[Burcu Yılmaz]] ve [[Burcu Yılmaz|Burcu]]\n"
     assert Vault(v).upsert(spec, date(2026, 11, 1)) == p                         # ikinci çalıştırma: değişiklik yok
+
+
+def test_redact_api_keys_and_secret_assignments():
+    from sb.redact import redact
+    out = redact("key AIzaSyCzamqSfPGBU6wp0fXXXXXXXXXXXXXXXXXX and SMTP_PASSWORD=Hello...111 ok")
+    assert "AIzaSy" not in out and "Hello...111" not in out
+    assert redact("$mail->Password = $config['SMTP_PASSWORD'] ?? '';") == "$mail->Password = $config['SMTP_PASSWORD'] ?? '';"
+    assert "sk-ant-..." in redact("claude config set apiKey sk-ant-...")

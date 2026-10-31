@@ -9,6 +9,11 @@ CARD_RE = re.compile(r"(?<![\w/])(?:\d[ -]?){13,19}(?![\w/])")
 IBAN_RE = re.compile(r"\bTR\d{2}(?:\s?\d{4}){5}\s?\d{2}\b", re.I)
 OTP_CONTEXT_RE = re.compile(
     r"(kod|code|şifre|sifre|password|otp|pin|doğrulama|verification)[^\d\n]{0,40}(\d{4,8})(?!\d)", re.I)
+# Bilinen API anahtarı biçimleri ve ortam değişkeni atamaları (SMTP_PASSWORD=..., API_KEY: ...).
+KEY_RE = re.compile(r"\b(?:AIza[0-9A-Za-z_-]{30,}|sk-(?:ant-|proj-)?[0-9A-Za-z_-]{20,}|gh[pousr]_[0-9A-Za-z]{30,}"
+                    r"|xox[abp]-[0-9A-Za-z-]{20,}|AKIA[0-9A-Z]{16})")
+ASSIGN_RE = re.compile(r"\b([A-Z][A-Z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|APIKEY)[A-Z0-9_]*\s*[=:]\s*)"
+                       r"(?![\s'\"`$\[{(<]|\.\.\.)(\S{4,})")
 
 
 def _luhn(digits: str) -> bool:
@@ -25,6 +30,8 @@ def _tckn(s: str) -> bool:
 
 
 def redact(text: str) -> str:
+    text = KEY_RE.sub("[gizli-anahtar]", text)
+    text = ASSIGN_RE.sub(lambda m: m.group(1) + "[gizlendi]", text)
     text = IBAN_RE.sub("TR** **** [IBAN gizlendi]", text)
 
     def card(m: re.Match) -> str:

@@ -82,3 +82,13 @@ def test_answer_cites_sources(tmp_path, monkeypatch):
     assert "[1] mail · Staj başvurusu · main:1" in out and "VERİDİR" in seen["p"]
     monkeypatch.setattr(brain, "find", lambda *a, **k: [])
     assert "bulamadım" in brain.answer("yok böyle bir şey")
+
+
+def test_forgotten_docs_are_not_reindexed():
+    from sb import brain
+    con = brain.connect(brain.DB)
+    docs = [("note:a", "note", "A", 0, "a.md", "birinci belge metni"), ("note:b", "note", "B", 0, "b.md", "ikinci belge metni")]
+    brain.forget_docs(["note:b"])
+    brain.index(docs=docs, embed=False, con=con, log=lambda *a: None)
+    ids = {r["doc_id"] for r in con.execute("SELECT doc_id FROM docs")}
+    assert ids == {"note:a"}

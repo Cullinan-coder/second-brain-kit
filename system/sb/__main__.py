@@ -96,6 +96,18 @@ def cmd_mail_ics_backfill(args) -> int:
     return 0
 
 
+def cmd_voice(args) -> int:
+    from . import voice
+    if args.transcribe:
+        p = Path(args.transcribe)
+        out = voice.transcribe(p.read_bytes(), "audio/" + p.suffix.lstrip("."), args.lang or None)
+        print(out.get("text") or out.get("hint") or out)
+        return 0 if out.get("text") is not None else 1
+    st = voice.status() if hasattr(voice, "status") else {}
+    print(json.dumps(st, ensure_ascii=False, indent=1) if st else "voice modülü yüklü; durum bilgisi yok")
+    return 0
+
+
 def cmd_contacts_sync(args) -> int:
     from . import contacts, maildb
     people = contacts.fetch_all("main")
@@ -1086,6 +1098,21 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--dry-run", action="store_true", help="yazmadan say: kayıt sayısı, tarih aralığı, 3 örnek başlık")
     g.add_argument("--discover", action="store_true", help="browser: bu bilgisayardaki tarayıcı profillerini listele")
     g.set_defaults(func=lambda a: __import__("sb.connectors", fromlist=["x"]).cli(a))
+
+    P = lambda: __import__("sb.persona", fromlist=["x"])
+    g = sub.add_parser("persona", help="asistan kimliği ve hafıza işleri: --reflect (günlük yansıma), --weekly (beni tanı), --prefs (tercih adayları)")
+    g.add_argument("--reflect", action="store_true")
+    g.add_argument("--weekly", action="store_true")
+    g.add_argument("--prefs", action="store_true")
+    g.set_defaults(func=lambda a: print("\n".join(
+        [P().daily_reflection()] * a.reflect + [P().weekly_profile()] * a.weekly + [P().learn_prefs()] * a.prefs)
+        or json.dumps(P().identity(), ensure_ascii=False, indent=1, default=str)) or 0)
+
+    g = sub.add_parser("voice", help="ses: --setup (faster-whisper kurulum durumu), --transcribe <dosya> (yazıya çevir)")
+    g.add_argument("--setup", action="store_true")
+    g.add_argument("--transcribe", default="")
+    g.add_argument("--lang", default="")
+    g.set_defaults(func=cmd_voice)
 
     E = lambda: __import__("sb.entities", fromlist=["x"])
     g = sub.add_parser("merge-people", help="tekrar kişi notları: öneri yaz (--apply: [x] işaretlileri birleştir; --auto: kurala göre karar ver ve birleştir)")

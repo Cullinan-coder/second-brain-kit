@@ -7,7 +7,9 @@ import pytest
 @pytest.fixture(autouse=True)
 def _private_state(monkeypatch, tmp_path):
     """Testler gerçek ~/.secondbrain kayıtlarına (kullanım, performans, çökme, önbellek) yazmasın."""
-    from sb import brain, router, telemetry, usage
+    from sb import brain, config, router, telemetry, usage
+    (tmp_path / "data").mkdir(exist_ok=True)
+    monkeypatch.setattr(config, "DATA", tmp_path / "data")       # Faz 2 modülleri config.DATA'yı işlev içinde okur
     monkeypatch.setattr(brain, "DB", tmp_path / "brain.db")
     monkeypatch.setattr(brain, "VEC_NPY", tmp_path / "vecs.npy")
     monkeypatch.setattr(brain, "IDS_NPY", tmp_path / "vec_ids.npy")
