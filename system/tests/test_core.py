@@ -1613,3 +1613,23 @@ def test_night_commands_via_assistant(tmp_path, monkeypatch):
     r = chat.respond(s, "gece koşusunu başlat", chat_fn=no_model)
     assert r["proposals"] and not started                    # onay kartı; onaysız başlamaz
     assert chat.decide(s, r["proposals"][0]["id"], True) == "başladı" and started == [1]
+
+
+def test_feature_switches_and_roadmap(tmp_path, monkeypatch):
+    from sb import chat, features
+    monkeypatch.setattr(features, "CONFIG", tmp_path / "features.yaml")
+    features.reload()
+    assert features.enabled("sms") and features.step_enabled(["sms-sync"]) and features.tool_enabled("play_spotify")
+    out = features.set_modules(off=["sms", "media"])
+    assert "· sms" in out and "✓ gmail" in out
+    assert not features.step_enabled(["sms-sync"]) and features.step_enabled(["mail-categorize"])
+    assert not features.tool_enabled("play_spotify") and features.tool_enabled("note_find")
+    assert "kapalı" in chat.run_tool(chat.Session(), "play_spotify", {"query": "x"})
+    assert "Bilinmeyen" in features.set_modules(on=["yok"])
+    features.set_modules(on=["sms"])
+    assert features.enabled("sms")
+    features.reload()
+    items = features.catalog()
+    assert len(items) == 250 and {i["faz"] for i in items} == {0, 1, 2, 3, 4, 5}
+    assert all(i["denetleyen"] == "opus" for i in items)
+    assert "Toplam 250" in features.roadmap()

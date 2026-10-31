@@ -104,16 +104,60 @@ def label(cfg: dict, note: str = "") -> str:
     return f"yerel {cfg['ollama']['model']}" + (f" ({note})" if note else "")
 
 
-def complete(task: str, prompt: str, *, schema: dict | None = None, model: str = "sonnet", timeout: int = 1200) -> tuple[str, str]:
-    cfg = config()
-    if cfg["tasks"].get(task, "claude") == "ollama":
+def _run(cfg: dict, target: str, prompt: str, schema: dict | None, model: str, timeout: int, task: str) -> tuple[str, str]:
+    if target == "ollama":
         return ollama_chat(prompt, cfg, schema, timeout), label(cfg)
-    try:
+    if target == "claude":
         return claude_text(prompt, model, timeout, schema), "claude"
-    except Exception as e:
-        if not cfg.get("fallback_to_local"):
-            raise
-        return ollama_chat(prompt, cfg, schema, timeout), label(cfg, f"Claude yedeği: {str(e)[:70]}")
+    from . import providers                                  # "<sağlayıcı>:<model>" → bulut API ya da yerel sunucu
+    out = providers.chat(target, [{"role": "user", "content": prompt}], schema=schema, timeout=timeout, task=task)
+    return out["content"], f"api {target}"
+
+
+def complete(task: str, prompt: str, *, schema: dict | None = None, model: str = "sonnet", timeout: int = 1200,
+             private: bool = False) -> tuple[str, str]:
+    """Yönlendiricinin zincirindeki hedefleri sırayla dener (router.chain). `private=True` ya da istemde hassas veri varsa
+    yalnız yerel modeller kullanılır. Önbellek açıksa aynı istek yeniden üretilmez."""
+    from . import router
+    cfg = config()
+    targets = router.chain(cfg, task, prompt, private)
+    use_cache = router.cacheable(cfg, task)
+    err: tuple[str, Exception] | None = None
+    for target in targets:
+        if use_cache and (hit := router.cache_get(cfg, target, prompt, schema)):
+            return hit
+        try:
+            text, lbl = _run(cfg, target, prompt, schema, model, timeout, task)
+        except Exception as e:
+            err = err or (target, e)
+            continue
+        if err:                                              # yedek hedef cevap verdi: etikette neden düşüldüğü
+            first, e = err
+            why = f"{'Claude' if first == 'claude' else 'API'} yedeği: {str(e)[:70]}"
+            lbl = label(cfg, why) if target == "ollama" else f"{lbl} ({why})"
+        if use_cache:
+            router.cache_put(target, prompt, schema, text, lbl)
+        return text, lbl
+    raise err[1] if err else RuntimeError("model zinciri boş")
+
+
+def long_complete(task: str, instruction: str, text: str, *, chunk_chars: int = 0, timeout: int = 1200,
+                  private: bool = False) -> tuple[str, str]:
+    """Bağlama sığmayan metin (madde 36): parçalara böl, her parçayı talimatla işle, sonra parça sonuçlarını birleştir."""
+    from . import router
+    size = chunk_chars or int(config()["ollama"].get("max_chars", 60000)) - len(instruction) - 2000
+    parts = router.chunks(text, max(size, 4000))
+    if len(parts) == 1:
+        return complete(task, f"{instruction}\n\n{text}", timeout=timeout, private=private)
+    notes, lbl = [], ""
+    for i, part in enumerate(parts, 1):
+        out, lbl = complete(task, f"{instruction}\n\n[Uzun metnin {i}/{len(parts)}. parçası — yalnız bu parçaya göre çalış, "
+                                  f"kısa yaz]\n{part}", timeout=timeout, private=private)
+        notes.append(f"### Parça {i}\n{strip_think(out)}")
+    final, lbl = complete(task, f"{instruction}\n\nAşağıdakiler aynı metnin {len(parts)} parçasından çıkarılan ara sonuçlar. "
+                                f"Bunları birleştirip tek, tekrarsız sonuç yaz:\n\n" + "\n\n".join(notes),
+                          timeout=timeout, private=private)
+    return final, f"{lbl} · {len(parts)} parça"
 
 
 def is_local(lbl: str) -> bool:

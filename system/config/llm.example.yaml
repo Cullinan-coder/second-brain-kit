@@ -18,3 +18,38 @@ ollama:
   max_chars: 66000         # yerel modele giden metin bu kadar karaktere kırpılır (baş + son)
   max_confidence: 0.79     # yerel tarih çıkarmada güven üst sınırı (< 0.8 eşiği: otomatik takvime yazılmaz)
   vision_model: qwen3-vl:8b   # ekran/kamera görüntüsünü anlatır (yaklaşık 6 GB); boş bırakılırsa yalnız yazı (OCR) okunur
+
+# --- Bulut API sağlayıcıları (isteğe bağlı) ---
+# tasks altındaki değer "ollama" | "claude" | "<sağlayıcı>:<model>" olabilir, ör.  topic_map: openai:gpt-5-mini
+# Sağlayıcılar: openai, anthropic, gemini, openrouter, groq, deepseek, mistral, lmstudio, ollama.
+# Asistan modeli için ayrı görev anahtarı: `chat: anthropic:claude-sonnet-4-5` (yoksa "ollama").
+# API anahtarı: ortam değişkeni (OPENAI_API_KEY ...) ya da `sb set-secret api-openai`. Tek soru denemek: sb ask "..." --model openai:gpt-5-mini
+# Not: bulut modeline giden metin bilgisayardan çıkar; mail/SMS gibi özel işleri yerelde (ollama) tut.
+# fallback_to_local: true iken API hatasında iş yerel modele düşer.
+# Varsayılan adresleri/anahtar adlarını değiştirmek için (açıp düzenle):
+# providers:
+#   lmstudio:
+#     base_url: http://localhost:1234/v1     # LM Studio yerel sunucusu (anahtar gerekmez)
+#   openai:
+#     base_url: https://api.openai.com/v1    # Azure/vekil sunucu için değiştir
+#     api_key_env: OPENAI_API_KEY
+
+# --- Maliyet takibi ve bütçe (sb usage) ---
+# Her bulut çağrısı ~/.secondbrain/usage.jsonl'a yazılır; yerel modeller 0 USD ile kaydedilir.
+# Sınır aşılırsa bulut çağrısı yapılmaz (BudgetExceeded; fallback_to_local açıksa iş yerele düşer). Sınırı kaldırmak için 0 yaz.
+budget:
+  monthly_usd: 10
+  daily_usd: 2
+  warn_at: 0.8             # sınırın bu oranında tek seferlik (günde bir) bildirim
+# Bilinmeyen/yeni modellerin fiyatı (USD / 1M token: [girdi, çıktı]); yerleşik tabloyu ezer:
+# prices:
+#   openai:
+#     gpt-5-mini: [0.25, 2.0]
+
+# --- Gömme (embedding) modeli ---
+# "<sağlayıcı>:<model>": ollama (/api/embed), openai ve uyumlular (/embeddings), gemini (batchEmbedContents). Anthropic gömme sunmaz.
+# Bu model indirilmemiş olabilir: `ollama pull nomic-embed-text`. Denemek için: sb embed-test "metin"
+embedding:
+  model: "ollama:nomic-embed-text"
+  batch: 32
+# Bulut alternatifi:  model: "openai:text-embedding-3-small"  (ya da gemini:text-embedding-004)

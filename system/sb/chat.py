@@ -419,7 +419,10 @@ def _fold_tr(s: str) -> str:
 
 
 def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
-    from . import actions, mcp_server as ms
+    from . import actions, features, mcp_server as ms
+    if not features.tool_enabled(name):
+        key = features.TOOL_MODULE[name]
+        return f"Bu özellik kapalı ({features.MODULES[key][0]}). Açmak için: sb features --on {key}"
     try:
         if name in AUTO_ACTIONS:
             if session.tainted or session.remote:
@@ -472,8 +475,15 @@ def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
 
 def ollama_tools_chat(messages: list[dict], cfg: dict) -> dict:
     o = cfg["ollama"]
+    from .features import tool_enabled                  # kapalı modülün aracı modele hiç gösterilmez
+    tools = [t for t in TOOLS if tool_enabled(t["function"]["name"])]
+    spec = cfg["tasks"].get("chat", "ollama")
+    if spec != "ollama":                                 # "<sağlayıcı>:<model>": aynı Ollama biçimli mesaj döner
+        from . import providers
+        out = providers.chat(spec, messages, tools=tools, think=bool(o.get("think", False)), timeout=900)
+        return {"role": "assistant", "content": out["content"], **({"tool_calls": out["tool_calls"]} if out["tool_calls"] else {})}
     llm.ensure_ollama(cfg)
-    payload = {"model": o["model"], "messages": messages, "tools": TOOLS, "stream": False, "think": o.get("think", False),
+    payload = {"model": o["model"], "messages": messages, "tools": tools, "stream": False, "think": o.get("think", False),
                "options": {"num_ctx": o["num_ctx"], "temperature": 0.3}}
     return llm._http(o["host"], "/api/chat", payload, 900)["message"]
 
@@ -984,7 +994,9 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             with lock:                                               # aynı anda tek model çağrısı
                 if self.path == "/api/chat":
                     try:
-                        out = respond(s, str(data.get("text", ""))[:4000], chat_fn)
+                        from . import telemetry
+                        with telemetry.timed("chat", "respond"):
+                            out = respond(s, str(data.get("text", ""))[:4000], chat_fn)
                     except Exception as e:
                         out = {"reply": f"Hata: {type(e).__name__}: {str(e)[:200]}", "trace": [], "proposals": pending(s)}
                 elif self.path == "/api/decide":

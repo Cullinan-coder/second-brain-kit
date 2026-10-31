@@ -26,8 +26,10 @@ def mail_steps() -> list[tuple[str, list[str], int]]:
         acc = accounts()
     except OSError:
         return []
-    steps = [(f"mail {a}", ["mail-fetch", a], 3600) for a, c in (acc.get("google") or {}).items() if "gmail" in (c.get("scopes") or [])]
-    steps += [(f"mail {a}@", ["mail-fetch", a], 1800) for a in (acc.get("imap") or {})]
+    from . import features
+    steps = [(f"mail {a}", ["mail-fetch", a], 3600) for a, c in (acc.get("google") or {}).items()
+             if "gmail" in (c.get("scopes") or []) and features.enabled("gmail")]
+    steps += [(f"mail {a}@", ["mail-fetch", a], 1800) for a in (acc.get("imap") or {}) if features.enabled("imap")]
     return steps
 
 
@@ -83,6 +85,8 @@ def run_step(name: str, args: list[str], timeout: int, log) -> dict:
     except subprocess.TimeoutExpired:
         out, rc = f"zaman aşımı ({timeout} sn)", 124
     dur = time.time() - t0
+    from . import telemetry
+    telemetry.record("daily_step", name, dur * 1000, rc == 0)
     lines = [l for l in out.strip().splitlines() if l.strip()]
     tail = " | ".join(lines[-2:]) if lines else ""
     log(f"[{'OK' if rc == 0 else 'HATA'}] {name} ({dur:.0f} sn) rc={rc}\n" + "\n".join("    " + l for l in lines[-12:]))
@@ -181,7 +185,9 @@ def daily(skip: set[str] | None = None, force: bool = False) -> int:
         return 0
     with lock():
         log(f"günlük çalışma başladı {datetime.now():%F %T}")
-        steps = [run_step(n, a, t, log) for n, a, t in mail_steps() + DAILY_REST if not skip or n not in skip]
+        from . import features
+        steps = [run_step(n, a, t, log) for n, a, t in mail_steps() + DAILY_REST
+                 if (not skip or n not in skip) and features.step_enabled(a)]
         try:
             con = maildb.connect(DATA / "mail.db")
             if telegram.chat_id():

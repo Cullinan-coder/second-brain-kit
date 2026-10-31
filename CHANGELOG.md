@@ -2,6 +2,21 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.4.0 — 2026-10-31 (Faz 0: temel altyapı · yol haritası `ROADMAP.md`)
+- **Yol haritası:** 250 özellik, 6 faz (`features.yaml`); ilerleme `sb roadmap`.
+- **Özellik anahtarları:** `sb features --on/--off <modül>` — kapalı modülün günlük adımı çalışmaz, asistan aracı modele gösterilmez.
+- **Bulut modeller:** OpenAI, Anthropic, Gemini, OpenRouter, Groq, DeepSeek, Mistral + yerel LM Studio / llama.cpp / vLLM.
+  Görev başına model (`llm.yaml` → `tasks: <görev>: "<sağlayıcı>:<model>"`; asistan için `tasks.chat`). Anahtar: `sb set-secret api-<ad>`.
+  Tek soru: `sb ask "..." --model openai:gpt-5-mini [--stream]`.
+- **Yönlendirici:** kurallar (`routing`), yedek zinciri (`fallback`), önbellek (`cache`). Şifre/kart/TC/IBAN içeren ya da gizli
+  işaretli içerik hiçbir koşulda buluta gitmez (yalnız yerel model). Uzun belgeler parça parça okunup birleştirilir.
+- **Maliyet:** her çağrı kaydedilir, `sb usage`; aylık/günlük bütçe (`budget`), aşılırsa bulut yerine yerel model, %80'de bildirim.
+- **Gömme modeli** seçimi (`embedding`), `sb embed-test`.
+- **Yerel model yöneticisi:** `sb models` (donanım: RAM, ekran kartı, VRAM → önerilen profil full/medium/small/cloud),
+  `--apply <profil>`, `--bench` (kendi notlarınla hız ve biçim testi), `--pull/--rm` (onaylı).
+- **Kalite:** `sb e2e [--live]` uçtan uca test, `sb logs [--crash|--bundle]` çökme raporu (kişisel veri maskeli, hiçbir yere gönderilmez),
+  `sb perf` performans, `sb whatsnew` yenilikler.
+
 ## 0.3.1 — 2026-10-31
 - **Gece koşusu yalnız sen istediğinde:** otomatik saat yok. Asistana (Obsidian ya da telefon) `geceye ekle: iş @klasör`,
   `gece işleri neler`, `gece koşusunu başlat` (onay kartı) yaz; arka planda sırayla yapılır, bitince bildirim gelir.

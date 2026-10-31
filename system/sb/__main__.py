@@ -656,6 +656,28 @@ def cmd_set_secret(args) -> int:
     return 0
 
 
+def cmd_ask(args) -> int:
+    from . import llm, providers
+    cfg = llm.config()
+    spec = args.model or cfg["tasks"].get("chat", "ollama")
+    if spec == "ollama":
+        spec = "ollama:" + cfg["ollama"]["model"]
+    messages = [{"role": "user", "content": args.question}]
+    try:
+        if args.stream:
+            for piece in providers.stream_text(spec, messages):
+                print(piece, end="", flush=True)
+            print()
+        else:
+            out = providers.chat(spec, messages)
+            print(out["content"])
+            print(f"[{out['provider']}:{out['model']} · {out['usage']['input']}+{out['usage']['output']} token]", file=sys.stderr)
+    except providers.ProviderError as e:
+        print(f"Hata: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         if stream:                                   # pythonw (kısayol) altında akış yoktur
@@ -946,6 +968,69 @@ def main(argv: list[str] | None = None) -> int:
     g.set_defaults(func=lambda a: print(W().night_run() if a.run else W().night_start() if a.start else
                                         W().night_add(a.add, a.where) if a.add else (W().ensure_note() and W().night_plan())) or 0)
 
+    F = lambda: __import__("sb.features", fromlist=["x"])
+    g = sub.add_parser("features", help="modülleri aç/kapat (config/features.yaml); listesiz çalıştırınca durumu gösterir")
+    g.add_argument("--on", action="append", default=[])
+    g.add_argument("--off", action="append", default=[])
+    g.set_defaults(func=lambda a: print(F().set_modules(a.on, a.off) if a.on or a.off else F().listing()) or 0)
+
+    g = sub.add_parser("roadmap", help="250 maddelik yol haritasının ilerlemesi (features.yaml)")
+    g.add_argument("--mark", default="", help="ör. 3,5,23")
+    g.add_argument("--status", default="tamamlandi")
+    g.set_defaults(func=lambda a: print(F().mark([int(x) for x in a.mark.split(",") if x.strip()], a.status) if a.mark
+                                        else F().roadmap()) or 0)
+
+    TEL = lambda: __import__("sb.telemetry", fromlist=["x"])
+    g = sub.add_parser("logs", help="son günlük çalışma logu / çökme raporu; --bundle paylaşılabilir paket üretir")
+    g.add_argument("--n", type=int, default=40)
+    g.add_argument("--crash", action="store_true", help="son çökme raporunu göster")
+    g.add_argument("--bundle", action="store_true", help="son 5 rapor + doctor çıktısını tek zip yap (hiçbir yere gönderilmez)")
+    g.set_defaults(func=lambda a: print(f"Paket hazır: {TEL().crash_bundle()}\nGitHub issue'ya ekleyebilirsin; kendiliğinden gönderilmez.")
+                   or 0 if a.bundle else print(TEL().logs(a.n, "crash" if a.crash else "daily")) or 0)
+
+    g = sub.add_parser("perf", help="performans panosu (perf.jsonl): adım/sohbet süreleri, p95, hata oranı")
+    g.add_argument("--days", type=int, default=7)
+    g.set_defaults(func=lambda a: print(TEL().perf_summary(a.days)) or 0)
+
+    g = sub.add_parser("whatsnew", help="son görmediğin sürüm yenilikleri")
+    g.add_argument("--all", action="store_true", help="tüm sürümleri göster")
+    g.set_defaults(func=lambda a: print(TEL().whatsnew(a.all)) or 0)
+
+    g = sub.add_parser("e2e", help="gerçek kasada salt okunur uçtan uca testler; --live çalışan asistanı da dener")
+    g.add_argument("--live", action="store_true")
+    g.set_defaults(func=lambda a: __import__("sb.telemetry", fromlist=["x"]).run_e2e(a.live))
+
+    g = sub.add_parser("models", help="yerel model yöneticisi: donanım, öneri, profil, indirme/silme, kendi verinle sınav")
+    g.add_argument("--apply", default="", help="profili llm.yaml'a uygula: full|medium|small|cloud (--yes olmadan yalnız fark)")
+    g.add_argument("--bench", default="", help="virgüllü model listesi, ör. ollama:qwen3:14b,ollama:qwen3:4b")
+    g.add_argument("--n", type=int, default=5, help="sınavda not sayısı")
+    g.add_argument("--pull", default="", help="Ollama'ya model indir (--yes gerekir)")
+    g.add_argument("--rm", default="", help="Ollama'dan model sil (--yes gerekir)")
+    g.add_argument("--yes", action="store_true")
+    g.set_defaults(func=lambda a: __import__("sb.models", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("usage", help="model kullanımı ve maliyet özeti (bütçeyle birlikte)")
+    g.add_argument("--days", type=int, default=30)
+    g.set_defaults(func=lambda a: print(__import__("sb.usage", fromlist=["x"]).summary(a.days)) or 0)
+
+    def cmd_embed_test(a):
+        from . import llm, providers
+        spec = ((llm.config().get("embedding") or {}).get("model")) or ""
+        if not spec:
+            print("llm.yaml içinde embedding.model tanımlı değil (ör. ollama:nomic-embed-text).")
+            return 1
+        try:
+            v = providers.embed(spec, [a.text])[0]
+        except Exception as e:
+            print(f"Gömme başarısız ({spec}): {e}")
+            return 1
+        print(f"{spec}: {len(v)} boyut\nilk 5: {[round(x, 4) for x in v[:5]]}")
+        return 0
+
+    g = sub.add_parser("embed-test", help="yapılandırılmış gömme modeliyle tek metni göm (boyut + ilk 5 değer)")
+    g.add_argument("text")
+    g.set_defaults(func=cmd_embed_test)
+
     g = sub.add_parser("asistan-undo", help="asistanın son kasa değişikliğini geri al")
     g.set_defaults(func=lambda a: print(__import__("sb.vault_ops", fromlist=["x"]).undo_last(actor="kullanici")) or 0)
 
@@ -967,12 +1052,27 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("action", choices=["setup", "pull", "send"])
     g.set_defaults(func=cmd_telegram)
 
+    g = sub.add_parser("ask", help="tek soru: verilen (ya da tasks.chat) modele sor, ör. --model openai:gpt-5-mini")
+    g.add_argument("question")
+    g.add_argument("--model", default="", help="<sağlayıcı>:<model>; boşsa tasks.chat")
+    g.add_argument("--stream", action="store_true", help="cevabı parça parça yazdır")
+    g.set_defaults(func=cmd_ask)
+
     g = sub.add_parser("set-secret")
-    g.add_argument("name", choices=["claude-oauth", "telegram-bot", *[f"imap-{a}" for a in (accounts().get("imap") or {})]])
+    g.add_argument("name", choices=["claude-oauth", "telegram-bot", *[f"imap-{a}" for a in (accounts().get("imap") or {})],
+                                    *[f"api-{n}" for n in ("openai", "anthropic", "gemini", "openrouter", "groq", "deepseek", "mistral")]])
     g.set_defaults(func=cmd_set_secret)
 
     args = p.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except KeyboardInterrupt:
+        return 130
+    except Exception as e:                           # SystemExit Exception değildir: dokunulmadan geçer
+        from . import telemetry
+        path = telemetry.crash(e, " ".join(sys.argv[1:] if argv is None else argv))
+        print(f"Beklenmeyen hata; rapor: {path}. Paylaşmak için: sb logs --bundle", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

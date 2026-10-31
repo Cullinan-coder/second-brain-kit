@@ -69,6 +69,22 @@ def checks() -> list[tuple[str, str, str]]:
                     add(OK if m in tags else WARN, f"Model {m}", f"ollama pull {m}")
         except Exception:
             pass
+    try:
+        from . import models as _models
+        _hw = _models.hardware()
+        add(OK, f"Donanım: RAM {_hw['ram_gb'] or '?'} GB, GPU {_hw['gpu'] or 'yok'}, VRAM {_hw['vram_gb'] if _hw['vram_gb'] is not None else '?'} GB (önerilen profil: {_models.recommend(_hw)['profile']})",
+            f"önerilen profil: {_models.recommend(_hw)['profile']} (sb models)")
+    except Exception:
+        pass
+    # bulut API sağlayıcıları (llm.yaml'da "<sağlayıcı>:<model>" ile kullanılanlar)
+    try:
+        from . import providers
+        from .llm import config as llm_config
+        used = sorted({str(v).split(":", 1)[0] for v in (llm_config().get("tasks") or {}).values() if ":" in str(v)} - {"ollama", "claude"})
+        for prov in used:
+            add(OK if providers.has_key(prov) else WARN, f"API anahtarı: {prov}", f"sb set-secret api-{prov} (ya da ortam değişkeni)")
+    except Exception as e:
+        add(WARN, "Sağlayıcı kontrolü yapılamadı", str(e)[:80])
     # Claude Code
     claude = shutil.which("claude")
     add(OK if claude else WARN, "Claude Code (claude)", "claude.com/code — derin derleme ve MCP için")
