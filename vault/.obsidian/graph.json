@@ -1,0 +1,233 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": true,
+  "showAttachments": true,
+  "hideUnresolved": true,
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    {
+      "query": "[kume:\"Küme - Akademik Hazırlık ve Ders Notları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Akademik Hazırlık ve Ders Notları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 13736238
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Akademik ve Eğitim Stratejileri\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Akademik ve Eğitim Stratejileri.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 9657586
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Akademik ve Profesyonel Projeler\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Akademik ve Profesyonel Projeler.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 3068218
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Anlam ve Deyimler\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Anlam ve Deyimler.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 15883388
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Aşk ve Duygusal Duygular\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Aşk ve Duygusal Duygular.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 3047633
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Bilgisayar Mühendisliği Ders Notları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Bilgisayar Mühendisliği Ders Notları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 13955676
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Bilgisayar Mühendisliği Ders ve Proje Notları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Bilgisayar Mühendisliği Ders ve Proje Notları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 12725969
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Claude.ai Projesi Notları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Claude.ai Projesi Notları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 6091448
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Ders Proje ve Ödev Tarihleri\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Ders Proje ve Ödev Tarihleri.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 13722414
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Ders Teslim Tarihleri ve Durumları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Ders Teslim Tarihleri ve Durumları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 6380786
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Duygusal ve Felsefi Düşünceler\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Duygusal ve Felsefi Düşünceler.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 5820718
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Google Drive Dosya ve Klasörleri\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Google Drive Dosya ve Klasörleri.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 15883438
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Kişisel Duygular ve Deneyimler\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Kişisel Duygular ve Deneyimler.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 3061713
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Kişisel Proje ve Notlar\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Kişisel Proje ve Notlar.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 15916636
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Kullanıcı Soruları ve Cevapları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Kullanıcı Soruları ve Cevapları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 9121489
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Makine Öğrenimi ve Veri Analizi Projeleri\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Makine Öğrenimi ve Veri Analizi Projeleri.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 6091398
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Ayşe'in Proje ve Staj Deneyimleri\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Ayşe'in Proje ve Staj Deneyimleri.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 13708847
+      }
+    },
+    {
+      "query": "[kume:\"Küme - WhatsApp Grupları ve Sohbet Kayıtları\"] OR path:\"40-Kaynaklar/Kümeler/Küme - WhatsApp Grupları ve Sohbet Kayıtları.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 6064626
+      }
+    },
+    {
+      "query": "[kume:\"Küme - Yapay Zeka ve Etik Eğitim\"] OR path:\"40-Kaynaklar/Kümeler/Küme - Yapay Zeka ve Etik Eğitim.md\"",
+      "color": {
+        "a": 1,
+        "rgb": 9359662
+      }
+    },
+    {
+      "query": "path:\"60-Kişiler\"",
+      "color": {
+        "a": 1,
+        "rgb": 16096779
+      }
+    },
+    {
+      "query": "path:\"20-Projeler\"",
+      "color": {
+        "a": 1,
+        "rgb": 15680580
+      }
+    },
+    {
+      "query": "path:\"10-Dersler\"",
+      "color": {
+        "a": 1,
+        "rgb": 2278750
+      }
+    },
+    {
+      "query": "path:\"30-Kariyer\"",
+      "color": {
+        "a": 1,
+        "rgb": 959977
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Teknolojiler\"",
+      "color": {
+        "a": 1,
+        "rgb": 9133302
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Konular\" OR path:\"40-Kaynaklar/Kavramlar\"",
+      "color": {
+        "a": 1,
+        "rgb": 15485081
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Sohbet geçmişi\" OR path:\"40-Kaynaklar/Claude\" OR path:\"40-Kaynaklar/NotebookLM\"",
+      "color": {
+        "a": 1,
+        "rgb": 1357990
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Bilgisayar\"",
+      "color": {
+        "a": 1,
+        "rgb": 6583435
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Belgeler\" OR path:\"40-Kaynaklar/Drive\" OR path:\"40-Kaynaklar/Keep\"",
+      "color": {
+        "a": 1,
+        "rgb": 10724259
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Gruplar\"",
+      "color": {
+        "a": 1,
+        "rgb": 15381256
+      }
+    },
+    {
+      "query": "path:\"40-Kaynaklar/Bağlantılar\"",
+      "color": {
+        "a": 1,
+        "rgb": 9741240
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": false,
+  "textFadeMultiplier": 0.6,
+  "nodeSizeMultiplier": 1.3133363559816,
+  "lineSizeMultiplier": 1.71958028369713,
+  "collapse-forces": false,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.08317427835927314,
+  "close": true
+}

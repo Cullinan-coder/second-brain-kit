@@ -241,15 +241,20 @@ def _drop(con: sqlite3.Connection, doc_id: str) -> None:
     con.execute("DELETE FROM docs WHERE doc_id = ?", (doc_id,))
 
 
-def embed_pending(con: sqlite3.Connection, batch: int = 32, log=print, embedder=None) -> int:
-    """Gömmesi olmayan parçaları gömer (nomic: 'search_document: ' öneki) ve hızlı matrisi yeniler."""
+def embed_pending(con: sqlite3.Connection, batch: int = 32, log=print, embedder=None, kinds: tuple[str, ...] | None = None) -> int:
+    """Gömmesi olmayan parçaları gömer (nomic: 'search_document: ' öneki) ve hızlı matrisi yeniler.
+    Sıra: notlar → belgeler → mail/sohbet → kayıtlar (büyük kayıt yığını notları bekletmesin); `kinds` verilirse yalnız onlar."""
     import numpy as np
     model = _embed_model()
     if not model:
         return 0
     if embedder is None:
         from .providers import embed as embedder
-    rows = con.execute("SELECT c.id, c.text FROM chunks c LEFT JOIN vecs v ON v.chunk_id = c.id WHERE v.chunk_id IS NULL").fetchall()
+    where = f" AND d.kind IN ({','.join('?' * len(kinds))})" if kinds else ""
+    rows = con.execute("SELECT c.id, c.text FROM chunks c JOIN docs d ON d.doc_id = c.doc_id "
+                       "LEFT JOIN vecs v ON v.chunk_id = c.id WHERE v.chunk_id IS NULL" + where +
+                       " ORDER BY CASE d.kind WHEN 'note' THEN 0 WHEN 'file' THEN 1 WHEN 'mail' THEN 2 WHEN 'chat' THEN 2 ELSE 3 END, c.id",
+                       tuple(kinds or ())).fetchall()
     done, t0 = 0, time.time()
     for i in range(0, len(rows), batch):
         part = rows[i:i + batch]

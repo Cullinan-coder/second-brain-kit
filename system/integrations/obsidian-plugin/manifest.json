@@ -1,0 +1,9 @@
+{
+  "id": "second-brain-assistant",
+  "name": "Second Brain Asistan",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Yerel Second Brain asistanıyla sohbet, özet, benzer notlar ve günün planı (yalnız 127.0.0.1).",
+  "author": "Ayşe Yılmaz",
+  "isDesktopOnly": true
+}

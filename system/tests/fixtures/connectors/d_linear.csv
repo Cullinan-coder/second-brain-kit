@@ -1,0 +1,3 @@
+ID,Team,Title,Description,Status,Estimate,Priority,Project,Creator,Assignee,Labels,Due Date
+ENG-7,Eng,Yeni panel,Tasarım bekliyor,Todo,2,High,Panel,Ben,Ben,,2026-11-12
+ENG-2,Eng,Bitmiş iş,,Done,1,Low,Panel,Ben,Ben,,

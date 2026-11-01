@@ -52,7 +52,7 @@ def gemini_convs(text: str) -> list[dict]:
     for e in activity_entries(text):
         m = GEMINI_Q.match(e["metin"])
         prompt = (m.group(1) if m else e["metin"]).strip()
-        if not prompt or not e["date_ms"]:
+        if not prompt or not e["date_ms"] or not 0 < e["date_ms"] < 4_102_444_800_000:   # tarih okunamadı / 2100 sonrası
             continue
         answer = " ".join(_strip(e["ham"]).split())
         turns = [("user", prompt)] + ([("assistant", answer)] if answer else [])
@@ -120,12 +120,92 @@ def write_keep(notes: list[dict], account: str) -> list[str]:
     return written
 
 
+NB_RE = re.compile(r"/NotebookLM/([^/]+)/(?:(Sources|Artifacts|Chat History)/)?([^/]+)$")
+NB_SOURCE_CHARS, NB_TEXT_CHARS = 60_000, 6_000
+
+
+def _html_text(raw: bytes) -> str:
+    h = raw.decode("utf-8", "replace")
+    h = re.sub(r"(?is)<(script|style)\b.*?</\1>", " ", h)
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", h)).split())
+
+
+def notebooklm(z: zipfile.ZipFile) -> list[dict]:
+    """NotebookLM defterleri: {title, id, created, sources:[{name,text}], artifacts:[{title,type,text}], chats:[text]}."""
+    nbs: dict[str, dict] = {}
+    names = set(z.namelist())
+    for n in z.namelist():
+        m = NB_RE.search(n)
+        if not m:
+            continue
+        nb = nbs.setdefault(m.group(1), {"title": m.group(1), "id": "", "created": "", "sources": [], "artifacts": [], "chats": []})
+        part, name = m.group(2), m.group(3)
+        if not part and name.endswith(" metadata.json"):
+            try:
+                meta = json.loads(z.read(n).decode("utf-8"))
+            except ValueError:
+                continue
+            nb.update(title=meta.get("title") or nb["title"], id=meta.get("id", ""),
+                      created=(meta.get("metadata") or {}).get("createTime", "")[:10])
+        elif part == "Sources" and name.endswith(".html"):
+            nb["sources"].append({"name": name[:-5], "text": _html_text(z.read(n))[:NB_SOURCE_CHARS]})
+        elif part == "Chat History" and name.endswith(".html"):
+            nb["chats"].append(_html_text(z.read(n))[:NB_TEXT_CHARS])
+        elif part == "Artifacts" and name.endswith((".mp4", ".m4a", ".wav")):
+            nb["artifacts"].append({"title": name, "type": "sesli/görüntülü özet", "text": ""})
+        elif part == "Artifacts" and not name.endswith((" metadata.json", ".png", ".jpg")):
+            kind = ""
+            if n + " metadata.json" in names:
+                try:
+                    kind = json.loads(z.read(n + " metadata.json").decode("utf-8")).get("type", "")
+                except ValueError:
+                    pass
+            nb["artifacts"].append({"title": name, "type": kind.replace("ARTIFACT_TYPE_", "").lower(),
+                                    "text": _html_text(z.read(n))[:NB_TEXT_CHARS]})
+    return list(nbs.values())
+
+
+def write_notebooklm(nbs: list[dict], account: str, con) -> list[str]:
+    """Defter başına 40-Kaynaklar/NotebookLM notu; kaynak metinleri beyin dizini için items'a (source=notebooklm)."""
+    from datetime import date
+    from .. import vault_ops
+    from ..notes import dump_note, safe_filename
+    from ..redact import redact
+    folder = vault_ops.VAULT / "40-Kaynaklar" / "NotebookLM"
+    folder.mkdir(parents=True, exist_ok=True)
+    written, items = [], []
+    for nb in nbs:
+        d = date.fromisoformat(nb["created"]) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", nb["created"] or "") else date.today()
+        b = [f"# {nb['title']}", "", f"NotebookLM defteri ({account}) · {d}", "", f"## Kaynaklar ({len(nb['sources'])})", ""]
+        b += [f"- {s['name']} ({len(s['text'])} karakter)" for s in nb["sources"]] or ["- (yok)"]
+        if nb["artifacts"]:
+            b += ["", f"## Üretilenler ({len(nb['artifacts'])})"]
+            for a in nb["artifacts"]:
+                b += ["", f"### {a['title']}" + (f" · {a['type']}" if a["type"] else "")] + ([a["text"][:3000]] if a["text"] else [])
+        for i, c in enumerate(nb["chats"], 1):
+            b += ["", f"## Sohbet {i}", "", c]
+        fm = {"type": "kaynak", "status": "aktif", "tags": ["notebooklm"], "source": "notebooklm",
+              "source_id": f"notebooklm:{account}:{nb['id'] or nb['title']}", "created": d, "updated": date.today(), "due": None}
+        p = folder / f"{safe_filename(nb['title']) or nb['id']}.md"
+        p.write_text(dump_note(fm, redact("\n".join(b)) + "\n"), encoding="utf-8", newline="\n")
+        written.append(vault_ops._rel(p))
+        when = int(datetime(d.year, d.month, d.day, tzinfo=timezone.utc).timestamp() * 1000)
+        items += [{"source": "notebooklm", "id": sid(nb["title"], s["name"]), "date_ms": when, "kind": "source",
+                   "title": f"{nb['title']} › {s['name']}", "url": None, "body": redact(s["text"]),
+                   "meta": {"notebook": nb["title"], "account": account}} for s in nb["sources"] if s["text"]]
+    if items:
+        ingest_items("notebooklm", items, con, refresh=True)
+    if written:
+        vault_ops.commit(written, f"NotebookLM defterleri ({account}): {len(written)}")
+    return written
+
+
 def run(paths: list[str], con, account: str = "google", dry_run: bool = False, log=print) -> dict:
     from .. import history
     from . import youtube
     zips = [Path(p) for p in paths]
-    stats = {"gemini": 0, "activity": 0, "browser": 0, "keep": 0, "youtube": 0, "play": 0}
-    convs, items, keep = [], [], []
+    stats = {"gemini": 0, "activity": 0, "browser": 0, "keep": 0, "youtube": 0, "play": 0, "notebooklm": 0}
+    convs, items, keep, nbs = [], [], [], []
     with tempfile.TemporaryDirectory() as tmp:
         for zp in zips:
             with zipfile.ZipFile(zp) as z:
@@ -164,14 +244,16 @@ def run(paths: list[str], con, account: str = "google", dry_run: bool = False, l
                                 items.append({"source": "play", "id": sid(kind, title, when), "date_ms": None, "kind": kind,
                                               "title": clean(title), "url": None, "body": clean(title), "meta": {"time": when}})
                 keep += keep_notes(z)
+                nbs += notebooklm(z)
     for it in items:
         stats[it["source"] if it["source"] in stats else "activity"] += 1
-    stats["gemini"], stats["keep"] = len(convs), len(keep)
+    stats["gemini"], stats["keep"], stats["notebooklm"] = len(convs), len(keep), len(nbs)
     if dry_run:
         return {**stats, "yazıldı": False}
     for src in sorted({i["source"] for i in items}):
         ingest_items(src, [i for i in items if i["source"] == src], con, refresh=(src == "browser"))
     out = history.write_convs(convs, apply=True) if convs else ""
     written = write_keep(keep, account) if keep else []
+    nb_written = write_notebooklm(nbs, account, con) if nbs else []
     log(out)
-    return {**stats, "yazıldı": True, "keep_notları": len(written)}
+    return {**stats, "yazıldı": True, "keep_notları": len(written), "notebooklm_notları": len(nb_written)}

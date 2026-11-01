@@ -872,6 +872,18 @@ STATIC_TYPES = {".css": "text/css; charset=utf-8", ".js": "text/javascript; char
                 ".webmanifest": "application/manifest+json"}
 
 
+def extension_origins() -> set[str]:
+    """Kullanıcının açıkça izin verdiği tarayıcı eklentileri (config/eklentiler.yaml: `chrome: [<eklenti kimliği>]`).
+    Herhangi bir chrome-extension:// kaynağı KABUL EDİLMEZ: bilgisayardaki başka eklentiler kasayı okuyamasın."""
+    import yaml
+    from .config import SYSTEM
+    try:
+        ids = (yaml.safe_load((SYSTEM / "config" / "eklentiler.yaml").read_text(encoding="utf-8")) or {}).get("chrome") or []
+    except (OSError, ValueError):
+        return set()
+    return {f"chrome-extension://{i}" for i in ids if re.fullmatch(r"[a-p]{32}", str(i))}
+
+
 def static_file(name: str) -> tuple[bytes, str] | None:
     """web/ altındaki düz dosya (alt klasör, '..' ve bilinmeyen uzantı yok)."""
     if not re.fullmatch(r"[\w.-]{1,80}", name) or name.startswith(".") or ".." in name:
@@ -956,7 +968,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             origin = self.headers.get("Origin")
             if is_remote:
                 return origin == f"http://{self.headers.get('Host', '')}"         # telefonda tarayıcı her zaman Origin gönderir
-            return not origin or origin in ALLOWED_ORIGINS
+            return not origin or origin in ALLOWED_ORIGINS or origin in extension_origins()
 
         def _authed(self) -> bool:
             return not is_remote or (auth is not None and auth.check_cookie(self.headers.get("Cookie", "")))
@@ -1010,6 +1022,8 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 return self._send(200, f[0], f[1])
             if route.startswith("/api/v2/"):
                 return self._v2("GET")
+            if route == "/bubble" and not is_remote and (WEB / "bubble.html").exists():     # mini sohbet balonu (aynı kaynak)
+                return self._send(200, (WEB / "bubble.html").read_bytes(), "text/html; charset=utf-8")
             if route in ("/", "/index.html", "/classic"):
                 if not self._authed():
                     return self._send(200, PAIR_PAGE.encode("utf-8"), "text/html; charset=utf-8")

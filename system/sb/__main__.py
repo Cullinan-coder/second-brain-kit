@@ -96,6 +96,23 @@ def cmd_mail_ics_backfill(args) -> int:
     return 0
 
 
+def cmd_courses(args) -> int:
+    from . import academic
+    for c in academic.courses():
+        nd = c.get('next_due') or {}
+        print(f"{c.get('code', ''):8} {c.get('name', '')[:40]:40} " + (f"{nd.get('date')} {nd.get('title')}" if isinstance(nd, dict) and nd else '—'))
+    return 0
+
+
+def cmd_gpa(args) -> int:
+    from . import academic
+    changes = [{"code": k.strip(), "grade": v.strip().upper()} for k, _, v in (w.partition("=") for w in args.what_if) if v]
+    out = academic.compute_gpa(academic.load_grades().get("entries", []) if isinstance(academic.load_grades(), dict)
+                               else academic.load_grades(), changes or None)
+    print(json.dumps(out, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
 def cmd_voice(args) -> int:
     from . import voice
     if args.transcribe:
@@ -1099,6 +1116,31 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--discover", action="store_true", help="browser: bu bilgisayardaki tarayıcı profillerini listele")
     g.set_defaults(func=lambda a: __import__("sb.connectors", fromlist=["x"]).cli(a))
 
+    g = sub.add_parser("plan", help="bugünün planı: en önemli 3 iş, takvim boşluklarına bloklar, uyarılar")
+    g.set_defaults(func=lambda a: __import__("sb.productivity", fromlist=["x"]).main(["plan"]))
+    g = sub.add_parser("tasks-board", help="görev panosu (yapılacak / yapılıyor / bitti)")
+    g.set_defaults(func=lambda a: __import__("sb.productivity", fromlist=["x"]).main(["board"]))
+    g = sub.add_parser("courses", help="ders panosu: yaklaşan sınav/teslim, dosya sayısı")
+    g.set_defaults(func=cmd_courses)
+    g = sub.add_parser("gpa", help="GANO; --what-if KOD=HARF ile senaryo")
+    g.add_argument("--what-if", nargs="*", default=[])
+    g.set_defaults(func=cmd_gpa)
+
+    g = sub.add_parser("automation-tick", help="otomasyon kurallarını bir kez değerlendir (dış etkili eylemler onaya düşer)")
+    g.set_defaults(func=lambda a: print(__import__("sb.automation", fromlist=["x"]).tick()) or 0)
+
+    PV = lambda: __import__("sb.privacy", fromlist=["x"])
+    for name, fn, hlp in (("vault-encrypt", "encrypt_cli", "klasörü şifrele (önce yedek; --folder <klasör> --confirm)"),
+                          ("vault-decrypt", "decrypt_cli", "şifreli klasörü aç (--folder <klasör> --confirm)"),
+                          ("restore", "restore_cli", "yedekten geri yükle (önce mevcut durumun yedeği; <yedek> --confirm)"),
+                          ("security-test", "security_test_cli", "istem enjeksiyonu kalkanı: yerel modelle senaryolar")):
+        g = sub.add_parser(name, help=hlp)
+        g.add_argument("rest", nargs="*")
+        g.add_argument("--folder", default="")
+        g.add_argument("--confirm", action="store_true")
+        g.set_defaults(func=lambda a, fn=fn: getattr(PV(), fn)(
+            a.rest + (["--folder", a.folder] if a.folder else []) + (["--confirm"] if a.confirm else [])))
+
     P = lambda: __import__("sb.persona", fromlist=["x"])
     g = sub.add_parser("persona", help="asistan kimliği ve hafıza işleri: --reflect (günlük yansıma), --weekly (beni tanı), --prefs (tercih adayları)")
     g.add_argument("--reflect", action="store_true")
@@ -1128,14 +1170,24 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("chat-links", help="WhatsApp/Telegram sohbetlerini kişi ve proje notlarına bağla")
     g.set_defaults(func=lambda a: print(E().write_chat_links()) or 0)
 
-    g = sub.add_parser("clusters", help="notları anlamına göre kümele ve adlandır (40-Kaynaklar/Kümeler)")
+    g = sub.add_parser("clusters", help="notları konu kümelerine ayır (40-Kaynaklar/Kümeler; --docs: belge/mail/sohbet kümeleri → Analiz)")
     g.add_argument("-k", type=int, default=None)
-    g.set_defaults(func=lambda a: print(E().clusters(a.k)) or 0)
+    g.add_argument("--docs", action="store_true")
+    g.set_defaults(func=lambda a: print(E().clusters(a.k, kinds=("file", "mail", "chat"), folder=E().DOC_CLUSTERS) if a.docs
+                                        else E().clusters(a.k)) or 0)
 
-    g = sub.add_parser("suggest-links", help="anlamca yakın ama bağlı olmayan notlar (--apply: [x] işaretlilere bağlantı)")
+    g = sub.add_parser("graph-style", help="Obsidian grafiği renkleri (küme başına, kategori); görünürlüğe dokunmaz. "
+                                           "--hide: teknik/etiket/ek/bağlantısız düğümleri gizle")
+    g.add_argument("--hide", action="store_true")
+    g.set_defaults(func=lambda a: print(E().graph_style(hide=a.hide)) or 0)
+
+    g = sub.add_parser("suggest-links", help="anlamca yakın ama bağlı olmayan notlar (--apply: [x] işaretlilere bağlantı; "
+                                             "--auto: kurala göre karar ver ve bağla)")
     g.add_argument("--apply", action="store_true")
+    g.add_argument("--auto", action="store_true")
     g.add_argument("--threshold", type=float, default=0.83)
-    g.set_defaults(func=lambda a: print("\n".join(E().apply_links()) or "İşaretli öneri yok." if a.apply
+    g.set_defaults(func=lambda a: print(E().auto_links() if a.auto else
+                                        "\n".join(E().apply_links()) or "İşaretli öneri yok." if a.apply
                                         else E().suggest_links(a.threshold)) or 0)
 
     g = sub.add_parser("analyze", help="beyin analizleri (40-Kaynaklar/Analiz): zaman çizelgesi, proje haritası, sınıflar, tekrarlar...")

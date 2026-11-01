@@ -1,0 +1,4 @@
+TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE
+task,Fatura ödemesini kontrol et,Elektrik,4,1,Ben,,2026-11-05,en,Europe/Istanbul
+task,Kitap iade et,,1,1,Ben,,,en,
+section,Bölüm,,,,,,,,

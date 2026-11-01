@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Second Brain - Beyne at",
+  "version": "0.1.0",
+  "description": "Sayfayı ya da seçili metni yerel Second Brain asistanına gönderir.",
+  "permissions": ["activeTab", "contextMenus", "storage"],
+  "host_permissions": ["http://127.0.0.1:8765/*"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_popup": "popup.html", "default_title": "Second Brain"}
+}

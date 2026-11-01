@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Second Brain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root { color-scheme: light dark; --bg:#fff; --fg:#1d1d1f; --card:#f1f1f4; --acc:#5b5bd6; --mut:#6b6b76; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1c1c20; --fg:#eee; --card:#2a2a31; --mut:#9a9aa6; } }
+* { box-sizing: border-box; }
+body { margin:0; height:100vh; display:flex; flex-direction:column; background:var(--bg); color:var(--fg); font:14px system-ui,sans-serif; }
+#log { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.m { padding:8px 10px; border-radius:10px; max-width:92%; word-break:break-word; background:var(--card); align-self:flex-start; }
+.m.u { align-self:flex-end; background:var(--acc); color:#fff; }
+.m.e { color:#c0392b; }
+.m code { background:rgba(128,128,128,.2); padding:0 3px; border-radius:3px; }
+.src { font-size:12px; color:var(--mut); margin-top:6px; }
+form { display:flex; gap:6px; padding:8px; border-top:1px solid var(--card); }
+textarea { flex:1; resize:none; border-radius:8px; border:1px solid var(--card); padding:6px; background:var(--bg); color:var(--fg); font:inherit; }
+button { border:0; border-radius:8px; padding:0 12px; background:var(--acc); color:#fff; cursor:pointer; font:inherit; }
+button.rec { background:#c0392b; }
+button:disabled { opacity:.5; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<form id="f">
+  <textarea id="q" rows="2" placeholder="Beyne sor…"></textarea>
+  <button type="button" id="mic" title="Sesle sor">Mik</button>
+  <button type="submit" id="go">Gönder</button>
+</form>
+<script>
+(function () {
+  'use strict';
+  var BASE = 'http://127.0.0.1:8765';
+  var sid = 'bub' + Math.random().toString(36).slice(2, 12);
+  var log = document.getElementById('log'), q = document.getElementById('q'), go = document.getElementById('go'), mic = document.getElementById('mic');
+
+  function text(parent, s) {
+    String(s == null ? '' : s).split('\n').forEach(function (ln, i) {
+      if (i) parent.appendChild(document.createElement('br'));
+      var re = /\*\*([^*\n]+)\*\*|`([^`\n]+)`/g, last = 0, m;
+      while ((m = re.exec(ln))) {
+        if (m.index > last) parent.appendChild(document.createTextNode(ln.slice(last, m.index)));
+        var e = document.createElement(m[1] != null ? 'strong' : 'code'); e.textContent = m[1] != null ? m[1] : m[2]; parent.appendChild(e);
+        last = re.lastIndex;
+      }
+      if (last < ln.length) parent.appendChild(document.createTextNode(ln.slice(last)));
+    });
+  }
+  function add(cls, s) {
+    var d = document.createElement('div'); d.className = 'm ' + (cls || ''); text(d, s); log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+  }
+  async function api(path, init) {
+    init = init || {}; init.headers = Object.assign({ 'X-SB': '1' }, init.headers || {});
+    try {
+      var r = await fetch(BASE + path, init), j = await r.json();
+      if (!r.ok && !(j && j.error)) return { error: 'HTTP ' + r.status };
+      return j;
+    } catch (e) { return { error: 'Sunucuya ulaşılamadı. Asistan çalışıyor mu? (127.0.0.1:8765)' }; }
+  }
+  async function ask(t) {
+    add('u', t);
+    var w = add('', '…'); go.disabled = true;
+    var r = await api('/api/v2/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sid: sid, text: t }) });
+    go.disabled = false; w.textContent = '';
+    if (!r || r.error) { w.className = 'm e'; text(w, r && r.error || 'Hata'); return; }
+    text(w, r.reply && r.reply.text || '(boş cevap)');
+    var s = r.reply && r.reply.sources;
+    if (s && s.length) {
+      var b = document.createElement('div'); b.className = 'src';
+      s.slice(0, 5).forEach(function (x) { var l = document.createElement('div'); l.textContent = '• ' + (x.title || x.path || x.kind); b.appendChild(l); });
+      w.appendChild(b);
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+  document.getElementById('f').addEventListener('submit', function (e) {
+    e.preventDefault(); var t = q.value.trim(); if (!t) return; q.value = ''; ask(t);
+  });
+  q.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('f').requestSubmit(); } });
+
+  var rec = null, chunks = [];
+  mic.addEventListener('click', async function () {
+    if (rec) { rec.stop(); return; }
+    if (!navigator.mediaDevices || !window.MediaRecorder) { add('e', 'Bu pencerede ses kaydı desteklenmiyor.'); return; }
+    try {
+      var st = await navigator.mediaDevices.getUserMedia({ audio: true });
+      rec = new MediaRecorder(st); chunks = [];
+      rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+      rec.onstop = async function () {
+        st.getTracks().forEach(function (t) { t.stop(); });
+        var type = rec.mimeType || 'audio/webm'; rec = null; mic.classList.remove('rec'); mic.textContent = 'Mik';
+        var r = await api('/api/v2/stt', { method: 'POST', headers: { 'Content-Type': type }, body: new Blob(chunks, { type: type }) });
+        if (!r || r.error) add('e', r && r.error || 'Dökümde hata');
+        else if (r.available === false) add('e', 'Ses tanıma kurulu değil: ' + (r.hint || ''));
+        else if (r.text) q.value = (q.value ? q.value + ' ' : '') + r.text;
+      };
+      rec.start(); mic.classList.add('rec'); mic.textContent = 'Dur';
+    } catch (e) { rec = null; add('e', 'Mikrofona erişilemedi.'); }
+  });
+  add('', 'Merhaba, ne öğrenmek istersin?');
+})();
+</script>
+</body>
+</html>

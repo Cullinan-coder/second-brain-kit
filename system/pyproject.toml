@@ -33,6 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 voice = ["faster-whisper>=1.1", "av>=15,<18"]   # yerel konuşma → yazı (sb voice --setup); av 19 faster-whisper ile uyumsuz
 media = ["yt-dlp>=2025.1"]               # video/podcast dökümü (altyazısı olmayanlar)
+voice-gpu = ["nvidia-cublas-cu12", "nvidia-cudnn-cu12>=9,<10"]   # NVIDIA ekran kartında Whisper (~8 kat hızlı); yoksa işlemci
 
 [tool.uv]
 package = false

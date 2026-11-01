@@ -2,6 +2,31 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.8.0 — 2026-11-01 (Faz 4: ajanlar, kişisel, güvenlik, yeni kaynaklar, eklentiler)
+- **Otomasyon:** `config/otomasyon.yaml` kuralları (yeni mail, teslim yaklaştı, zaman, not değişti, webhook → görev, bildirim, not, özet,
+  takvim önerisi, WhatsApp taslağı); dış etkili eylemler her zaman onay kuyruğuna düşer (görünüm `automations`); `sb automation-tick` günlük çalışmada.
+- **Ajanlar:** 5 hazır ajan (ders asistanı, proje raporu, mail özetleyici, araştırmacı, haftalık planlayıcı), izin kum havuzu, çok ajanlı akış,
+  izleme paneli, gece raporu; kod ajanı yalnız gece listesine ekler.
+- **Güvenlik ve gizlilik:** gizlilik paneli, bulut maskeleme süzgeci, denetim günlüğü, izin profilleri, yedekler, dışa aktarma, istem enjeksiyonu
+  testleri (`sb security-test`); isteğe bağlı kasa şifreleme `sb vault-encrypt --folder <klasör> --confirm` (önce yedek).
+- **Kişisel:** harcama ve bütçe, abonelikler, garanti, ilaç hatırlatma (onaylı), okuma/izleme listesi, yemek planı, bakım, hediye fikirleri,
+  ruh hali, seyahat planı (görünüm `life`).
+- **21 yeni içe aktarıcı:** `sb import <kaynak> <dosya>` — discord, slack, notion, keep, apple-notlar, onenote, evernote, instagram, x, todoist,
+  ticktick, mstodo, trello, jira, linear, pocket, raindrop, gphotos, gmaps, bank (hesap/kart numarası saklanmaz), coursera, udemy, screentime.
+- **Eklentiler** (`_system/integrations/`, elle kurulum): Obsidian yan paneli, tarayıcı "Beyne at" (yalnız `config/eklentiler.yaml`'daki kimliğe izin),
+  tepsi simgesi, mini sohbet balonu (`/bubble`).
+- **Beyin grafiği:** notlardan konu kümeleri (küme başına renk), belge/mail kümeleri analizde, bağlantı önerileri otomatik; `sb graph-style` yalnız renk.
+
+## 0.7.0 — 2026-11-01 (Faz 3: verimlilik, iletişim, okul, iş)
+- **Verimlilik:** görev panosu, akıllı günlük plan ve "bugün en önemli 3 iş" (`sb plan`), zaman bloklama (onaylı), pomodoro, alışkanlık, hedefler,
+  haftalık gözden geçirme, teslim riski ve takvim çakışması uyarısı, tekrarlayan/bağımlı görevler.
+- **Okul:** ders panosu (`sb courses`), GANO ve senaryo (`sb gpa --what-if KOD=HARF`), sınav çalışma planı, başvuru takibi, okul belgeleri.
+- **İletişim (mail salt okunur):** taslaklar yalnız kasada, zincir özeti, cevap bekleyenler, takip, kişiye özel ton, önemli tarihler, ilişki sağlığı,
+  bülten temizliği önerisi, toplantı hazırlık/sonrası, mail → görev, çeviri.
+- **Kariyer:** CRM (`musteri: true`), teklif, saat takibi ve rapor, başvuru panosu, CV/ön yazı, mülakat, portfolyo, LinkedIn taslağı, sözleşmeler,
+  gelir/gider ve vergi tarihleri; ödev yardımcısı (öğretici kip), kaynakça, yazım asistanı.
+- **Ses:** NVIDIA ekran kartında Whisper (`voice-gpu` isteğe bağlı bağımlılık), NotebookLM Takeout içe aktarımı.
+
 ## 0.6.0 — 2026-11-01 (Faz 2: asistan, ses, arayüz)
 - **Yeni asistan arayüzü** (`http://127.0.0.1:8765/`; eskisi `/classic`): açık/koyu tema, vurgu rengi, yazı boyutu; sohbet geçmişi
   (arama, sabitleme, yeniden adlandırma, arşiv); tıklanabilir kaynak kartları; yeniden tasarlanmış onay kartları; Ctrl+K komut paleti;

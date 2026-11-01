@@ -522,7 +522,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 64
   ad: Mini sohbet balonu
   kategori: arayuz
@@ -530,7 +530,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 65
   ad: Obsidian eklentisi
   kategori: arayuz
@@ -538,7 +538,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 66
   ad: Tarayıcı eklentisi
   kategori: arayuz
@@ -546,7 +546,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 67
   ad: Bilgi grafiği görünümü
   kategori: arayuz
@@ -746,7 +746,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 92
   ad: Slack
   kategori: kaynak
@@ -754,7 +754,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 93
   ad: Notion içe aktarma
   kategori: kaynak
@@ -762,7 +762,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 94
   ad: Google Keep, Apple Notlar, OneNote
   kategori: kaynak
@@ -770,7 +770,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 95
   ad: Evernote içe aktarma
   kategori: kaynak
@@ -778,7 +778,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 96
   ad: Todoist, To Do, TickTick
   kategori: kaynak
@@ -786,7 +786,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 97
   ad: Trello, Jira, Linear
   kategori: kaynak
@@ -794,7 +794,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 98
   ad: GitHub derin (issue, PR, yorum, commit, release)
   kategori: kaynak
@@ -834,7 +834,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 103
   ad: YouTube izleme geçmişi ve abonelikler
   kategori: kaynak
@@ -858,7 +858,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 106
   ad: Google Haritalar zaman çizelgesi
   kategori: kaynak
@@ -866,7 +866,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 107
   ad: Banka ekstresi CSV (numarasız özet)
   kategori: kaynak
@@ -874,7 +874,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 108
   ad: e-Devlet / e-Okul belgeleri
   kategori: kaynak
@@ -890,7 +890,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 110
   ad: Sağlık uygulaması özeti (gizli)
   kategori: kaynak
@@ -906,7 +906,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 112
   ad: RSS ve haber bültenleri
   kategori: kaynak
@@ -930,7 +930,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 115
   ad: İş ilanı takibi
   kategori: kaynak
@@ -1314,7 +1314,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 163
   ad: Akıllı günlük plan
   kategori: verim
@@ -1322,7 +1322,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 164
   ad: Zaman bloklama (onaylı)
   kategori: verim
@@ -1330,7 +1330,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 165
   ad: Pomodoro / odak modu
   kategori: verim
@@ -1338,7 +1338,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 166
   ad: Alışkanlık takibi
   kategori: verim
@@ -1346,7 +1346,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 167
   ad: Hedefler (OKR)
   kategori: verim
@@ -1354,7 +1354,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 168
   ad: Haftalık gözden geçirme sihirbazı
   kategori: verim
@@ -1362,7 +1362,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 169
   ad: Tekrarlayan görevler
   kategori: verim
@@ -1370,7 +1370,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 170
   ad: Bağımlı görevler
   kategori: verim
@@ -1378,7 +1378,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 171
   ad: Mail → görev
   kategori: verim
@@ -1386,7 +1386,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 172
   ad: Toplantı hazırlık notu
   kategori: verim
@@ -1394,7 +1394,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 173
   ad: Toplantı sonrası karar/görev çıkarma
   kategori: verim
@@ -1402,7 +1402,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 174
   ad: Teslim risk uyarısı
   kategori: verim
@@ -1410,7 +1410,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 175
   ad: Enerji/ruh hali ile plan uyarlama
   kategori: verim
@@ -1418,7 +1418,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 176
   ad: Akıllı hatırlatma zamanı
   kategori: verim
@@ -1426,7 +1426,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 177
   ad: Takvim çakışma tespiti
   kategori: verim
@@ -1434,7 +1434,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 178
   ad: Sınav takvimi ve çalışma planı
   kategori: verim
@@ -1442,7 +1442,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 179
   ad: Bugün en önemli 3 iş
   kategori: verim
@@ -1450,7 +1450,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 180
   ad: Mail taslağı (göndermeden)
   kategori: iletisim
@@ -1458,7 +1458,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 181
   ad: Mail zinciri özeti
   kategori: iletisim
@@ -1466,7 +1466,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 182
   ad: Cevap bekleyenler listesi
   kategori: iletisim
@@ -1474,7 +1474,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 183
   ad: Takip hatırlatması
   kategori: iletisim
@@ -1482,7 +1482,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 184
   ad: WhatsApp taslak → onaylı gönderme (gelişmiş)
   kategori: iletisim
@@ -1490,7 +1490,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 185
   ad: Kişiye özel ton
   kategori: iletisim
@@ -1498,7 +1498,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 186
   ad: Doğum günü ve önemli tarihler
   kategori: iletisim
@@ -1506,7 +1506,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 187
   ad: İlişki sağlığı
   kategori: iletisim
@@ -1514,7 +1514,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 188
   ad: Toplu mesaj taslağı (tek tek onaylı)
   kategori: iletisim
@@ -1522,7 +1522,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 189
   ad: Bülten temizliği önerisi
   kategori: iletisim
@@ -1530,7 +1530,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 190
   ad: Arama sonrası not hatırlatması
   kategori: iletisim
@@ -1538,7 +1538,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 191
   ad: Mail çevirisi ve yabancı dilde taslak
   kategori: iletisim
@@ -1546,7 +1546,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 192
   ad: Ders panosu
   kategori: akademik
@@ -1554,7 +1554,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 193
   ad: Ders notu üretici
   kategori: akademik
@@ -1562,7 +1562,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 194
   ad: Sınav hazırlık modu
   kategori: akademik
@@ -1570,7 +1570,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 195
   ad: Ödev yardımcısı (öğretici kip)
   kategori: akademik
@@ -1578,7 +1578,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 196
   ad: Kaynakça yöneticisi
   kategori: akademik
@@ -1586,7 +1586,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 197
   ad: Tez/proje yazım asistanı
   kategori: akademik
@@ -1594,7 +1594,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 198
   ad: GANO hesaplama ve senaryo
   kategori: akademik
@@ -1602,7 +1602,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 199
   ad: Ders programı ve duyuru takibi
   kategori: akademik
@@ -1610,7 +1610,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 200
   ad: Hoca/asistan iletişim geçmişi
   kategori: akademik
@@ -1618,7 +1618,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 201
   ad: Grup projesi takibi
   kategori: akademik
@@ -1626,7 +1626,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 202
   ad: Burs, staj, yarışma takibi
   kategori: akademik
@@ -1634,7 +1634,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 203
   ad: Okul belgeleri arşivi
   kategori: akademik
@@ -1642,7 +1642,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 204
   ad: Mini CRM
   kategori: kariyer
@@ -1650,7 +1650,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 205
   ad: Teklif ve fatura taslağı
   kategori: kariyer
@@ -1658,7 +1658,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 206
   ad: Proje saat takibi ve müşteri raporu
   kategori: kariyer
@@ -1666,7 +1666,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 207
   ad: Başvuru takibi panosu
   kategori: kariyer
@@ -1674,7 +1674,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 208
   ad: CV ve ön yazı üretici
   kategori: kariyer
@@ -1682,7 +1682,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 209
   ad: Mülakat hazırlığı (sesli prova)
   kategori: kariyer
@@ -1690,7 +1690,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 210
   ad: Portfolyo üretici
   kategori: kariyer
@@ -1698,7 +1698,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 211
   ad: LinkedIn gönderi taslağı
   kategori: kariyer
@@ -1706,7 +1706,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 212
   ad: Rakip ve pazar takibi
   kategori: kariyer
@@ -1714,7 +1714,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 213
   ad: Sözleşme arşivi ve bitiş uyarısı
   kategori: kariyer
@@ -1722,7 +1722,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 214
   ad: Gelir/gider özeti ve vergi hatırlatma
   kategori: kariyer
@@ -1730,7 +1730,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 215
   ad: Müşteri iletişim geçmişi
   kategori: kariyer
@@ -1738,7 +1738,7 @@ ozellikler:
   surum: 0.7.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 216
   ad: Otomasyon oluşturucu (her X olduğunda Y)
   kategori: ajan
@@ -1746,7 +1746,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 217
   ad: Ajan pazarı (hazır ajanlar)
   kategori: ajan
@@ -1754,7 +1754,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 218
   ad: Zamanlanmış rapor ajanları
   kategori: ajan
@@ -1762,7 +1762,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 219
   ad: Web araştırma ajanı
   kategori: ajan
@@ -1770,7 +1770,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 220
   ad: Tarayıcı otomasyonu (izinli)
   kategori: ajan
@@ -1786,7 +1786,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 222
   ad: Ajan izleme paneli
   kategori: ajan
@@ -1794,7 +1794,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 223
   ad: Webhook ve e-posta tetikleyicileri
   kategori: ajan
@@ -1802,7 +1802,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 224
   ad: Zapier / n8n / Make
   kategori: ajan
@@ -1810,7 +1810,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 225
   ad: Ajan kum havuzu (izinler)
   kategori: ajan
@@ -1818,7 +1818,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 226
   ad: Çok ajanlı akış şablonları
   kategori: ajan
@@ -1826,7 +1826,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 227
   ad: Akış ortasında insan onayı
   kategori: ajan
@@ -1834,7 +1834,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 228
   ad: Gece koşusu raporu ve sabah onayı
   kategori: ajan
@@ -1842,7 +1842,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 229
   ad: Harcama özeti ve bütçe
   kategori: yasam
@@ -1850,7 +1850,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 230
   ad: Abonelik takibi
   kategori: yasam
@@ -1858,7 +1858,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 231
   ad: Seyahat planlayıcı
   kategori: yasam
@@ -1866,7 +1866,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 232
   ad: Garanti ve fatura takibi
   kategori: yasam
@@ -1874,7 +1874,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 233
   ad: Sağlık randevusu ve ilaç hatırlatma
   kategori: yasam
@@ -1882,7 +1882,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 234
   ad: Okuma ve izleme listesi
   kategori: yasam
@@ -1890,7 +1890,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 235
   ad: Tarif ve yemek planı
   kategori: yasam
@@ -1898,7 +1898,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 236
   ad: Ev ve araç bakım hatırlatmaları
   kategori: yasam
@@ -1906,7 +1906,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 237
   ad: Hediye fikirleri defteri
   kategori: yasam
@@ -1914,7 +1914,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 238
   ad: Günlük ve ruh hali
   kategori: yasam
@@ -1922,7 +1922,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 239
   ad: Gizlilik paneli
   kategori: guvenlik
@@ -1930,7 +1930,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 240
   ad: Bulut gönderim süzgeci (maskeleme)
   kategori: guvenlik
@@ -1938,7 +1938,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 241
   ad: Kasa şifreleme (isteğe bağlı)
   kategori: guvenlik
@@ -1946,7 +1946,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 242
   ad: Denetim günlüğü arayüzü
   kategori: guvenlik
@@ -1954,7 +1954,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 243
   ad: İzin profilleri
   kategori: guvenlik
@@ -1962,7 +1962,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 244
   ad: Yedek ve geri yükleme sihirbazı
   kategori: guvenlik
@@ -1970,7 +1970,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 245
   ad: Veri dışa aktarma ve silme
   kategori: guvenlik
@@ -1978,7 +1978,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 246
   ad: İstem enjeksiyonu kalkanı testleri
   kategori: guvenlik
@@ -1986,7 +1986,7 @@ ozellikler:
   surum: 0.8.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 247
   ad: Gerçek veriyle uçtan uca test paketi
   kategori: kalite

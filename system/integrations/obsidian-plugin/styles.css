@@ -1,0 +1,12 @@
+.sb-chat { display: flex; flex-direction: column; height: 100%; padding: 8px; gap: 8px; }
+.sb-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.sb-msg { padding: 8px 10px; border-radius: 8px; max-width: 95%; word-break: break-word; }
+.sb-user { align-self: flex-end; background: var(--interactive-accent); color: var(--text-on-accent); }
+.sb-assistant { align-self: flex-start; background: var(--background-secondary); }
+.sb-err { color: var(--text-error); }
+.sb-input { display: flex; gap: 6px; align-items: flex-end; }
+.sb-input textarea { flex: 1; resize: vertical; }
+.sb-sources { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.sb-source { font-size: var(--font-ui-smaller); padding: 2px 8px; border-radius: 12px; cursor: pointer; }
+.sb-note { font-size: var(--font-ui-smaller); color: var(--text-muted); margin-top: 4px; }
+.sb-sim { margin-bottom: 8px; }

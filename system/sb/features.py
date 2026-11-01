@@ -55,6 +55,7 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
     "image_gen": ("Görsel üretme", "Metinden görsel (bulut sağlayıcı anahtarı gerekir)", "OpenAI/Gemini anahtarı", False),
     "memory_ui": ("Hafıza ve kişilik", "Asistan kimliği, ortak günlük, tercih öğrenme, hafıza düzenleyici, yansıma", "model", True),
     "cards": ("Bilgi kartları", "Notlardan kart üretme ve aralıklı tekrar", "model", True),
+    "automation": ("Otomasyonlar ve ajanlar", "Kurallar (her X olduğunda Y), hazır ajanlar, onay kuyruğu", "model", True),
 }
 TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her zaman açık)
     "calendar_add": "calendar", "calendar_delete": "calendar", "calendar_list": "calendar",
@@ -68,7 +69,7 @@ STEP_MODULE = {          # günlük çalışma komutu → modül
     "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "project-deep": "projects",
     "course-files": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
     "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
-    "github-deep": "github", "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui",
+    "github-deep": "github", "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
 }
 
 

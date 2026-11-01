@@ -1,0 +1,6 @@
+"Date: 2026-10-31+0300"
+"Version: 6.0"
+"Status: 0 Normal; 1 Completed; 2 Archived"
+"Folder Name","List Name","Title","Kind","Tags","Content","Is Check list","Start Date","Due Date","Reminder","Repeat","Priority","Status","Created Time","Completed Time","Order","Timezone","Is All Day","Is Floating","Column Name","Column Order","View Mode","taskId","parentId"
+"","Okul","Rapor taslağı","TEXT","","İlk bölüm","N","","2026-11-03T10:00:00+0000","","","0","0","2026-10-01T10:00:00+0000","","1","Europe/Istanbul","false","false","","","list","101",""
+"","Okul","Eski ödev","TEXT","","","N","","","","","0","2","2026-09-01T10:00:00+0000","2026-09-02T10:00:00+0000","2","Europe/Istanbul","false","false","","","list","102",""

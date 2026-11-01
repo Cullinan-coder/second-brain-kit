@@ -407,3 +407,29 @@ def test_takeout_activity_gemini_keep(tmp_path):
     assert g[0]["turns"] == [("user", "Docker LLM arayüzü adı neydi"), ("assistant", "Open WebUI")]
     out = takeout.run([str(z)], None, account="side", dry_run=True)
     assert out["gemini"] == 1 and out["keep"] == 1 and out["browser"] == 1 and out["activity"] == 1   # giriş adresi ve çöp alınmadı
+
+
+def test_takeout_notebooklm(tmp_path):
+    import io
+    import json
+    import zipfile
+    from sb.connectors import takeout
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        base = "Takeout/NotebookLM/Olasılık/"
+        z.writestr(base + "Olasılık metadata.json", json.dumps({"title": "Olasılık Notları", "id": "nb1",
+                                                                "metadata": {"createTime": "2025-11-19T15:31:13Z"}}))
+        z.writestr(base + "Sources/ders.pdf.html", "<html><body><p>Bayes teoremi &amp; koşullu olasılık</p></body></html>")
+        z.writestr(base + "Sources/ders.pdf metadata.json", "{}")
+        z.writestr(base + "Artifacts/Test", "<html><script>var x=1</script><p>Soru 1: P(A|B)?</p></html>")
+        z.writestr(base + "Artifacts/Test metadata.json", json.dumps({"type": "ARTIFACT_TYPE_QUIZ"}))
+        z.writestr(base + "Artifacts/Özet.mp4", b"\x00")
+        z.writestr(base + "Chat History/Chat Session - 1.html", "<p>MODEL: Merhaba</p>")
+    nbs = takeout.notebooklm(zipfile.ZipFile(buf))
+    assert len(nbs) == 1
+    nb = nbs[0]
+    assert nb["title"] == "Olasılık Notları" and nb["created"] == "2025-11-19"
+    assert nb["sources"] == [{"name": "ders.pdf", "text": "Bayes teoremi & koşullu olasılık"}]
+    quiz = next(a for a in nb["artifacts"] if a["title"] == "Test")
+    assert quiz["type"] == "quiz" and "var x" not in quiz["text"] and "P(A|B)" in quiz["text"]
+    assert any(a["type"] == "sesli/görüntülü özet" for a in nb["artifacts"]) and nb["chats"] == ["MODEL: Merhaba"]

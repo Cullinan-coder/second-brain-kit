@@ -54,12 +54,37 @@ def test_kmeans_and_cluster_notes(tmp_path, monkeypatch):
     lab, _ = entities.kmeans(vecs, 2)
     assert len(set(lab[:8])) == 1 and len(set(lab[8:])) == 1 and lab[0] != lab[8]
     keys = [(f"20-Projeler/p{i}.md", f"Proje {i}", "note", 0) for i in range(8)] +         [(f"C:/belge{i}.pdf", f"belge{i}.pdf", "file", 1767225600000) for i in range(8)]
-    monkeypatch.setattr(entities, "doc_vectors", lambda kinds=None, con=None: (keys, vecs))
-    out = entities.clusters(k=2, namer=lambda titles: {"ad": "Aynı Ad", "aciklama": "test kümesi"})
+    monkeypatch.setattr(entities, "doc_vectors", lambda kinds=None, con=None, auto=None: (keys, vecs))
+    out = entities.clusters(k=2, namer=lambda titles: {"ad": "Aynı Ad", "aciklama": "test kümesi"}, kinds=("note", "file"))
     files = sorted((v / entities.CLUSTERS).glob("*.md"))
     texts = [f.read_text(encoding="utf-8") for f in files]
     assert "2 kümeye" in out and len(files) == 2                                   # aynı ad: ikinci küme ezilmez
     assert any("[[20-Projeler/p" in t and "8 not" in t for t in texts) and any("📄 2026-01-01 belge" in t and "8 belge" in t for t in texts)
+
+
+def test_note_clusters_link_all_members_tag_them_and_archive_old(tmp_path, monkeypatch):
+    v = _vault(tmp_path, monkeypatch)
+    (v / "20-Projeler").mkdir(exist_ok=True)
+    for i in range(16):
+        (v / "20-Projeler" / f"p{i}.md").write_text(f"---\ntype: proje\n---\n# p{i}\n", encoding="utf-8")
+    old = v / entities.CLUSTERS / "Küme - Eski.md"
+    old.parent.mkdir(parents=True, exist_ok=True)
+    old.write_text("# eski\n", encoding="utf-8")
+    (v / "20-Projeler" / "p0.md").write_text("---\ntype: proje\nkume: Küme - Eski\n---\n# p0\n", encoding="utf-8")
+    rng = np.random.default_rng(1)
+    a, b = np.eye(8)[0], np.eye(8)[1]
+    vecs = np.vstack([a + rng.normal(0, .05, 8) for _ in range(10)] + [b + rng.normal(0, .05, 8) for _ in range(6)])
+    vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
+    keys = [(f"20-Projeler/p{i}.md", f"p{i}", "note", 0) for i in range(16)]
+    monkeypatch.setattr(entities, "doc_vectors", lambda kinds=None, con=None, auto=None: (keys, vecs))
+    names = iter([{"ad": "Bir", "aciklama": "x"}, {"ad": "İki", "aciklama": "y"}])
+    entities.clusters(k=2, namer=lambda titles: next(names))
+    texts = "".join(f.read_text(encoding="utf-8") for f in (v / entities.CLUSTERS).glob("*.md"))
+    assert all(f"[[20-Projeler/p{i}|p{i}]]" in texts for i in range(16))                   # 40 sınırı yok: hepsi bağlı
+    assert not old.exists() and (v / "90-Arşiv" / entities.CLUSTERS / "Küme - Eski.md").exists()
+    from sb.notes import split_note
+    tags = {split_note((v / "20-Projeler" / f"p{i}.md").read_text(encoding="utf-8"))[0]["kume"] for i in range(16)}
+    assert tags == {"Küme - Bir", "Küme - İki"}
 
 
 def test_suggest_links_skips_linked(tmp_path, monkeypatch):
@@ -96,3 +121,36 @@ def test_merge_decision_rules():
     assert merge_decision("Biyoloji Hocasi", "Nebi Acar", "aynı telefon")[0]
     assert not merge_decision("Cpt'Emu", "Melih Can", "aynı telefon")[0]
     assert not merge_decision("Protein tozu kom", "Zeus Nutration", "aynı telefon")[0]
+
+
+def test_auto_links_skips_same_series(tmp_path, monkeypatch):
+    v = _vault(tmp_path, monkeypatch)
+    calls = []
+    monkeypatch.setattr(entities, "apply_links", lambda: calls.append(1) or ["bağlandı"])
+    (v / "00-Inbox").mkdir(exist_ok=True)
+    (v / entities.LINK_NOTE).write_text(
+        "- [ ] [[40-Kaynaklar/Sohbet geçmişi/Gemini 2026-03|Gemini 2026-03]] ↔ [[40-Kaynaklar/Sohbet geçmişi/Gemini 2026-05|G]] — 0.98\n"
+        "- [ ] [[Adsız doküman(1)]] ↔ [[Adsız doküman]] — 0.97\n"
+        "- [ ] [[Avenox - Hafıza]] ↔ [[Avenox - Ekip]] — 0.97\n", encoding="utf-8")
+    out = entities.auto_links()
+    text = (v / entities.LINK_NOTE).read_text(encoding="utf-8")
+    assert "1 bağlandı, 2 reddedildi" in out and calls
+    assert text.count("- [-]") == 2 and "- [x] [[Avenox - Hafıza]]" in text
+
+
+def test_graph_style_colors_each_cluster_and_hides_noise(tmp_path, monkeypatch):
+    import json
+    v = _vault(tmp_path, monkeypatch)
+    (v / ".obsidian").mkdir()
+    (v / ".obsidian" / "graph.json").write_text(json.dumps({"linkDistance": 250, "showOrphans": True}), encoding="utf-8")
+    (v / entities.CLUSTERS).mkdir(parents=True)
+    for n in ("Küme - A", "Küme - B"):
+        (v / entities.CLUSTERS / f"{n}.md").write_text("# x\n", encoding="utf-8")
+    entities.graph_style(v)
+    cfg = json.loads((v / ".obsidian" / "graph.json").read_text(encoding="utf-8"))
+    assert cfg["showOrphans"] is True and "search" not in cfg and len(cfg["colorGroups"]) > 2     # varsayılan: yalnız renkler
+    entities.graph_style(v, hide=True)
+    cfg = json.loads((v / ".obsidian" / "graph.json").read_text(encoding="utf-8"))
+    assert cfg["linkDistance"] == 250 and cfg["showOrphans"] is False and cfg["showTags"] is False
+    assert cfg["colorGroups"][0]["query"].startswith('[kume:"Küme - A"]') and cfg["colorGroups"][0]["color"] != cfg["colorGroups"][1]["color"]
+    assert '-path:"90-Arşiv"' in cfg["search"] and '-path:"00-Inbox"' in cfg["search"]

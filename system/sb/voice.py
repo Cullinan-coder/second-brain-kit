@@ -77,11 +77,30 @@ def _words(s: str) -> list[str]:
 
 
 # ---------------------------------------------------------------- whisper
+_dll_done = False
+
+
+def _cuda_dlls() -> None:
+    """Windows: pip'le gelen NVIDIA kütüphaneleri (nvidia-cublas-cu12, nvidia-cudnn-cu12) DLL arama yoluna eklenir."""
+    global _dll_done
+    if _dll_done or os.name != "nt":
+        return
+    _dll_done = True
+    import site
+    import sys
+    roots = [Path(p) / "nvidia" for p in site.getsitepackages() + [site.getusersitepackages()]]
+    roots.append(Path(sys.prefix) / "Lib" / "site-packages" / "nvidia")
+    for b in {d for r in roots if r.is_dir() for d in r.glob("*/bin") if d.is_dir()}:
+        os.add_dll_directory(str(b))
+        os.environ["PATH"] = f"{b}{os.pathsep}{os.environ.get('PATH', '')}"      # ctranslate2 düz LoadLibrary kullanır
+
+
 def _load(name: str, device: str | None = None):
     if WhisperModel is None:
         raise Unavailable(WHISPER_HINT)
     if device == "cpu":
         return WhisperModel(name, device="cpu", compute_type="int8")
+    _cuda_dlls()
     try:
         return WhisperModel(name, device="cuda", compute_type="float16")
     except Exception:                                  # noqa: BLE001 — GPU/CUDA yok: işlemciye düş

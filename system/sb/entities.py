@@ -397,7 +397,7 @@ def kmeans(x, k: int, iters: int = 40, seed: int = 7):
 AUTO_NODES = ("40-Kaynaklar/Teknolojiler/", "40-Kaynaklar/Konular/", "40-Kaynaklar/Drive/", "40-Kaynaklar/Analiz/")
 
 
-def doc_vectors(kinds: tuple[str, ...] = ("note", "file", "mail", "chat"), con=None):
+def doc_vectors(kinds: tuple[str, ...] = ("note", "file", "mail", "chat"), con=None, auto_nodes: tuple[str, ...] = AUTO_NODES):
     """Belge başına gömme (parça ortalaması) bütün türlerde: notlar (otomatik düğüm/ayna notlar hariç), belgeler, mailler/mesajlar.
     Dönüş: [(ref, başlık, tür)], matris."""
     import numpy as np
@@ -407,7 +407,8 @@ def doc_vectors(kinds: tuple[str, ...] = ("note", "file", "mail", "chat"), con=N
     if m is None:
         return [], None
     pos = {int(c): i for i, c in enumerate(ids)}
-    skip = ("60-Kişiler/", "50-Günlük/", "00-Inbox/", "40-Kaynaklar/Mail/", "40-Kaynaklar/Bilgisayar/", "40-Kaynaklar/Kümeler/") + AUTO_NODES
+    skip = ("60-Kişiler/", "50-Günlük/", "00-Inbox/", "40-Kaynaklar/Mail/", "40-Kaynaklar/Bilgisayar/", "40-Kaynaklar/Kümeler/",
+            "90-Arşiv/", "_system/", "_templates/") + auto_nodes
     by: dict[tuple, list[int]] = defaultdict(list)
     marks = ",".join("?" * len(kinds))
     for r in con.execute(f"SELECT c.id, d.kind, d.title, d.ref, d.date_ms FROM chunks c JOIN docs d ON d.doc_id = c.doc_id "
@@ -432,19 +433,26 @@ def _member_line(ref: str, title: str, kind: str, date_ms: int) -> str:
     return f"- {icon} {when} {title}" + (f" — `{ref}`" if kind == "file" else "")
 
 
-def clusters(k: int | None = None, con=None, namer=None, kinds: tuple[str, ...] = ("note", "file", "mail", "chat")) -> str:
-    """Beyni yeniden gruplar (madde 121): bütün belge türleri anlamına göre kümelenir; her küme yerel modelle adlandırılır."""
+NOTE_CLUSTER_SKIP = ("40-Kaynaklar/Teknolojiler/", "40-Kaynaklar/Konular/", "40-Kaynaklar/Analiz/")
+DOC_CLUSTERS = "40-Kaynaklar/Analiz/Belge kümeleri"
+
+
+def clusters(k: int | None = None, con=None, namer=None, kinds: tuple[str, ...] = ("note",), folder: str = CLUSTERS) -> str:
+    """Beyni yeniden gruplar (madde 121). Varsayılan: kasa notları konu kümelerine ayrılır; küme notu bütün üyelerine bağlanır
+    ve üyelerin `kume` özelliği yazılır (grafikte küme başına renk). kinds başka türler içerirse (belge/mail) kümeler `folder`'a
+    yalnız özet olarak yazılır. Her küme yerel modelle adlandırılır; eski küme notları silinmez, arşive taşınır."""
     import numpy as np
     from collections import Counter
     from . import llm
-    keys, vecs = doc_vectors(kinds, con)
+    notes_only = tuple(kinds) == ("note",)
+    keys, vecs = doc_vectors(kinds, con, NOTE_CLUSTER_SKIP if notes_only else AUTO_NODES)
     if vecs is None or len(keys) < 12:
         return "Kümeleme için yeterli gömme yok (önce sb index)."
-    k = k or max(6, min(40, int(round((len(keys) / 8) ** 0.5))))
+    k = k or (max(8, min(30, round(len(keys) / 12))) if notes_only else max(6, min(40, int(round((len(keys) / 8) ** 0.5)))))
     lab, cent = kmeans(vecs, k)
-    folder = vault_ops.VAULT / CLUSTERS
+    rel_folder, folder = folder, vault_ops.VAULT / folder
     folder.mkdir(parents=True, exist_ok=True)
-    written = []
+    written, membership = [], {}
     for j in range(k):
         idx = np.where(lab == j)[0]
         if len(idx) < 3:
@@ -454,9 +462,12 @@ def clusters(k: int | None = None, con=None, namer=None, kinds: tuple[str, ...] 
         if namer:
             name = namer([t for _, t, _, _ in core])
         else:
-            prompt = ("Aşağıdakiler (not, belge ve mail başlıkları) anlamca aynı kümede. Kümeye 2-4 kelimelik Türkçe bir ad ver ve kümenin ne "
-                      "hakkında olduğunu tek cümleyle yaz. JSON: {\"ad\": ..., \"aciklama\": ...}\n\n"
-                      + "\n".join(f"- ({kd}) {t}" for _, t, kd, _ in core))
+            lines = [f"- [{_folder_of(r) if kd == 'note' else kd}] {t}" + (f": {_snippet(r)}" if kd == "note" else "")
+                     for r, t, kd, _ in core]
+            prompt = ("Aşağıdakiler (kişisel bilgi kasasından notlar/belgeler) anlamca aynı kümede. Ortak KONUYU bul ve kümeye 2-4 kelimelik "
+                      "Türkçe bir konu adı ver (ör. 'Veri Yapıları ve Algoritmalar', 'Staj ve İş Başvuruları'). 'Notlar', 'Başlıklar', "
+                      "'Belgeler' gibi genel adlar YASAK. Kümenin ne hakkında olduğunu tek cümleyle yaz. JSON: {\"ad\": ..., \"aciklama\": ...}\n\n"
+                      + "\n".join(lines))
             raw, _ = llm.complete("cluster", prompt, schema={"type": "object", "required": ["ad", "aciklama"], "properties": {
                 "ad": {"type": "string"}, "aciklama": {"type": "string"}}}, timeout=300, private=True)
             import json
@@ -466,21 +477,68 @@ def clusters(k: int | None = None, con=None, namer=None, kinds: tuple[str, ...] 
             title += " +"
         p = folder / f"{title}.md"
         counts = Counter(keys[i][2] for i in idx)
-        top = "\n".join(_member_line(*keys[i]) for i in order[:40])
+        shown = order if notes_only else order[:40]
+        top = "\n".join(_member_line(*keys[i]) for i in shown)
+        if notes_only:
+            membership.update({keys[i][0]: title for i in idx})
         fm = {"type": "kaynak", "status": "aktif", "tags": ["kume"], "source": "derived", "source_id": f"kume:{title}",
               "created": date.today(), "updated": date.today(), "due": None}
         names = {"note": "not", "file": "belge", "mail": "mail/mesaj", "item": "kayıt"}
         summary = ", ".join(f"{n} {names.get(kd, kd)}" for kd, n in counts.most_common())
         body = (f"# {title}\n\n{name['aciklama']}\n\n<!-- sb:auto:kume:start -->\n{len(idx)} öğe ({summary}). "
-                f"Merkeze en yakın {min(40, len(idx))}:\n{top}\n<!-- sb:auto:kume:end -->\n")
+                + ("Üyeler (merkeze yakınlığa göre)" if notes_only else f"Merkeze en yakın {min(40, len(idx))}")
+                + f":\n{top}\n<!-- sb:auto:kume:end -->\n")
         p.write_text(dump_note(fm, body), encoding="utf-8")
         written.append(vault_ops._rel(p))
-    for old in folder.glob("*.md"):                           # bu çalışmada üretilmeyen eski kümeler kalkar (yeniden kümeleme)
+    import shutil
+    for old in folder.glob("*.md"):                           # bu çalışmada üretilmeyen eski kümeler arşive (silinmez)
         if vault_ops._rel(old) not in written:
-            old.unlink()
-            written.append(vault_ops._rel(old))
+            dest = vault_ops.VAULT / vault_ops.ARCHIVE / vault_ops._rel(old)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(old), str(dest))
+            written += [vault_ops._rel(old), vault_ops._rel(dest)]
+    if notes_only:
+        written += _write_membership(membership)
     vault_ops.commit(written, f"kümeleme: {k} küme, {len(keys)} öğe")
-    return f"{len(keys)} öğe ({', '.join(kinds)}) {k} kümeye ayrıldı → {CLUSTERS}"
+    return f"{len(keys)} öğe ({', '.join(kinds)}) {k} kümeye ayrıldı → {rel_folder}"
+
+
+def _folder_of(ref: str) -> str:
+    parts = Path(ref).parts
+    return "/".join(parts[1:2] if parts and parts[0] == "40-Kaynaklar" and len(parts) > 2 else parts[:1])
+
+
+def _snippet(ref: str, n: int = 160) -> str:
+    """Notun gövdesinden ilk anlamlı satırlar (adlandırma için; otomatik bölüm işaretleri ve başlık atlanır)."""
+    try:
+        _, body = split_note((vault_ops.VAULT / ref).read_text(encoding="utf-8"))
+    except OSError:
+        return ""
+    text = " ".join(l for l in body.splitlines() if l.strip() and not l.startswith(("#", "<!--", "---")))
+    return " ".join(text.split())[:n]
+
+
+def _write_membership(membership: dict[str, str]) -> list[str]:
+    """Notların `kume` özelliği: grafik renk grupları bununla küme başına renklenir. Kümeden çıkan notta özellik kalkar."""
+    changed = []
+    for p in vault_ops.VAULT.rglob("*.md"):
+        rel = vault_ops._rel(p)
+        if rel.startswith(("_system/", "90-Arşiv/", "_templates/", ".")):
+            continue
+        want = membership.get(rel)
+        text = p.read_text(encoding="utf-8")
+        if not want and "\nkume:" not in text:
+            continue
+        fm, body = split_note(text)
+        if not fm or fm.get("kume") == want:
+            continue
+        if want:
+            fm["kume"] = want
+        else:
+            fm.pop("kume", None)
+        p.write_text(dump_note(fm, body), encoding="utf-8")
+        changed.append(rel)
+    return changed
 
 
 def _linked(vault: Path) -> set[tuple[str, str]]:
@@ -544,3 +602,90 @@ def apply_links() -> list[str]:
     if out:
         vault_ops.commit([LINK_NOTE], f"bağlantı önerileri işlendi ({len(out)})")
     return out
+
+
+def _series(title: str) -> str:
+    """Aynı serinin parçaları aynı kökü verir: 'Gemini 2026-03' / 'Gemini 2026-05', 'Adsız doküman(1)' / 'Adsız doküman', '10.500'."""
+    return re.sub(r"[\d\W_]+", " ", _fold(Path(title).name)).strip()
+
+
+def auto_links() -> str:
+    """Bağlantı önerilerine kurala göre karar verir ve uygular (kullanıcı 2026-11-01'de sormadan düzenlemeye izin verdi):
+    aynı serinin parçaları (ay notları, numaralı kopyalar, adsız belgeler) bağlanmaz; diğer anlam yakın çiftler bağlanır."""
+    p = vault_ops.VAULT / LINK_NOTE
+    if not p.exists():
+        return "Bağlantı önerisi yok."
+    text, yes, no = p.read_text(encoding="utf-8"), 0, 0
+    for line in [l for l in text.splitlines() if l.startswith("- [ ]")]:
+        t = LINK_RE.findall(line)
+        if len(t) < 2:
+            continue
+        a, b = _series(t[0]), _series(t[1])
+        if not a or not b or a == b or "adsiz" in (a + b):
+            text = text.replace(line, "- [-]" + line[5:] + " (otomatik: aynı seri / anlamsız ad)")
+            no += 1
+        else:
+            text = text.replace(line, "- [x]" + line[5:] + " (otomatik: anlam yakın, farklı konu)")
+            yes += 1
+    p.write_text(text, encoding="utf-8")
+    done = apply_links()
+    return f"bağlantı önerileri: {yes} bağlandı, {no} reddedildi (aynı seri) → {len(done)} bağlantı notu"
+
+
+GRAPH_HIDE_DIRS = ("90-Arşiv", "_system", "_templates", "00-Inbox", "50-Günlük", "40-Kaynaklar/Analiz")
+GRAPH_HIDE_FILES = ("AGENTS", "CLAUDE", "Açık konular", "Son oturum", "Araçlar ve erişimler", "Asistan", "Asistan kuralları",
+                    "Asistan hafızası", "Asistan kimliği", "Dashboard")
+GRAPH_GROUPS = [            # (ad, sorgu, renk) — küme renklerinden sonra uygulanır
+    ("Kişiler", 'path:"60-Kişiler"', "#f59e0b"),
+    ("Projeler", 'path:"20-Projeler"', "#ef4444"),
+    ("Dersler", 'path:"10-Dersler"', "#22c55e"),
+    ("Kariyer", 'path:"30-Kariyer"', "#0ea5e9"),
+    ("Teknolojiler", 'path:"40-Kaynaklar/Teknolojiler"', "#8b5cf6"),
+    ("Konular ve kavramlar", 'path:"40-Kaynaklar/Konular" OR path:"40-Kaynaklar/Kavramlar"', "#ec4899"),
+    ("Yapay zeka sohbetleri", 'path:"40-Kaynaklar/Sohbet geçmişi" OR path:"40-Kaynaklar/Claude" OR path:"40-Kaynaklar/NotebookLM"', "#14b8a6"),
+    ("Bilgisayar", 'path:"40-Kaynaklar/Bilgisayar"', "#64748b"),
+    ("Belgeler ve Drive", 'path:"40-Kaynaklar/Belgeler" OR path:"40-Kaynaklar/Drive" OR path:"40-Kaynaklar/Keep"', "#a3a3a3"),
+    ("Gruplar", 'path:"40-Kaynaklar/Gruplar"', "#eab308"),
+    ("Bağlantılar", 'path:"40-Kaynaklar/Bağlantılar"', "#94a3b8"),
+]
+
+
+def _rgb(hex_color: str) -> int:
+    return int(hex_color.lstrip("#"), 16)
+
+
+def _cluster_colors(n: int) -> list[int]:
+    """Birbirinden ayrık n renk (altın oran ile ton, iki parlaklık katmanı)."""
+    import colorsys
+    out = []
+    for i in range(n):
+        h = (0.11 + i * 0.618033988749895) % 1.0
+        r, g, b = colorsys.hsv_to_rgb(h, 0.62 if i % 2 else 0.78, 0.95 if i % 2 else 0.82)
+        out.append((int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255))
+    return out
+
+
+def graph_style(vault: Path | None = None, hide: bool = False) -> str:
+    """Obsidian grafiği renkleri: her konu kümesi (küme notu + üyeleri) kendi renginde; kümede olmayanlar kategori renginde.
+    Görünürlük ayarlarına (filtre, etiket, ek, bağlantısız) dokunmaz — Ayşe 2026-11-01'de her şeyin görünmesini sabitledi.
+    `hide=True`: teknik notlar, etiketler, ekler ve bağlantısız düğümler gizlenir. Diğer ayarlar (kuvvetler, yakınlaştırma) korunur."""
+    import json
+    v = vault or vault_ops.VAULT
+    gp = v / ".obsidian" / "graph.json"
+    try:
+        cfg = json.loads(gp.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cfg = {}
+    names = sorted(f.stem for f in (v / CLUSTERS).glob("*.md")) if (v / CLUSTERS).is_dir() else []
+    groups = [{"query": f'[kume:"{n}"] OR path:"{CLUSTERS}/{n}.md"', "color": {"a": 1, "rgb": c}}
+              for n, c in zip(names, _cluster_colors(len(names)))]
+    groups += [{"query": q, "color": {"a": 1, "rgb": _rgb(c)}} for _, q, c in GRAPH_GROUPS]
+    cfg.update({"colorGroups": groups, "collapse-color-groups": True})
+    if hide:
+        search = " ".join([f'-path:"{d}"' for d in GRAPH_HIDE_DIRS] + [f'-file:"{f}"' for f in GRAPH_HIDE_FILES])
+        cfg.update({"search": search, "showTags": False, "showAttachments": False, "hideUnresolved": True, "showOrphans": False})
+    gp.parent.mkdir(parents=True, exist_ok=True)
+    gp.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    shown = (f"gizli: {len(GRAPH_HIDE_DIRS)} klasör, etiketler, ekler, bağlantısızlar" if hide
+             else "görünürlük ayarlarına dokunulmadı")
+    return f"graf: {len(names)} küme rengi + {len(GRAPH_GROUPS)} kategori rengi; {shown}"

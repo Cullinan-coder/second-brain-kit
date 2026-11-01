@@ -10,8 +10,18 @@ import zipfile
 from pathlib import Path
 
 from . import academic, browser, kindle, rss, spotify, telegram, whatsapp, youtube
+from . import bank, discord, learning, notes, notion, places, reading, screentime, slack, social, tasks_import
 
 REGISTRY = {
+    # Faz 4c (kaynak adı açıkça verilir: sb import <kaynak> <dosya|klasör>)
+    "discord": discord.run, "slack": slack.run, "notion": notion.run,
+    "keep": notes.run_keep, "apple-notlar": notes.run_apple, "onenote": notes.run_onenote, "evernote": notes.run_evernote,
+    "instagram": social.run_instagram, "x": social.run_x,
+    "todoist": tasks_import.run, "ticktick": tasks_import.run, "mstodo": tasks_import.run, "trello": tasks_import.run,
+    "jira": tasks_import.run, "linear": tasks_import.run,
+    "pocket": reading.run_pocket, "raindrop": reading.run_raindrop,
+    "gphotos": places.run_photos, "gmaps": places.run_maps, "bank": bank.run,
+    "coursera": learning.run_coursera, "udemy": learning.run_udemy, "screentime": screentime.run,
     "whatsapp": whatsapp.run,
     "telegram": telegram.run,
     "kindle": kindle.run,

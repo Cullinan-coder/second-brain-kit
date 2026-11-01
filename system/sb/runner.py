@@ -62,7 +62,8 @@ DAILY_REST = [
     ("sohbet bağlantıları", ["chat-links"], 600),
     ("kişi birleştirme (otomatik)", ["merge-people", "--auto"], 900),
     ("kayıtlı aramalar", ["search2", "--saved"], 600),
-    ("günlük yansıma", ["persona", "--reflect"], 900),           # dünün makbuz/takvim/görevlerinden 5 satır (yerel model)
+    ("günlük yansıma", ["persona", "--reflect"], 900),
+    ("otomasyonlar", ["automation-tick"], 900),                  # config/otomasyon.yaml kuralları; takvim/WhatsApp onaya düşer           # dünün makbuz/takvim/görevlerinden 5 satır (yerel model)
     ("araçlar notu", ["arsenal"], 300),                         # Araçlar ve erişimler.md (doctor + kaynak sayımı)
 ]
 
@@ -223,8 +224,9 @@ def weekly() -> int:
         text = digest.build_weekly(con, VAULT, date.today(), lint_errors())
         from . import features
         if features.enabled("brain"):
-            for name, args, to in (("kümeleme", ["clusters"], 3600), ("bağlantı önerileri", ["suggest-links"], 1800),
-                                   ("analizler", ["analyze", "all"], 3600)):
+            for name, args, to in (("konu kümeleri", ["clusters"], 3600), ("belge kümeleri", ["clusters", "--docs"], 3600),
+                                   ("bağlantı önerileri", ["suggest-links"], 1800), ("bağlantılar (otomatik)", ["suggest-links", "--auto"], 900),
+                                   ("graf renkleri", ["graph-style"], 300), ("analizler", ["analyze", "all"], 3600)):
                 run_step(name, args, to, log)
         if features.enabled("memory_ui"):
             for name, args, to in (("beni tanı", ["persona", "--weekly"], 1800), ("tercih adayları", ["persona", "--prefs"], 1800)):

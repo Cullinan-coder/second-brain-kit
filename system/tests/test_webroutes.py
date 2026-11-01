@@ -80,3 +80,12 @@ def test_static_file_rejects_traversal_and_unknown_types(tmp_path, monkeypatch):
 def test_routes_listing_reports_registered():
     out = webroutes.call(webroutes.find("GET", "/api/v2/routes"), webroutes.Ctx("GET", "/api/v2/routes"))
     assert out[0] == 200 and "GET /api/v2/routes" in json.loads(out[1])["routes"]
+
+
+def test_extension_origin_only_when_allowlisted(tmp_path, monkeypatch):
+    from sb import config
+    monkeypatch.setattr(config, "SYSTEM", tmp_path)
+    assert chat.extension_origins() == set()                                   # dosya yok: hiçbir eklenti
+    (tmp_path / "config").mkdir()
+    (tmp_path / "config" / "eklentiler.yaml").write_text("chrome: [abcdefghijklmnopabcdefghijklmnop, '../kotu']\n", encoding="utf-8")
+    assert chat.extension_origins() == {"chrome-extension://abcdefghijklmnopabcdefghijklmnop"}
