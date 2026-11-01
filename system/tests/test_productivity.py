@@ -232,7 +232,9 @@ def test_deadline_risk_warning_and_notify_once(env):
     assert not any("«Rapor»" in w["text"] for w in pr.risk_warnings())   # üzerinde çalışılıyor → uyarı yok
 
 
-def test_morning_text_and_cli(capsys):
+def test_morning_text_and_cli(capsys, monkeypatch):
+    import sb.gcal_api
+    monkeypatch.setattr(sb.gcal_api, "Calendar", lambda *a, **k: FakeCal([]))     # gerçek Google takvimine gidilmez
     add("Sabah işi", priority=1)
     t = pr.morning_text(FakeCal([ev("Toplantı", "13:00", "14:00")]))
     assert "Sabah işi" in t and "Toplantı" in t

@@ -295,7 +295,7 @@ def day_events(day: date, calendar=None) -> tuple[list[dict], str]:
             calendar = Calendar("main")
         a = datetime.combine(day, time.min).astimezone()
         evs = calendar.list_events(a, a + timedelta(days=1))
-    except Exception as e:                                         # noqa: BLE001 — takvimsiz de plan çıkmalı
+    except (Exception, SystemExit) as e:                           # noqa: BLE001 — takvimsiz de plan çıkmalı (giriş yoksa SystemExit)
         return [], f"Takvim okunamadı ({type(e).__name__}); plan yalnız görevlerden."
     out = []
     for ev in evs:

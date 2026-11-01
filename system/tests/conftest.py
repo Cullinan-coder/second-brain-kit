@@ -7,8 +7,12 @@ import pytest
 @pytest.fixture(autouse=True)
 def _private_state(monkeypatch, tmp_path):
     """Testler gerçek ~/.secondbrain kayıtlarına (kullanım, performans, çökme, önbellek) yazmasın."""
-    from sb import brain, config, router, telemetry, usage
+    from sb import brain, config, gcal_api, router, telemetry, usage
     (tmp_path / "data").mkdir(exist_ok=True)
+
+    def _no_real_calendar(*a, **k):                                 # CI'da giriş yok: testler gerçek Google'a gitmesin
+        raise RuntimeError("testte gerçek Google Takvim yok — sahte takvim ver")
+    monkeypatch.setattr(gcal_api, "Calendar", _no_real_calendar)
     monkeypatch.setattr(config, "DATA", tmp_path / "data")       # Faz 2 modülleri config.DATA'yı işlev içinde okur
     monkeypatch.setattr(brain, "DB", tmp_path / "brain.db")
     monkeypatch.setattr(brain, "VEC_NPY", tmp_path / "vecs.npy")

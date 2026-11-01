@@ -2,6 +2,10 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.8.1 — 2026-11-01
+- Kurulum ve güncelleme `integrations` klasörünü (Obsidian/tarayıcı/tepsi eklentileri) de kopyalar (0.8.0'da eksikti).
+- Takvime erişilemeyince (giriş yok) günlük plan çökmek yerine takvimsiz çıkar; testler hiçbir zaman gerçek Google Takvim'e gitmez.
+
 ## 0.8.0 — 2026-11-01 (Faz 4: ajanlar, kişisel, güvenlik, yeni kaynaklar, eklentiler)
 - **Otomasyon:** `config/otomasyon.yaml` kuralları (yeni mail, teslim yaklaştı, zaman, not değişti, webhook → görev, bildirim, not, özet,
   takvim önerisi, WhatsApp taslağı); dış etkili eylemler her zaman onay kuyruğuna düşer (görünüm `automations`); `sb automation-tick` günlük çalışmada.
