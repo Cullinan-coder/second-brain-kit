@@ -15,6 +15,7 @@ from pathlib import Path
 
 import yaml
 
+from . import config as _config
 from . import llm, notes, router, usage, vault_ops
 from .config import DATA, KEYRING_SERVICE, SYSTEM, VAULT
 from .redact import redact
@@ -30,11 +31,15 @@ SCOPES = ("vault", "data", "all")
 
 # ------------------------------------------------------------------ izin profilleri
 ACTIONS = ("takvim", "whatsapp", "komut", "kasa_duzenleme", "bulut")
+# Profiller yalnız onay EKLER; taban her profilde aynı: takvim, WhatsApp, riskli/yazan komutlar, silme HER ZAMAN onaylı.
+# "komut": salt okunur komutlar da onaylı mı · "kasa_duzenleme": not güncelleme/arşiv/kural/hafıza/yakalama onaylı mı ·
+# "bulut": True → hiçbir istek bulut modeline gitmez (yalnız yerel). "serbest" tabanın altına inemez: normal ile aynıdır.
 PROFILES: dict[str, dict[str, bool]] = {
     "sıkı": {"takvim": True, "whatsapp": True, "komut": True, "kasa_duzenleme": True, "bulut": True},
-    "normal": {"takvim": True, "whatsapp": True, "komut": True, "kasa_duzenleme": False, "bulut": False},
+    "normal": {"takvim": True, "whatsapp": True, "komut": False, "kasa_duzenleme": False, "bulut": False},
     "serbest": {"takvim": True, "whatsapp": True, "komut": False, "kasa_duzenleme": False, "bulut": False},
 }
+FLOOR = {"takvim": True, "whatsapp": True}                       # özel profil bile bunları kapatamaz
 
 
 def _yaml(path: Path) -> dict:
@@ -50,6 +55,7 @@ def permissions() -> dict:
     for name, rules in (cfg.get("profiller") or {}).items():
         if isinstance(rules, dict):
             profiles.setdefault(str(name), {}).update({a: bool(rules[a]) for a in ACTIONS if a in rules})
+            profiles[str(name)].update(FLOOR)
     current = cfg.get("profil") if cfg.get("profil") in profiles else "normal"
     return {"profile": current, "profiles": profiles, "actions": list(ACTIONS), "needs_approval": profiles[current]}
 
@@ -247,8 +253,25 @@ def archive_candidates(folder: str) -> list[str]:
 
 
 # ------------------------------------------------------------------ kasa şifreleme (yalnız CLI)
+class KeyLost(RuntimeError):
+    """Anahtar daha önce üretilmiş ama keyring'den okunamıyor: yeni anahtar üretmek eski şifreli notları kalıcı kilitler."""
+
+
+def _key_marker() -> Path:
+    return _config.DATA / "vault_key_created"
+
+
+def _has_encrypted_files() -> bool:
+    try:
+        return any(VAULT.rglob("*.md.enc"))
+    except OSError:
+        return False
+
+
 def _real_cipher():
-    """(encrypt, decrypt) ya da None (cryptography/keyring yoksa). Testte monkeypatch edilir."""
+    """(encrypt, decrypt) ya da None (cryptography/keyring yoksa). Testte monkeypatch edilir.
+    Anahtar daha önce üretildiyse (işaret dosyası ya da şifreli .md.enc varlığı) ve keyring okuyamıyorsa
+    YENİ ANAHTAR ÜRETİLMEZ: KeyLost fırlatılır."""
     try:
         import keyring
         from cryptography.fernet import Fernet
@@ -256,10 +279,55 @@ def _real_cipher():
         return None
     key = keyring.get_password(KEYRING_SERVICE, KEY_NAME)
     if not key:
+        if _key_marker().exists() or _has_encrypted_files():
+            raise KeyLost("Şifreleme anahtarı daha önce oluşturulmuş ama anahtar zincirinden okunamadı; yeni anahtar "
+                          "ÜRETİLMEDİ (eski şifreli notlar kalıcı kilitlenirdi). Yedek anahtarı geri yükle.")
         key = Fernet.generate_key().decode()
         keyring.set_password(KEYRING_SERVICE, KEY_NAME, key)
+        try:
+            _key_marker().parent.mkdir(parents=True, exist_ok=True)
+            _key_marker().write_text(datetime.now().isoformat(timespec="seconds"), encoding="utf-8")
+        except OSError:
+            pass
     f = Fernet(key.encode())
     return f.encrypt, f.decrypt
+
+
+def export_key(path: str | Path) -> Path:
+    """Şifreleme anahtarını verilen dosyaya yedekler (`sb vault-key --export <dosya>`). Dosyayı güvenli bir yerde sakla
+    (parola yöneticisi/USB); anahtarı olmayan şifreli notlar açılamaz."""
+    try:
+        import keyring
+    except ImportError as e:
+        raise RuntimeError("keyring kurulu değil") from e
+    key = keyring.get_password(KEYRING_SERVICE, KEY_NAME)
+    if not key:
+        raise KeyLost("anahtar zincirinde şifreleme anahtarı yok")
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(key + "\n", encoding="utf-8")
+    try:
+        dest.chmod(0o600)
+    except OSError:
+        pass
+    return dest
+
+
+def vault_key_cli(argv: list[str]) -> int:
+    if "--export" in argv:
+        i = argv.index("--export")
+        target = argv[i + 1] if i + 1 < len(argv) else ""
+    else:
+        target = ""
+    if not target:
+        print("Kullanım: sb vault-key --export <dosya>")
+        return 1
+    try:
+        print(f"Anahtar yedeklendi: {export_key(target)} (güvenli bir yerde sakla)")
+        return 0
+    except Exception as e:                                    # noqa: BLE001
+        print(f"Yapılmadı: {e}")
+        return 1
 
 
 def _cipher():
@@ -278,7 +346,10 @@ def encrypt_folder(folder: str, confirm: bool = False) -> dict:
     targets = sorted(p.rglob("*.md"))
     if not confirm:
         return {"ok": True, "dry_run": True, "files": len(targets), "message": "Yapılmadı. Uygulamak için --confirm ekle."}
-    c = _cipher()
+    try:
+        c = _cipher()
+    except KeyLost as e:
+        return {"ok": False, "available": True, "message": str(e)}
     if c is None:
         return {"ok": False, "available": False, "message": "cryptography/keyring kurulu değil: uv pip install cryptography keyring"}
     enc, dec = c
@@ -292,8 +363,13 @@ def encrypt_folder(folder: str, confirm: bool = False) -> dict:
         f.with_name(f.name + ".enc").write_bytes(token)
         f.unlink()
         done += 1
+    # Düz yedek zip'i şifreli notların düz kopyasını tutar: AYNI anahtarla şifrelenmiş bir kopyası (.zip.enc) yazılır;
+    # düz zip rollback için kalır, kullanıcıya doğrulayıp Geri Dönüşüm Kutusu'na atması önerilir (kalıcı silme yok).
+    enc_backup = backup.with_name(backup.name + ".enc")
+    enc_backup.write_bytes(enc(backup.read_bytes()))
     vault_ops.log("kullanıcı", "şifrele", folder, f"{done} not; yedek {backup.name}", "")
-    return {"ok": True, "available": True, "encrypted": done, "backup": backup.name}
+    return {"ok": True, "available": True, "encrypted": done, "backup": backup.name, "backup_encrypted": enc_backup.name,
+            "advice": f"{backup.name} düz metin içerir: {enc_backup.name} ile doğruladıktan sonra Geri Dönüşüm Kutusu'na at."}
 
 
 def decrypt_folder(folder: str, confirm: bool = False) -> dict:
@@ -301,7 +377,10 @@ def decrypt_folder(folder: str, confirm: bool = False) -> dict:
     targets = sorted(p.rglob("*.md.enc"))
     if not confirm:
         return {"ok": True, "dry_run": True, "files": len(targets), "message": "Yapılmadı. Uygulamak için --confirm ekle."}
-    c = _cipher()
+    try:
+        c = _cipher()
+    except KeyLost as e:
+        return {"ok": False, "available": True, "message": str(e)}
     if c is None:
         return {"ok": False, "available": False, "message": "cryptography/keyring kurulu değil"}
     _, dec = c
@@ -316,15 +395,24 @@ def decrypt_folder(folder: str, confirm: bool = False) -> dict:
     return {"ok": True, "available": True, "decrypted": done, "backup": backup.name}
 
 
+def _safe_member(m: str) -> bool:
+    """Zip üyesi göreli, `..`'sız, sürücü (`C:foo`) / mutlak / UNC / ADS (`:`) içermeyen bir yol olmalı."""
+    if not m or m.endswith("/") or ":" in m or m.startswith(("/", "\\")):
+        return False
+    parts = m.replace("\\", "/").split("/")
+    return ".." not in parts and "" not in parts and not Path(m).is_absolute()
+
+
 def restore(name: str, confirm: bool = False) -> dict:
     """Yedeği kasaya/sisteme açar. Önce üzerine yazılacak mevcut dosyaların yedeği (`onceki-*.zip`) alınır."""
     z = (BACKUPS / Path(name).name)
     if not z.is_file():
         return {"ok": False, "message": f"yedek yok: {name}"}
-    is_vault = z.name.startswith("vault-")
-    root = VAULT if is_vault else SYSTEM
+    if not z.name.startswith("vault-"):                         # yalnız kasa yedekleri; _system'e yazılmaz
+        return {"ok": False, "message": f"yalnız 'vault-' ile başlayan kasa yedekleri geri yüklenir: {z.name}"}
+    root = VAULT
     with zipfile.ZipFile(z) as zf:
-        members = [m for m in zf.namelist() if not m.endswith("/") and ".." not in Path(m).parts and not Path(m).is_absolute()]
+        members = [m for m in zf.namelist() if _safe_member(m)]
         if not confirm:
             return {"ok": True, "dry_run": True, "files": len(members), "message": "Yapılmadı. Uygulamak için --confirm ekle."}
         existing = [(root / m, m) for m in members if (root / m).is_file()]

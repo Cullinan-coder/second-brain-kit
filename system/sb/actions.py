@@ -297,11 +297,12 @@ def whatsapp_send(phone: str, text: str) -> str:
 
 # ------------------------------------------------------------------ terminal
 SAFE_CMDS = {"pwd", "df", "du", "ps", "uptime", "ifconfig", "sw_vers", "which", "date", "free", "uname", "get-process", "get-service", "get-date", "get-volume", "get-psdrive", "get-netipaddress", "get-netadapter",
-             "get-childitem", "dir", "ls", "ipconfig", "ping", "test-connection", "tracert", "systeminfo", "tasklist", "netstat",
-             "whoami", "hostname", "nvidia-smi", "get-content", "type", "cat", "resolve-dnsname", "nslookup", "get-command",
+             "get-childitem", "dir", "ls", "ipconfig", "systeminfo", "tasklist", "netstat",
+             "whoami", "hostname", "nvidia-smi", "get-content", "type", "cat", "get-command",
              "get-computerinfo", "get-hotfix", "get-uptime", "python", "node", "git", "uv", "ollama", "winget"}
-SAFE_SUBCMDS = {"git": {"status", "log", "branch", "diff", "remote", "show"}, "winget": {"list", "search", "show", "upgrade"},
-                "ollama": {"list", "ps", "show", "--version"}, "uv": {"--version", "pip"}, "python": {"--version", "-v"},
+# Yalnız salt okunur alt komutlar (paket kurma, yükseltme, dal silme, uzak depo değiştirme onaylı).
+SAFE_SUBCMDS = {"git": {"status", "log", "diff", "show"}, "winget": {"list", "search", "show"},
+                "ollama": {"list", "ps", "show", "--version"}, "uv": {"--version"}, "python": {"--version", "-v"},
                 "node": {"--version", "-v"}}
 SAFE_PIPES = {"sort-object", "sort", "select-object", "select", "format-table", "ft", "format-list", "fl", "measure-object",
               "out-string", "select-string", "sls", "findstr"}
@@ -317,6 +318,21 @@ FORBIDDEN = re.compile(
     re.I | re.M)
 
 
+def _readable_path(arg: str) -> bool:
+    """`cat/type/Get-Content` hedefi kasada ya da ~/Workspace altında mı (göreli yol ev klasörüne göre)."""
+    arg = re.sub(r"^-(path|literalpath)\s+", "", arg.strip(), flags=re.I).strip("'\" ")
+    if not arg or "*" in arg or "?" in arg:
+        return False
+    from .config import VAULT
+    try:
+        target = (Path.home() / arg).resolve() if not Path(arg).is_absolute() else Path(arg).resolve()
+    except (OSError, ValueError):
+        return False
+    roots = [Path(VAULT).resolve(), (Path.home() / "Workspace").resolve()]
+    config = Path(VAULT).resolve() / "_system" / "config"                # ayar dosyaları (hesap adresleri) onaylı
+    return any(r in target.parents for r in roots) and config not in target.parents
+
+
 def classify_command(cmd: str) -> str:
     """'serbest' (salt-okunur izinli) | 'onayli' | 'yasak'."""
     c = cmd.strip()
@@ -324,6 +340,9 @@ def classify_command(cmd: str) -> str:
         return "yasak"
     if re.search(r"[;&<>`{}]|\$\(|@\(|\|\||secret|\.ssh|credential|keyring|\.secondbrain|password|sifre|şifre", c, re.I):
         return "onayli"                                         # zincir/yönlendirme/betik bloğu: göster ve sor
+    if re.search(r"\benv:|\$env|--output|\\\\|\bftp:|\.env\b|\.pem\b|\.key\b|\.pfx\b|\.p12\b|\.kdbx\b|token|cookie|"
+                 r"login data|\.npmrc|\.aws|\.git-credentials|id_rsa", c, re.I):
+        return "onayli"                                         # ortam değişkeni (anahtarlar), dosyaya yazma, ağ paylaşımı, sır dosyaları
     parts = [p.strip() for p in c.split("|")]
     first = parts[0].split()
     head = first[0].lower()
@@ -331,6 +350,8 @@ def classify_command(cmd: str) -> str:
         return "onayli"
     if head in SAFE_SUBCMDS and (len(first) < 2 or first[1].lower() not in SAFE_SUBCMDS[head]):
         return "onayli"
+    if head in ("get-content", "type", "cat") and not _readable_path(" ".join(first[1:])):
+        return "onayli"                                         # dosya okuma: yalnız kasa ve Workspace içi onaysız
     if any(p.split()[0].lower() not in SAFE_PIPES for p in parts[1:] if p.split()):
         return "onayli"
     return "serbest"

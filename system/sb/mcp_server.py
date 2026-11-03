@@ -119,8 +119,11 @@ def brain_note(path: str) -> str:
     p = (VAULT / path).resolve()
     if VAULT.resolve() not in p.parents or p.suffix != ".md" or not p.is_file():
         return "Geçersiz yol: sadece kasa içindeki .md notları okunabilir."
+    if "_system" in p.relative_to(VAULT.resolve()).parts:
+        return "Geçersiz yol: _system altı (kod, yapılandırma, sırlar) okunamaz."
     if is_private(p):
-        return "Bu not gizli (visibility: private); otomatik okunmaz. Kullanıcı açıkça isterse kendisi açar."
+        return (f"Bu not gizli (visibility: private); içeriği otomatik okunmaz. Başlık: {p.stem}. "
+                "Kullanıcı açıkça isterse kendisi açar.")
     return _read(p, 60_000)
 
 

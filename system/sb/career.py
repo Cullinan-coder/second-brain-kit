@@ -67,8 +67,9 @@ def _unique(rel_dir: str, name: str) -> str:
 
 
 def _inside(path: str) -> Path:
-    p = (_vault() / str(path or "")).resolve()
-    if not str(p).startswith(str(_vault().resolve())) or not p.is_file() or p.suffix.lower() != ".md":
+    root = _vault().resolve()
+    p = (root / str(path or "")).resolve()
+    if root not in p.parents or not p.is_file() or p.suffix.lower() != ".md":
         raise ValueError("path kasada bir .md dosyası olmalı")
     return p
 

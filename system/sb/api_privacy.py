@@ -35,7 +35,7 @@ def permissions_get(ctx: Ctx) -> dict:
     return pv.permissions()
 
 
-@route("POST", "/api/v2/permissions")
+@route("POST", "/api/v2/permissions", local_only=True)          # telefondan değiştirilemez
 def permissions_set(ctx: Ctx) -> dict:
     try:
         return pv.set_profile(str(ctx.arg("profile") or ""))

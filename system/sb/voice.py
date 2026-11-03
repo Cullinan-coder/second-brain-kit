@@ -427,7 +427,13 @@ def _ytdlp_audio(url: str, outdir: Path) -> tuple[Path, str]:
         import yt_dlp
     except Exception:                                  # noqa: BLE001
         raise Unavailable(YTDLP_HINT)
-    opts = {"format": "bestaudio/best", "outtmpl": str(outdir / "a.%(ext)s"), "quiet": True, "noplaylist": True, "no_warnings": True}
+    opts = {"format": "bestaudio/best", "outtmpl": str(outdir / "a.%(ext)s"), "quiet": True, "noplaylist": True, "no_warnings": True,
+            "max_filesize": 50 * 1024 * 1024}
+    from . import capture
+    try:
+        capture.check_public_url(url)
+    except capture.UnsafeUrl as e:
+        raise ApiError(400, str(e))
     with yt_dlp.YoutubeDL(opts) as y:
         info = y.extract_info(url, download=True)
     files = [p for p in outdir.iterdir() if p.name.startswith("a.")]
@@ -441,6 +447,10 @@ def transcribe_url(url: str) -> dict:
     url = (url or "").strip()
     if not re.match(r"^https?://\S+$", url):
         raise ApiError(400, "geçerli bir http(s) adresi ver")
+    try:
+        capture.check_public_url(url)
+    except capture.UnsafeUrl as e:
+        raise ApiError(400, str(e))
     title, author, text = url, "", ""
     if (m := capture.YT_RE.search(url)):
         url = f"https://www.youtube.com/watch?v={m.group(1)}"
@@ -551,7 +561,7 @@ def _api_meeting(ctx):
                    str(ctx.arg("project", "") or ""))
 
 
-@route("POST", "/api/v2/transcribe-url", model=True)
+@route("POST", "/api/v2/transcribe-url", model=True, local_only=True)
 def _api_transcribe_url(ctx):
     return transcribe_url(str(ctx.arg("url", "") or ""))
 

@@ -146,6 +146,8 @@ def long_complete(task: str, instruction: str, text: str, *, chunk_chars: int = 
     """Bağlama sığmayan metin (madde 36): parçalara böl, her parçayı talimatla işle, sonra parça sonuçlarını birleştir."""
     from . import router
     size = chunk_chars or int(config()["ollama"].get("max_chars", 60000)) - len(instruction) - 2000
+    if not private and router.sensitive(f"{instruction}\n{text}"):   # hassaslık BÜTÜN metinde bir kez; parçalara taşınır
+        private = True
     parts = router.chunks(text, max(size, 4000))
     if len(parts) == 1:
         return complete(task, f"{instruction}\n\n{text}", timeout=timeout, private=private)

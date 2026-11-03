@@ -36,7 +36,33 @@ def is_local(target: str) -> bool:
 
 
 def sensitive(text: str) -> bool:
-    return bool(SENSITIVE_RE.search(text or ""))
+    """Hassas içerik: anahtar sözcük/biçim eşleşmesi YA DA redact.redact() metni değiştiriyorsa (API anahtarı,
+    `*_PASSWORD=`, OTP, geçerli kart/TCKN/IBAN)."""
+    text = text or ""
+    if SENSITIVE_RE.search(text):
+        return True
+    from . import redact
+    try:
+        return redact.redact(text) != text
+    except Exception:
+        return False
+
+
+def cloud_safe_messages(messages: list[dict]) -> tuple[list[dict], bool]:
+    """Asistan sohbeti için: mesajlardan biri hassassa `forced_local=True` döner (çağıran yalnız yerel modele gitmeli).
+    Mesajlar değiştirilmez; içerik (str ya da parça listesi) taranır."""
+    def _texts(m: dict):
+        c = m.get("content") if isinstance(m, dict) else None
+        if isinstance(c, str):
+            yield c
+        elif isinstance(c, list):
+            for part in c:
+                if isinstance(part, str):
+                    yield part
+                elif isinstance(part, dict) and isinstance(part.get("text"), str):
+                    yield part["text"]
+    forced = any(sensitive(t) for m in messages for t in _texts(m))
+    return messages, forced
 
 
 def _match(when: dict, task: str, prompt: str) -> bool:
@@ -62,9 +88,18 @@ def chain(cfg: dict, task: str, prompt: str = "", private: bool = False, default
     if rest is None:
         rest = ["ollama"] if cfg.get("fallback_to_local") else []
     out = list(dict.fromkeys([target, *[str(x) for x in rest]]))
-    if private or sensitive(prompt):                          # gizli/hassas: yalnız bu bilgisayar
+    if private or sensitive(prompt) or _strict_local():      # gizli/hassas ya da sıkı izin profili: yalnız bu bilgisayar
         out = [t for t in out if is_local(t)] or ["ollama"]
     return out
+
+
+def _strict_local() -> bool:
+    """İzin profili 'bulut' onayı istiyorsa (sıkı) hiçbir istek buluta gitmez."""
+    try:
+        from . import privacy
+        return privacy.needs_approval("bulut")
+    except Exception:                                         # noqa: BLE001 — profil okunamazsa normal yönlendirme
+        return False
 
 
 # ---------------------------------------------------------------- önbellek (madde 33)

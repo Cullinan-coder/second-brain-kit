@@ -112,25 +112,54 @@ def recover() -> int:
     return _install(*k)
 
 
-def run(check_only: bool = False) -> int:
+def _latest_tag(git: list[str]) -> str:
+    out = subprocess.run(git + ["tag", "--list", "v[0-9]*", "--sort=-v:refname"], capture_output=True, text=True).stdout.split()
+    return out[0] if out else ""
+
+
+def preview(git: list[str], target: str) -> tuple[str, int]:
+    """Gelecek commit'lerin özeti (`git log HEAD..<hedef> --oneline`) ve değişen dosya sayısı."""
+    log = subprocess.run(git + ["log", f"HEAD..{target}", "--oneline"], capture_output=True, text=True).stdout.strip()
+    files = subprocess.run(git + ["diff", "--name-only", f"HEAD...{target}"], capture_output=True, text=True).stdout.split()
+    return log, len(files)
+
+
+def run(check_only: bool = False, yes: bool = False, tags_only: bool = False) -> int:
     k = _kit()
     if not k:
         return 1
     kit, vault = k
     old = version()
     git = ["git", "-C", str(kit)]
-    subprocess.run(git + ["fetch", "--quiet"], check=True)
-    behind = subprocess.run(git + ["rev-list", "--count", "HEAD..@{u}"], capture_output=True, text=True).stdout.strip()
-    new = subprocess.run(git + ["show", "@{u}:system/VERSION"], capture_output=True, text=True).stdout.strip() or "?"
+    subprocess.run(git + ["fetch", "--quiet", "--tags"], check=True)
+    target = "@{u}"
+    if tags_only:
+        target = _latest_tag(git)
+        if not target:
+            print("Etiketli sürüm yok (v1.2.3 gibi); --tags-only ile güncellenemez.")
+            return 1
+    behind = subprocess.run(git + ["rev-list", "--count", f"HEAD..{target}"], capture_output=True, text=True).stdout.strip()
+    new = subprocess.run(git + ["show", f"{target}:system/VERSION"], capture_output=True, text=True).stdout.strip() or "?"
     if behind == "0":
         print(f"Güncel: {old}")
         return 0
-    print(f"Kurulu: {old} → yeni: {new} ({behind or '?'} değişiklik)")
+    print(f"Kurulu: {old} → yeni: {new} ({behind or '?'} değişiklik" + (f", etiket {target}" if tags_only else "") + ")")
+    log, nfiles = preview(git, target)
+    if log:
+        print("\nGelecek commit'ler:\n" + "\n".join("  " + ln for ln in log.splitlines()[:30]) + f"\nDeğişen dosya: {nfiles}\n")
     if check_only:
         return 0
+    if not yes:                                              # çekmeden ÖNCE onay: kit deposundaki kod bilgisayarda çalışacak
+        try:
+            ok = sys.stdin.isatty() and input("Bu değişiklikler çekilsin mi? [e/H] ").strip().lower() in ("e", "evet", "y", "yes")
+        except EOFError:
+            ok = False
+        if not ok:
+            print("Onaylanmadı; güncelleme yapılmadı (onaysız çalıştırmak için --yes).")
+            return 1
     z = backup()
     print(f"Yedek alındı: {z} (sorun olursa: sb update --rollback)")
-    r = subprocess.run(git + ["pull", "--ff-only", "--quiet"])
+    r = subprocess.run(git + (["merge", "--ff-only", "--quiet", target] if tags_only else ["pull", "--ff-only", "--quiet"]))
     if r.returncode:
         print("git pull başarısız (kit klasöründe elle değişiklik mi var?). `git -C <kit> status` ile bak.")
         return 1

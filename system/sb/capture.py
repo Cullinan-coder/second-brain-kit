@@ -9,8 +9,10 @@ modele "özetle" denir, içindeki talimatlar uygulanmaz; not kasaya git commit +
 from __future__ import annotations
 
 import html
+import ipaddress
 import json
 import re
+import socket
 import subprocess
 import urllib.parse
 import urllib.request
@@ -40,10 +42,51 @@ def clipboard() -> str:
     return out.stdout.decode("utf-8", "replace").strip()
 
 
+MAX_DOWNLOAD = 50 * 1024 * 1024                    # indirme üst sınırı (bayt)
+_CGNAT = ipaddress.ip_network("100.64.0.0/10")     # Tailscale / CGNAT
+
+
+class UnsafeUrl(ValueError):
+    pass
+
+
+def _ip_blocked(ip: str) -> bool:
+    a = ipaddress.ip_address(ip.split("%")[0])
+    if getattr(a, "ipv4_mapped", None):
+        a = a.ipv4_mapped
+    return (a.is_private or a.is_loopback or a.is_link_local or a.is_reserved or a.is_multicast or a.is_unspecified
+            or (a.version == 4 and a in _CGNAT))
+
+
+def check_public_url(url: str) -> str:
+    """Yalnız http(s) ve çözümlenen TÜM adresleri herkese açık olan adreslere izin verir (SSRF koruması)."""
+    u = urllib.parse.urlsplit((url or "").strip())
+    if u.scheme not in ("http", "https") or not u.hostname:
+        raise UnsafeUrl("yalnız http(s) adreslerine izin var")
+    try:
+        infos = socket.getaddrinfo(u.hostname, u.port or (443 if u.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
+    except OSError as e:
+        raise UnsafeUrl(f"adres çözümlenemedi: {u.hostname}") from e
+    if not infos:
+        raise UnsafeUrl("adres çözümlenemedi")
+    for info in infos:
+        if _ip_blocked(info[4][0]):
+            raise UnsafeUrl("özel/yerel ağ adreslerine erişim yok")
+    return url
+
+
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        check_public_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def _get(url: str, limit: int = 3_000_000) -> str:
+    check_public_url(url)
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        raw = r.read(limit)
+    opener = urllib.request.build_opener(_SafeRedirect)
+    with opener.open(req, timeout=30) as r:
+        raw = r.read(min(limit, MAX_DOWNLOAD))
         enc = r.headers.get_content_charset() or "utf-8"
     return raw.decode(enc, "replace")
 

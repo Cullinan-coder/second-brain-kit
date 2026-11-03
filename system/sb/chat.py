@@ -119,6 +119,31 @@ TOOLS = [
 AUTO_ACTIONS = {"open_app", "media", "play_youtube", "play_spotify", "web_search", "note_update", "note_archive", "undo_last",
                 "rule_add", "memory_add"}
 UNTRUSTED_READS = {"screen_read", "camera_read"}
+# Kalıcı (sistem istemine yazan) ya da dışarıya istek atan eylemler: bağlamda dış içerik varken yalnız kullanıcının KENDİ mesajı isterse onaysız.
+PERSIST_ACTIONS = {"rule_add", "memory_add", "brain_capture"}
+EXTERNAL_READS = {"brain_search", "brain_person", "web_search"}      # sonucu mail/SMS/belge/web metni içerebilir
+_ASK_RE = {"rule_add": r"kural|bundan sonra|her zaman|asla|hep ", "memory_add": r"hatırla|aklında tut|unutma|kaydet|not et"}
+
+
+VAULT_EDITS = {"note_update", "note_archive", "undo_last", "rule_add", "memory_add", "inbox_add", "brain_capture"}
+
+
+def _perm(action: str) -> bool:
+    """İzin profili bu eylem için EK onay istiyor mu (privacy.needs_approval; okunamazsa normal davranış)."""
+    try:
+        from . import privacy
+        return privacy.needs_approval(action)
+    except Exception:                                         # noqa: BLE001
+        return False
+
+
+def _user_asked(session, name: str, args: dict) -> bool:
+    """Eylem niyeti kullanıcının kendi son mesajında var mı (bağlamdaki dış metinde değil)."""
+    text = (getattr(session, "user_text", "") or "").lower()
+    if name == "brain_capture":
+        target = str(args.get("target", "")).strip().lower()
+        return bool(target) and target in text
+    return bool(re.search(_ASK_RE.get(name, r"$^"), text))
 ACTION_TITLES = {"play_spotify": "🎵 Spotify'da çal", "play_youtube": "▶️ YouTube'da aç", "open_app": "🖥️ Uygulamayı aç",
                  "media": "🔊 Medya", "web_search": "🔎 Tarayıcıda ara", "note_update": "📝 Notu güncelle",
                  "note_archive": "🗄️ Notu arşivle", "undo_last": "↩️ Son değişikliği geri al", "rule_add": "📏 Kural ekle",
@@ -174,6 +199,8 @@ class Session:
         self.proposals: dict[str, dict] = {}
         self.remote = remote          # telefondan (Tailscale) gelen oturum: bilgisayar eylemleri hep onaylı
         self.tainted = False          # bu turda ekran/kamera okundu: sonraki eylemler onaylı
+        self.external = False         # bağlamda dış metin (mail/SMS/belge/web) var: kalıcı eylemler kullanıcı istemediyse onaylı
+        self.user_text = ""
         self.vision_reply = ""
 
 
@@ -388,7 +415,7 @@ def _command(session: Session, args: dict) -> str:
     kind = actions.classify_command(cmd)
     if kind == "yasak":
         return actions.run_command(cmd)                       # reddeder; açıklama döner
-    if kind == "serbest" and not session.tainted and not session.remote:
+    if kind == "serbest" and not session.tainted and not session.remote and not _perm("komut"):
         vault_ops.log("asistan", "komut", "", cmd[:200], "")
         return _clip(actions.run_command(cmd))
 
@@ -434,7 +461,23 @@ def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
     if not features.tool_enabled(name):
         key = features.TOOL_MODULE[name]
         return f"Bu özellik kapalı ({features.MODULES[key][0]}). Açmak için: sb features --on {key}"
+    if name in EXTERNAL_READS:                              # sonucu dış metin: bu turun sonraki kalıcı eylemleri onaylı
+        session.external = True
     try:
+        if name in VAULT_EDITS and _perm("kasa_duzenleme"):  # sıkı profil: kasa düzenlemeleri de onaylı
+            what = ACTION_TITLES.get(name, name)
+            arg = next((str(v) for v in args.values() if v not in (None, "")), "")
+            run = (lambda: _auto_action(name, args)) if name in AUTO_ACTIONS else \
+                  (lambda: __import__("sb.capture", fromlist=["x"]).capture(str(args.get("target", "")).strip())) if name == "brain_capture" else \
+                  (lambda: __import__("sb.inbox", fromlist=["x"]).add(str(args.get("text", ""))))
+            return add_proposal(session, "eylem", f"{what}: {arg[:120]}" if arg else what, "izin profili (sıkı): kasa düzenlemesi onaylı", run)
+        if name in PERSIST_ACTIONS and session.external and not _user_asked(session, name, args):
+            what = ACTION_TITLES.get(name, name)                 # mail/SMS/belge içindeki talimat kalıcı kural/hafıza yazamasın, URL çekemesin
+            arg = next((str(v) for v in args.values() if v not in (None, "")), "")
+            run = (lambda: _auto_action(name, args)) if name in AUTO_ACTIONS else \
+                  (lambda: __import__("sb.capture", fromlist=["x"]).capture(str(args.get("target", "")).strip()))
+            return add_proposal(session, "eylem", f"{what}: {arg[:120]}" if arg else what,
+                                "dış içerik (mail/SMS/belge) bağlamdayken bu istek senin mesajında yok — onay gerekiyor", run)
         if name in AUTO_ACTIONS:
             if session.tainted or session.remote:
                 why = "ekran/kamera okunduktan sonra onay gerekiyor" if session.tainted else "telefondan istendi — bilgisayarda yapılacak"
@@ -489,6 +532,11 @@ def ollama_tools_chat(messages: list[dict], cfg: dict) -> dict:
     from .features import tool_enabled                  # kapalı modülün aracı modele hiç gösterilmez
     tools = [t for t in TOOLS if tool_enabled(t["function"]["name"])]
     spec = cfg["tasks"].get("chat", "ollama")
+    if spec != "ollama":                                 # bulut sohbet: hassas içerik ya da sıkı profil → yerel modele düş
+        from . import router
+        _, forced_local = router.cloud_safe_messages(messages)
+        if forced_local or _perm("bulut"):
+            spec = "ollama"
     if spec != "ollama":                                 # "<sağlayıcı>:<model>": aynı Ollama biçimli mesaj döner
         from . import providers
         out = providers.chat(spec, messages, tools=tools, think=bool(o.get("think", False)), timeout=900)
@@ -678,6 +726,7 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
     """Bir kullanıcı mesajını işler: otomatik getirme + araç çağırma döngüsü → {reply, trace, proposals}."""
     cfg = llm.config()
     session.tainted = False                                  # kirli içerik bayrağı her yeni istekte sıfırlanır
+    session.user_text = text
     session.messages.append({"role": "user", "content": text})
     session.messages[:] = session.messages[-HISTORY_MSGS:]
     uidx = len(session.messages) - 1
@@ -685,6 +734,7 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
         ctx, label = retrieve(text)
     except Exception as e:                                  # getirme hatası sohbeti durdurmaz
         ctx, label = "", f"getirme hatası: {type(e).__name__}"
+    session.external = bool(re.search(r"son mailler|arama \d|anlam \d", label or ""))    # dış metin bağlamda
     augmented = (f"{text}\n\n[KASA BAĞLAMI — otomatik getirildi. Cevabını SADECE buna ve araç sonuçlarına dayandır; "
                  "olmayan bilgiyi UYDURMA, 'kasada bulamadım' de. Sohbet/selamlaşmaysa bağlamı yok say.]\n"
                  + (ctx or "(otomatik arama bir şey bulamadı)"))
@@ -807,6 +857,8 @@ def decide(session: Session, pid: str, ok: bool, calendar=None) -> str:
     if not ok:
         p["status"] = "iptal"
         return f"İptal edildi: {p.get('summary') or p['title']}"
+    if session.remote and p.get("kind") in ("komut", "whatsapp"):        # çerez çalınsa bile uzaktan kod/mesaj olmasın
+        return "Bu onay yalnız bilgisayardan verilebilir (komut ve WhatsApp). Kart bilgisayardaki asistanda bekliyor."
     if "_run" in p:
         p["status"] = "yapıldı"
         return str(p["_run"]())
@@ -865,6 +917,7 @@ body:JSON.stringify({pin:document.getElementById('pin').value})});const j=await 
 
 
 MODEL_LOCK = threading.Lock()      # bilgisayar ve telefon aynı anda tek model çağrısı
+MAX_SESSIONS = 200
 
 WEB = Path(__file__).parent / "web"     # Faz 2 arayüzü (derleme adımı yok: düz HTML/CSS/JS)
 STATIC_TYPES = {".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".svg": "image/svg+xml",
@@ -951,6 +1004,13 @@ class RemoteAuth:
 
 def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | None = None, is_remote: bool = False):
     sessions: dict[str, Session] = {}
+
+    def _session(sid: str) -> Session:
+        """Oturum sözlüğü istemci kimlikleriyle sınırsız büyümesin: en eski oturumlar düşer."""
+        if sid not in sessions and len(sessions) >= MAX_SESSIONS:
+            for k in list(sessions)[: len(sessions) - MAX_SESSIONS + 1]:
+                sessions.pop(k, None)
+        return sessions.setdefault(sid, Session(remote=is_remote))
     lock = MODEL_LOCK
 
     class H(BaseHTTPRequestHandler):
@@ -1011,8 +1071,16 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                         msg = f"Spotify bağlanamadı: {type(e).__name__}: {str(e)[:150]}"
                 else:
                     msg = "yok"
-                html = f"<!doctype html><meta charset=utf-8><body style='font:18px system-ui;padding:40px'>{msg}</body>"
-                return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
+                import html as _html                                # adres çubuğundan gelen metin kaçışsız basılmaz (yansıyan XSS)
+                page = f"<!doctype html><meta charset=utf-8><body style='font:18px system-ui;padding:40px'>{_html.escape(msg)}</body>"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(page.encode("utf-8"))))
+                self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(page.encode("utf-8"))
+                return
             if route.startswith("/static/"):
                 if not self._authed():
                     return self._send(401, b'{"error":"eslenmemis"}')
@@ -1073,8 +1141,13 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             query = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
             data, raw, ctype = {}, b"", self.headers.get("Content-Type", "")
             if method == "POST":
-                n = int(self.headers.get("Content-Length", "0") or 0)
+                try:
+                    n = int(self.headers.get("Content-Length", "0") or 0)
+                except ValueError:
+                    n = -1
                 limit = webroutes.MAX_UPLOAD if r.upload else 200_000
+                if n < 0:                                     # negatif uzunluk: read(-n) bağlantı kapanana kadar bekler
+                    return self._send(400, b'{"error":"gecersiz"}')
                 if n > limit:
                     return self._send(413, b'{"error":"cok buyuk"}')
                 body = self.rfile.read(n) if n else b""
@@ -1088,7 +1161,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     if not isinstance(data, dict):
                         return self._send(400, b'{"error":"gecersiz"}')
             sid = str(data.get("sid") or query.get("sid") or "x")[:40]
-            s = sessions.setdefault(sid, Session(remote=is_remote))
+            s = _session(sid)
 
             def _respond(text: str) -> dict:
                 try:
@@ -1122,6 +1195,8 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 return self._v2("POST")
             try:
                 n = int(self.headers.get("Content-Length", "0"))
+                if n < 0:
+                    raise ValueError("negatif uzunluk")
                 data = json.loads(self.rfile.read(min(n, 200_000)) or b"{}")
             except (ValueError, json.JSONDecodeError):
                 return self._send(400, b'{"error":"gecersiz"}')
@@ -1139,7 +1214,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     auth.revoke()
                 info = {"ip": auth.ip if auth else "", "pin": auth.pin if auth else "", "devices": auth.devices() if auth else 0}
                 return self._send(200, json.dumps(info).encode("utf-8"))
-            s = sessions.setdefault(str(data.get("sid", "x"))[:40], Session(remote=is_remote))
+            s = _session(str(data.get("sid", "x"))[:40])
             with lock:                                               # aynı anda tek model çağrısı
                 if self.path == "/api/chat":
                     try:

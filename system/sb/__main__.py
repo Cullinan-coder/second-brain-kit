@@ -873,7 +873,10 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--check", action="store_true", help="yalnız yeni sürüm var mı bak")
     g.add_argument("--rollback", action="store_true", help="son güncellemeden önceki yedeğe dön")
     g.add_argument("--recover", action="store_true", help="yarım kalan güncellemeyi tamamla (kodu kitten yeniden kur)")
-    g.set_defaults(func=lambda a: (lambda u: u.rollback() if a.rollback else u.recover() if a.recover else u.run(check_only=a.check))(
+    g.add_argument("--yes", action="store_true", help="gelen değişiklikleri sormadan çek")
+    g.add_argument("--tags-only", action="store_true", help="yalnız etiketli (v*) sürümlere güncelle")
+    g.set_defaults(func=lambda a: (lambda u: u.rollback() if a.rollback else u.recover() if a.recover else
+                                   u.run(check_only=a.check, yes=a.yes, tags_only=a.tags_only))(
         __import__("sb.update", fromlist=["x"])))
 
     g = sub.add_parser("version", help="kurulu sürüm")
@@ -1140,6 +1143,10 @@ def main(argv: list[str] | None = None) -> int:
         g.add_argument("--confirm", action="store_true")
         g.set_defaults(func=lambda a, fn=fn: getattr(PV(), fn)(
             a.rest + (["--folder", a.folder] if a.folder else []) + (["--confirm"] if a.confirm else [])))
+
+    g = sub.add_parser("vault-key", help="kasa şifreleme anahtarını yedekle: --export <dosya>")
+    g.add_argument("--export", default="")
+    g.set_defaults(func=lambda a: PV().vault_key_cli(["--export", a.export] if a.export else []))
 
     P = lambda: __import__("sb.persona", fromlist=["x"])
     g = sub.add_parser("persona", help="asistan kimliği ve hafıza işleri: --reflect (günlük yansıma), --weekly (beni tanı), --prefs (tercih adayları)")

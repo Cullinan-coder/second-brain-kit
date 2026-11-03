@@ -2,6 +2,23 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.2 — 2026-11-03 (güvenlik incelemesi)
+- **Kritik:** Spotify geri dönüş sayfasında yansıyan XSS kapatıldı (adres çubuğundaki metin kaçışlanır, sıkı CSP).
+- **Telefon paylaşımı:** siteler arası formla kasaya veri yazdırma kapatıldı — paylaşım önizleme sayfasına gider, "Beyne at"a basmadan kaydedilmez.
+- **İstem enjeksiyonu:** bağlamda mail/SMS/belge/web içeriği varken "kural ekle", "hafızaya yaz", "URL çek" yalnız senin mesajında o istek varsa onaysız.
+- **Komutlar:** paket kurma, sistem yükseltme, dal silme/uzak depo değiştirme, ortam değişkeni okuma, dosyaya yazdırma (`--output`), ağ paylaşımı,
+  DNS sorgusu ve kasa/Workspace dışı dosya okuma artık onaylı.
+- **İzin profilleri gerçekten uygulanır** (Gizlilik ekranı): normal = önceki davranış; sıkı = salt okunur komutlar ve kasa düzenlemeleri de onaylı,
+  hiçbir istek buluta gitmez. Profiller onay yalnız EKLER; takvim ve WhatsApp her profilde onaylı. Profil telefondan değiştirilemez;
+  komut ve WhatsApp kartları yalnız bilgisayardan onaylanır.
+- **Bulut süzgeci:** API anahtarı, şifre ataması, OTP içeren metin buluta gitmez; uzun belgelerde karar bütün metne göre; bulut sohbet modeli
+  hassas içerikte yerele düşer.
+- **SSRF:** URL çekme ve video dökümü yerel/özel ağ adreslerine gitmez, 50 MB sınırı.
+- **Şifreleme:** anahtar okunamazsa yenisi üretilmez (eski notlar kilitlenmesin), `sb vault-key --export`, yedekler de şifreli.
+- **Diğer:** zip bombası sınırı, geri yüklemede yol denetimi, kaldırmada sırların listelenmesi, ajan kum havuzunda sembolik bağ, `brain_note` gizli notlar,
+  derin analizde ek sır dosyası desenleri, güncellemede önce özet + onay (`sb update --yes`, `--tags-only`), negatif istek uzunluğu, oturum sınırı.
+- **Testler gerçek sisteme dokunamaz:** kurulum motoru komutları ve şifre kasası testte kilitli.
+
 ## 0.9.1 — 2026-11-03
 - Kurulum testleri kurulmuş kit düzeninde (betikler kökte) ve macOS'ta (Apple Silicon) da doğru çalışır (0.9.0 CI'da bulundu).
 

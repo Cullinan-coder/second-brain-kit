@@ -414,7 +414,7 @@ def _plan(question: str) -> list[str]:
     return subs[:4] or [question]
 
 
-def research(question: str, web: bool = False, con: sqlite3.Connection | None = None, query_vec=None, save: bool = True) -> dict:
+def research(question: str, web: bool = False, con: sqlite3.Connection | None = None, query_vec=None, save: bool = True, keep=None) -> dict:
     """Çok adımlı araştırma: alt sorular → kasa (+web) → kaynak numaralı rapor → `40-Kaynaklar/Araştırmalar/<başlık>.md`.
     Dönüş: {title, path, report, subs, sources}."""
     from . import llm
@@ -424,6 +424,8 @@ def research(question: str, web: bool = False, con: sqlite3.Connection | None = 
     skipped_web = 0
     for sub in subs:
         for h in brain.find(sub, k=5, con=con, query_vec=query_vec):
+            if keep is not None and not keep(h):               # kum havuzu: klasör/gizlilik süzgeci
+                continue
             if not any(s["id"] == h["doc_id"] for s in sources):
                 sources.append({"id": h["doc_id"], "label": f"{h['kind']} · {h['title']} · {h['ref']}", "date": h["date"],
                                 "text": " ".join(h["text"].split())[:700]})

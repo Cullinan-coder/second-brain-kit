@@ -37,6 +37,20 @@ MAX_CHARS = 100_000               # dosya başına saklanan metin
 TEXT_HEAD = 300_000               # düz metin dosyalarında okunacak bayt
 
 
+MAX_UNZIPPED = 200 * 1024 * 1024  # docx/pptx/xlsx: toplam açılmış boyut sınırı (zip bombası)
+MAX_ZIP_FILES = 5000
+
+
+def guard_zip(p: Path) -> None:
+    """Açmadan önce zip üst bilgisini denetler: toplam açılmış boyut ya da dosya sayısı aşılırsa ValueError."""
+    with zipfile.ZipFile(p) as zf:
+        infos = zf.infolist()
+        if len(infos) > MAX_ZIP_FILES:
+            raise ValueError(f"zip çok fazla dosya içeriyor ({len(infos)}): çıkarma kesildi")
+        if sum(i.file_size for i in infos) > MAX_UNZIPPED:
+            raise ValueError("zip açılmış boyutu sınırı aşıyor: çıkarma kesildi")
+
+
 def _pdf(p: Path) -> str:
     from pypdf import PdfReader
     reader = PdfReader(str(p))
@@ -50,6 +64,7 @@ def _pdf(p: Path) -> str:
 
 def _docx(p: Path) -> str:
     import docx
+    guard_zip(p)
     d = docx.Document(str(p))
     parts = [para.text for para in d.paragraphs]
     for t in d.tables:
@@ -60,6 +75,7 @@ def _docx(p: Path) -> str:
 
 def _pptx(p: Path) -> str:
     from pptx import Presentation
+    guard_zip(p)
     out = []
     for i, slide in enumerate(Presentation(str(p)).slides, 1):
         texts = [sh.text_frame.text for sh in slide.shapes if getattr(sh, "has_text_frame", False) and sh.text_frame.text.strip()]
@@ -71,6 +87,7 @@ def _pptx(p: Path) -> str:
 
 def _xlsx(p: Path) -> str:
     from openpyxl import load_workbook
+    guard_zip(p)
     wb = load_workbook(str(p), read_only=True, data_only=True)
     out = []
     for ws in wb.worksheets[:10]:

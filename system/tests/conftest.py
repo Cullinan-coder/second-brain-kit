@@ -5,6 +5,24 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _no_real_system_changes(monkeypatch):
+    """Kurulum motoru testte gerçek komut çalıştıramaz (2026-11-03: bir kaldırma testi gerçek zamanlanmış görevleri sildi).
+    Komut gereken test _run_capture/_run_stream'i kendisi taklit eder; taklit edilmezse test yüksek sesle kırılır."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    try:
+        from setup import engine
+    except Exception:                                           # noqa: BLE001 — kitte setup yoksa koruma gereksiz
+        return
+
+    def _blocked(cmd, *a, **k):
+        raise RuntimeError(f"testte gerçek komut yok — taklit et: {' '.join(map(str, cmd))[:120]}")
+    monkeypatch.setattr(engine, "_run_capture", _blocked)
+    monkeypatch.setattr(engine, "_run_stream", _blocked)
+    monkeypatch.setattr(engine, "_keyring", lambda: (_ for _ in ()).throw(RuntimeError("testte gerçek şifre kasası yok")))
+
+
+@pytest.fixture(autouse=True)
 def _private_state(monkeypatch, tmp_path):
     """Testler gerçek ~/.secondbrain kayıtlarına (kullanım, performans, çökme, önbellek) yazmasın."""
     from sb import brain, config, gcal_api, router, telemetry, usage

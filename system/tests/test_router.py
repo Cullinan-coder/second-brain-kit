@@ -66,3 +66,12 @@ def test_chunks_and_long_complete(monkeypatch):
     monkeypatch.setattr(llm, "complete", lambda task, prompt, **k: (seen.append(prompt) or f"özet{len(seen)}", "yerel qwen3:14b"))
     out, lbl = llm.long_complete("worker", "Özetle", text, chunk_chars=5000)
     assert out == f"özet{len(seen)}" and lbl.endswith(f"· {len(seen) - 1} parça") and "ara sonuçlar" in seen[-1]
+
+
+def test_strict_profile_keeps_everything_local(tmp_path, monkeypatch):
+    from sb import privacy, router
+    monkeypatch.setattr(privacy, "PERM_FILE", tmp_path / "izinler.yaml")
+    cfg = {"tasks": {"x": "openai:gpt"}, "fallback": {"*": ["ollama"]}}
+    assert router.chain(cfg, "x", "merhaba")[0] == "openai:gpt"
+    privacy.set_profile("sıkı")
+    assert router.chain(cfg, "x", "merhaba") == ["ollama"]

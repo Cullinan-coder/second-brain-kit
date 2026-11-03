@@ -182,7 +182,9 @@ def build_prompt(folder: Path, name: str, courses: list[str], projects: list[str
 def run_claude(folder: Path, prompt: str, model: str = MODEL, timeout: int = 1800) -> str:
     # Gizli bilgi taşıyan dosyalar izin seviyesinde yasak (talimata güvenilmez).
     deny = ",".join(f"Read({p})" for p in ("**/.env", "**/.env.*", "**/*.pem", "**/*.key", "**/id_rsa*",
-                                            "**/*secret*", "**/*credential*", "**/*token*.json"))
+                                            "**/*secret*", "**/*credential*", "**/*token*.json",
+                                            "**/*.pfx", "**/*.p12", "**/*.kdbx", "**/.npmrc", "**/.aws/**",
+                                            "**/.git-credentials", "**/*cookies*", "**/Login Data"))
     cmd = ["claude", "-p", "--model", model, "--output-format", "json", "--tools", "Read,Glob,Grep",
            "--allowedTools", "Read,Glob,Grep", "--disallowedTools", deny,
            "--strict-mcp-config", "--no-session-persistence"]

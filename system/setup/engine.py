@@ -757,6 +757,27 @@ class Engine:
         return {"disabled": keys, "note": "Günlük çalışma bu modüllerin adımını atlar; hiçbir dosya silinmedi."}
 
     # -- temiz kaldırma
+    def _keyring_secret_names(self) -> list[str]:
+        """Anahtar zincirinde kalmış Second Brain sırları (vault-key HARİÇ). Yalnız değeri dolu olanlar."""
+        kr = _keyring()
+        if not kr:
+            return []
+        aliases = {"is", _alias(self.selection.get("fields") or {}) if getattr(self, "selection", None) else "is"}
+        cands = []
+        for fd in FIELDS:
+            if fd["kind"] == "secret" and fd.get("keyring"):
+                for al in aliases:
+                    cands.append(fd["keyring"].format(imap_alias=al))
+        cands += ["push-vapid-private"]
+        out = []
+        for n in dict.fromkeys(cands):
+            try:
+                if n != "vault-key" and kr.get_password(KEYRING_SERVICE, n):
+                    out.append(n)
+            except Exception:
+                continue
+        return out
+
     def uninstall_plan(self) -> list[dict]:
         acts = []
         if WIN:
@@ -768,6 +789,19 @@ class Engine:
             can = _trash() is not None
             acts.append({"id": "code", "auto": can, "desc": f"Kodu Geri Dönüşüm Kutusu'na taşı: {sysd} (kasa notları kalır)" if can
                          else f"Kodu elle taşı/sil: {sysd} (send2trash yok; kasa notlarına dokunma)"})
+        names = self._keyring_secret_names()
+        if names:
+            acts.append({"id": "secrets", "auto": True, "names": names,
+                         "desc": "Şifre kasasındaki (keyring) sırları sil: " + ", ".join(names)})
+        kr = _keyring()
+        try:
+            has_vk = bool(kr and kr.get_password(KEYRING_SERVICE, "vault-key"))
+        except Exception:
+            has_vk = False
+        if has_vk:
+            acts.append({"id": "vault_key", "auto": False,
+                         "desc": "UYARI: 'vault-key' (kasa şifreleme anahtarı) SİLİNMEZ. Şifreli .md.enc notların tek anahtarıdır; "
+                                 "silinirse notlar açılamaz. Önce `sb vault-key --export <dosya>` ile yedekle, gerekirse elle sil."})
         acts.append({"id": "notes", "desc": "Kasa notlarına dokunulmaz", "auto": False})
         return acts
 
@@ -787,6 +821,19 @@ class Engine:
                     for pl in (Path.home() / "Library" / "LaunchAgents").glob("com.secondbrain.*.plist"):
                         _run_capture(["launchctl", "unload", str(pl)])
                 done.append("tasks")
+            elif a["id"] == "secrets":
+                kr = _keyring()
+                removed = []
+                for n in a.get("names", []):
+                    if n == "vault-key":                         # asla
+                        continue
+                    try:
+                        kr.delete_password(KEYRING_SERVICE, n)
+                        removed.append(n)
+                    except Exception:
+                        pass
+                done.append("secrets")
+                pass
             elif a["id"] == "code":
                 t = self._system()
                 if t.name == "_system" and t.is_dir():          # yalnız _system klasörü; kasa köküne asla

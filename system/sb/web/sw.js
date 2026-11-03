@@ -46,7 +46,8 @@ async function handleShare(request) {
 self.addEventListener('fetch', (e) => {
   const req = e.request, url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  if (req.method === 'POST' && url.pathname === '/share') { e.respondWith(handleShare(req)); return; }
+  // Paylaşım GET /share önizleme sayfasına gider; kullanıcı 'Beyne at'a basmadan hiçbir şey kaydedilmez
+  // (POST yakalamak siteler arası formla kasaya veri yazdırmaya açıktı).
   if (req.method !== 'GET') return;
   if (url.pathname.startsWith('/api/')) return;                 // ağ önce, önbelleksiz: tarayıcıya bırak
   if (url.pathname === '/' || url.pathname.startsWith('/static/') || url.pathname === '/manifest.webmanifest') {

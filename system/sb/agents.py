@@ -12,7 +12,20 @@ from . import config, vault_ops
 
 OUT_DIR = "00-Inbox/Ajan çıktıları"
 READ_TOOLS = ("brain_find", "read_note", "list_notes", "research")
-PRIVATE_RE = re.compile(r"^visibility:\s*private\s*$", re.M | re.I)
+PRIVATE_RE = re.compile(r"^visibility:\s*['\"]?private['\"]?\s*$", re.M | re.I)
+
+
+def _frontmatter(txt: str) -> str:
+    """Notun TÜM frontmatter bloğu (ilk `---` … sonraki `---`); yoksa boş."""
+    t = txt.lstrip("﻿")
+    if not t.startswith("---"):
+        return ""
+    end = re.search(r"^---\s*$", t[3:], re.M)
+    return t[3:3 + end.start()] if end else t[3:]
+
+
+def is_private_text(txt: str) -> bool:
+    return bool(PRIVATE_RE.search(_frontmatter(txt)))
 
 AGENTS: list[dict] = [
     {"id": "ders", "ad": "Ders asistanı", "aciklama": "Ders notlarından soruya cevap ve çalışma önerisi verir.",
@@ -93,9 +106,26 @@ class Sandbox:
 
     def _folder_ok(self, rel: str) -> bool:
         rel = rel.replace("\\", "/").lstrip("/")
-        if ".." in rel.split("/"):
+        if ".." in rel.split("/") or ":" in rel:
             return False
-        return any(rel == f or rel.startswith(f + "/") for f in self.agent["okuma"])
+        if not any(rel == f or rel.startswith(f + "/") for f in self.agent["okuma"]):
+            return False
+        try:                                                 # sembolik bağlar çözülür: gerçek yol izinli klasörde kalmalı
+            real = (vault_ops.VAULT / rel).resolve()
+            return any(real == (vault_ops.VAULT / f).resolve() or (vault_ops.VAULT / f).resolve() in real.parents
+                       for f in self.agent["okuma"])
+        except OSError:
+            return False
+
+    def _hit_ok(self, h: dict) -> bool:
+        path = str(h.get("path") or h.get("ref") or "")
+        if not self._folder_ok(path):
+            return False
+        p = vault_ops.VAULT / path
+        try:
+            return not (p.is_file() and is_private_text(p.read_text(encoding="utf-8", errors="replace")))
+        except OSError:
+            return False
 
     def call(self, tool: str, **kw):
         if tool not in READ_TOOLS or tool not in self.agent["araclar"]:
@@ -103,11 +133,12 @@ class Sandbox:
         self.steps += 1
         if tool == "research":
             from . import search
-            return search.research(str(kw.get("question", "")), web=bool(kw.get("web")), save=False)
+            return search.research(str(kw.get("question", "")), web=bool(kw.get("web")), save=False,
+                                   keep=lambda h: self._hit_ok({"ref": h.get("ref", "")}))
         if tool == "brain_find":
             from . import brain
             hits = brain.find(str(kw.get("query", "")), k=int(kw.get("k", 6)))
-            return [x for x in hits if self._folder_ok(str(x.get("path", "")))]
+            return [x for x in hits if self._hit_ok(x)]
         rel = str(kw.get("path", ""))
         if not self._folder_ok(rel):
             self._deny(f"klasör {rel}")
@@ -117,7 +148,7 @@ class Sandbox:
         if not p.is_file() or p.suffix != ".md":
             return ""
         txt = p.read_text(encoding="utf-8", errors="replace")
-        return "" if PRIVATE_RE.search(txt[:600]) else txt[:4000]
+        return "" if is_private_text(txt) else txt[:4000]
 
 
 def _context(sb: Sandbox, query: str) -> str:

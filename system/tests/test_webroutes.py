@@ -89,3 +89,12 @@ def test_extension_origin_only_when_allowlisted(tmp_path, monkeypatch):
     (tmp_path / "config").mkdir()
     (tmp_path / "config" / "eklentiler.yaml").write_text("chrome: [abcdefghijklmnopabcdefghijklmnop, '../kotu']\n", encoding="utf-8")
     assert chat.extension_origins() == {"chrome-extension://abcdefghijklmnopabcdefghijklmnop"}
+
+
+def test_spotify_callback_escapes_reflected_error(server, monkeypatch):
+    from sb import spotify_api
+    monkeypatch.setattr(spotify_api, "client_id", lambda: "x")
+    r = urllib.request.urlopen(server + "/spotify/callback?error=%3Cscript%3Ealert(1)%3C/script%3E")
+    body = r.read().decode("utf-8")
+    assert "<script>" not in body and "&lt;script&gt;" in body
+    assert "default-src 'none'" in r.headers["Content-Security-Policy"]

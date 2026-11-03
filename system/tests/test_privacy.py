@@ -123,14 +123,14 @@ def test_audit(env):
 
 # ---- 243 izinler
 def test_permissions(env):
-    assert pv.needs_approval("komut") and not pv.needs_approval("bulut")
+    assert not pv.needs_approval("komut") and not pv.needs_approval("bulut")      # normal = bugünkü davranış (riskli komut yine onaylı)
     assert pv.needs_approval("bilinmeyen")
     code, d = call("POST", "/api/v2/permissions", {"profile": "sıkı"})
     assert code == 200 and pv.needs_approval("bulut")
     assert call("GET", "/api/v2/permissions")[1]["profile"] == "sıkı"
     assert call("POST", "/api/v2/permissions", {"profile": "yok"})[0] == 400
     pv.PERM_FILE.write_text("profil: serbest\nprofiller:\n  serbest: {takvim: false}\n", encoding="utf-8")
-    assert not pv.needs_approval("takvim") and not pv.needs_approval("komut")
+    assert pv.needs_approval("takvim") and not pv.needs_approval("komut")          # taban: takvim hiçbir profilde kapatılamaz
 
 
 # ---- 244 yedek / geri yükleme
