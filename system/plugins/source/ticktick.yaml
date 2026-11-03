@@ -1,0 +1,46 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: ticktick
+type: source
+name:
+  tr: TickTick
+  en: TickTick
+desc:
+  tr: TickTick görevleri → görev notları (yalnız açık görevler).
+  en: TickTick tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. TickTick web: Ayarlar → Hesap → Yedekle (Generate Backup) ile CSV dosyası üretilebilir; menü adları
+      sürüme göre değişebilir.
+
+      2. Çıkan CSV''yi Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://help.ticktick.com
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import ticktick <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. TickTick web: Settings → Account → Generate Backup produces a CSV; menu names may vary by version.
+
+      2. Drop the CSV on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://help.ticktick.com
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import ticktick <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: ticktick
+health:
+  cli: sb import ticktick <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

@@ -1,0 +1,32 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: playwright
+type: mcp
+name:
+  tr: Playwright
+  en: Playwright
+desc:
+  tr: Tarayıcı otomasyonu ve sayfa testi (Microsoft'un resmi MCP sunucusu).
+  en: Browser automation and page testing (Microsoft's official MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - '@playwright/mcp@latest'
+  env: {}
+  install: npm view @playwright/mcp version
+  docs_url: https://github.com/microsoft/playwright-mcp
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci
+- meslek:arastirmaci

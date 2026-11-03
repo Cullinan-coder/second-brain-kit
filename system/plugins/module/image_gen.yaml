@@ -1,0 +1,48 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: image_gen
+type: module
+name:
+  tr: Görsel üretme
+  en: Image generation
+desc:
+  tr: Metinden görsel (bulut sağlayıcı anahtarı gerekir)
+  en: Text-to-image (needs a cloud provider key).
+category: computer_voice
+module: image_gen
+catalog_ids:
+- 49
+requires:
+  accounts:
+  - openai
+  - gemini
+  fields:
+  - key: openai_key
+    label:
+      tr: OpenAI API anahtarı
+      en: OpenAI API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: platform.openai.com > API keys.
+      en: platform.openai.com > API keys.
+  - key: gemini_key
+    label:
+      tr: Gemini API anahtarı
+      en: Gemini API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: aistudio.google.com > Get API key.
+      en: aistudio.google.com > Get API key.
+  secrets:
+  - openai_key
+  - gemini_key
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:icerik

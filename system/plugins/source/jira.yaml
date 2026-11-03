@@ -1,0 +1,46 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: jira
+type: source
+name:
+  tr: Jira
+  en: Jira
+desc:
+  tr: Jira görevleri → görev notları (yalnız açık görevler).
+  en: Jira tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Jira''da Sorunlar (Issues) → Sorunları ara → filtre uygula → sağ üstte Dışa aktar (Export) → CSV (tüm
+      alanlar).
+
+      2. CSV''yi indir ve Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.atlassian.com/jira-software-cloud/docs/export-issues/
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import jira <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Jira go to Issues → Search for issues → apply a filter → Export (top-right) → CSV (all fields).
+
+      2. Download the CSV and drop it on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.atlassian.com/jira-software-cloud/docs/export-issues/
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import jira <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: jira
+health:
+  cli: sb import jira <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

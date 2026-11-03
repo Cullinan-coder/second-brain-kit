@@ -1,0 +1,58 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: notion
+type: source
+name:
+  tr: Notion dışa aktarımı
+  en: Notion export
+desc:
+  tr: Notion 'Markdown & CSV' dışa aktarımı → kasa notları.
+  en: Notion 'Markdown & CSV' export → vault notes.
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. Notion''da sol üstte çalışma alanı adı → Ayarlar → Genel (General) → ''Tüm çalışma alanı içeriğini dışa
+      aktar'' (Export all workspace content). Tek sayfa için: sayfanın sağ üstündeki ⋯ → Dışa aktar (Export).
+
+      2. Dışa aktarma biçimi: ''Markdown ve CSV''. ''Alt sayfaları dahil et'' (Include subpages) açık olsun; içerik:
+      ''Her şey''.
+
+      3. Dışa Aktar''a bas; Notion e-posta ile (ya da doğrudan) zip indirmesi verir.
+
+      4. Zip''i açmadan Veri yükleme ekranına bırak; sayfalar `40-Kaynaklar/Notion/` altında not olur, veritabanı
+      CSV''leri kayıt olarak alınır.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://www.notion.com/help/export-your-content
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import notion <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Notion: workspace name (top-left) → Settings → General → ''Export all workspace content''. For a
+      single page: ⋯ at the page''s top-right → Export.
+
+      2. Export format: ''Markdown & CSV''. Turn on ''Include subpages''; content: ''Everything''.
+
+      3. Press Export; Notion emails (or directly offers) a zip download.
+
+      4. Drop the zip as-is on the Data import screen; pages become notes under `40-Kaynaklar/Notion/`, database
+      CSVs are imported as records.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://www.notion.com/help/export-your-content
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import notion <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: notion
+health:
+  cli: sb import notion <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

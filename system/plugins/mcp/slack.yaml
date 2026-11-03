@@ -1,0 +1,58 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: slack
+type: mcp
+name:
+  tr: Slack
+  en: Slack
+desc:
+  tr: 'Slack kanallarını okur ve mesaj yazar. NOT: bu paket arşivlendi (modelcontextprotocol/servers-archived);
+    Slack''in güncel resmi MCP''si için docs_url''ye bak.'
+  en: 'Reads Slack channels and posts messages. NOTE: this package is archived (modelcontextprotocol/servers-archived);
+    see docs_url for Slack''s current official MCP.'
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - slack
+  fields:
+  - key: slack_bot_token
+    label:
+      tr: Slack bot belirteci (xoxb-…)
+      en: Slack bot token (xoxb-…)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: api.slack.com/apps'ta uygulama oluştur, gereken izinleri ver, çalışma alanına kur.
+      en: Create an app at api.slack.com/apps, grant scopes, install to the workspace.
+  - key: slack_team_id
+    label:
+      tr: Slack takım kimliği (T…)
+      en: Slack team id (T…)
+    kind: text
+    secret: false
+    required: true
+    help:
+      tr: ''
+      en: ''
+  secrets:
+  - slack_bot_token
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-slack'
+  env:
+    SLACK_BOT_TOKEN: '{slack_bot_token}'
+    SLACK_TEAM_ID: '{slack_team_id}'
+  install: npm view @modelcontextprotocol/server-slack version
+  docs_url: https://docs.slack.dev/ai/mcp-server
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:girisimci

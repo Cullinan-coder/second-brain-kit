@@ -1,0 +1,78 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: whatsapp
+type: source
+name:
+  tr: WhatsApp sohbetleri
+  en: WhatsApp chats
+desc:
+  tr: Sohbet dışa aktarımı (.txt/.zip) → mesajlar.
+  en: Chat export (.txt/.zip) → messages.
+category: imports
+parent: whatsapp
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: me
+    label:
+      tr: Sohbetlerde senin adın
+      en: Your name in chats
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Mesajların hangisinin sana ait olduğunu anlamak için.
+      en: Used to tell which messages are yours.
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .txt
+  - .zip
+  how_to:
+    tr: '1. Telefonda WhatsApp''ı aç ve dışa aktarmak istediğin sohbeti aç (her sohbet ayrı dışa aktarılır).
+
+      2. Android: sağ üstte ⋮ (üç nokta) → Diğer → Sohbeti dışa aktar → ''Medyasız'' seç. iPhone: sohbetin üstündeki
+      kişi/grup adına dokun → aşağı kaydır → Sohbeti dışa aktar → ''Medya olmadan''.
+
+      3. Paylaşım menüsünden dosyayı kendine kaydet: Google Drive''a, kendine e-postaya ya da Dosyalar''a (iPhone)
+      gönder. Çıkan dosya .txt (ya da .zip içinde .txt) olur.
+
+      4. Dosyayı bilgisayara indir. Dil/saat biçimi (gg.aa.yyyy, 12/24 saat) otomatik algılanır; Android ve iPhone
+      biçimleri desteklenir.
+
+      5. Önizlemede mesaj sayısı ve tarih aralığını kontrol et, ''Sen'' alanına WhatsApp''taki kendi adını yaz (hangi
+      mesajların senin olduğu bu şekilde anlaşılır), sonra içe aktar.
+
+      6. Birden çok sohbet için her birini ayrı dışa aktarıp aynı klasöre koy; klasör olarak da yüklenebilir.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import whatsapp <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Open the chat on your phone (each chat is exported separately).
+
+      2. Android: top-right ⋮ (three dots) → More → Export chat → choose ''Without media''. iPhone: tap the contact/group
+      name at the top → scroll down → Export Chat → ''Without Media''.
+
+      3. From the share sheet save the file to yourself: Google Drive, an email to yourself, or Files (iPhone).
+      The result is a .txt (or a .zip containing a .txt).
+
+      4. Download it to this computer. Date/time formats (dd.mm.yyyy, 12/24h) are detected automatically; both Android
+      and iPhone formats are supported.
+
+      5. Check message count and date range in the preview, type your own WhatsApp name in ''You'' (so your messages
+      are recognised), then import.
+
+      6. For many chats export each one and put them in the same folder; a folder can be uploaded as well.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import whatsapp <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: whatsapp
+health:
+  cli: sb import whatsapp <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

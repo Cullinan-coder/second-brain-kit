@@ -1,0 +1,45 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: notion
+type: mcp
+name:
+  tr: Notion
+  en: Notion
+desc:
+  tr: Notion sayfa ve veritabanlarını okuyup yazar (Notion'un resmi MCP sunucusu).
+  en: Reads and writes Notion pages and databases (Notion's official MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - notion
+  fields:
+  - key: notion_token
+    label:
+      tr: Notion entegrasyon belirteci
+      en: Notion integration token
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: notion.so/profile/integrations'da iç entegrasyon oluştur ve sayfaları ona paylaş.
+      en: Create an internal integration at notion.so/profile/integrations and share pages with it.
+  secrets:
+  - notion_token
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@notionhq/notion-mcp-server'
+  env:
+    NOTION_TOKEN: '{notion_token}'
+  install: npm view @notionhq/notion-mcp-server version
+  docs_url: https://github.com/makenotion/notion-mcp-server
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:girisimci

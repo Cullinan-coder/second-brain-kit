@@ -1,0 +1,40 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: search
+type: module
+name:
+  tr: Arama ve cevaplar
+  en: Search and answers
+desc:
+  tr: Karma arama, kaynaklı cevap, doğal dil süzgeçleri, kayıtlı aramalar, araştırma.
+  en: Hybrid search, cited answers, natural-language filters, saved searches, research.
+category: search_brain
+module: null
+catalog_ids:
+- 138
+- 139
+- 140
+- 141
+- 142
+- 143
+- 144
+- 145
+- 146
+- 147
+- 148
+- 149
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:yazilimci
+- meslek:akademisyen
+- meslek:arastirmaci

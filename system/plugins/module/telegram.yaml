@@ -1,0 +1,37 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: telegram
+type: module
+name:
+  tr: Telegram botu
+  en: Telegram bot
+desc:
+  tr: Telegram'dan not alma ve özet
+  en: Take notes and get summaries through Telegram.
+category: messaging
+module: telegram
+catalog_ids: []
+requires:
+  accounts:
+  - telegram
+  fields:
+  - key: telegram_token
+    label:
+      tr: Telegram bot belirteci
+      en: Telegram bot token
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: '@BotFather ile bot oluştur (docs/telegram-kurulum.md).'
+      en: Create a bot with @BotFather (docs/telegram-kurulum.md).
+  secrets:
+  - telegram_token
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+docs: docs/telegram-kurulum.md
+presets:
+- yogunluk:guc
+- meslek:girisimci

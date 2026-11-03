@@ -1,0 +1,26 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: linkedin
+type: module
+name:
+  tr: LinkedIn arşivi
+  en: LinkedIn archive
+desc:
+  tr: LinkedIn veri arşivini içe aktarır
+  en: Imports your LinkedIn data archive.
+category: school_project
+module: linkedin
+catalog_ids: []
+requires:
+  accounts:
+  - linkedin
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:satis
+- meslek:icerik

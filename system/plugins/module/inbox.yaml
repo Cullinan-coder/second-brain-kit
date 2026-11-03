@@ -1,0 +1,25 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: inbox
+type: module
+name:
+  tr: Not kutusu
+  en: Inbox
+desc:
+  tr: 00-Inbox/Dump notlarını yerine dağıtır
+  en: Sorts 00-Inbox/Dump notes into place.
+category: assistant_memory
+module: inbox
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

@@ -1,0 +1,24 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: computer
+type: module
+name:
+  tr: Bilgisayar kontrolü
+  en: Computer control
+desc:
+  tr: Uygulama açma, ses, sistem bilgisi, komut (onaylı)
+  en: Open apps, volume, system info, commands (approved).
+category: computer_voice
+module: computer
+catalog_ids:
+- 220
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc

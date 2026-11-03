@@ -139,7 +139,7 @@ def test_resume_skips_done_steps(env):
     eng.apply(resume=True, wait=True)
     assert eng.error == ""
     assert not (vault / "_system" / "config" / "profile.yaml").exists()      # config adımı yeniden koşmadı
-    assert eng.state()["done"][-1] == "doctor" and not eng.state()["resumable"]
+    assert eng.state()["done"][-1] == "shortcuts" and not eng.state()["resumable"]
     assert eng.progress()["percent"] == 100
 
 
@@ -305,7 +305,7 @@ def test_server_flow(srv):
     assert call(s, "POST", "/api/profile", j)[1]["ok"]
     assert call(s, "POST", "/api/test", {"kind": "yok"})[1]["ok"] is False
     assert call(s, "GET", "/api/health")[1]["rows"]
-    assert call(s, "GET", "/api/state")[1]["done"][-1] == "doctor"
+    assert call(s, "GET", "/api/state")[1]["done"][-1] == "shortcuts"
     code, j = call(s, "POST", "/api/uninstall", {})
     assert j["applied"] is False
     assert call(s, "POST", "/api/modules/disable", {"keys": ["yok"]})[0] == 400

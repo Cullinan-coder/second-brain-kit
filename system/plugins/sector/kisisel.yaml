@@ -1,0 +1,61 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: kisisel
+type: sector
+name:
+  tr: Kişisel (varsayılan)
+  en: Personal (default)
+desc:
+  tr: 'Tek kişilik kullanım: öğrenci/çalışan/girişimci kendi verisiyle. Varsayılan sektör paketi.'
+  en: 'Single-user use: a student/employee/founder with their own data. The default sector pack.'
+category: setup
+catalog_ids: []
+default_on: true
+default: true
+presets:
+  meslek: null
+  donanim: orta
+  gizlilik: karma
+  yogunluk: gunluk
+modules:
+- gmail
+- calendar
+- dates
+- contacts
+- digest
+- brain
+- assistant
+- memory_ui
+- capture
+- inbox
+- claude_hooks
+- flush
+- phone
+- search
+- privacy
+sources:
+- whatsapp
+- takeout
+- history-import
+mcp:
+- second-brain
+roles:
+- id: sahip
+  name:
+    tr: Sahip
+    en: Owner
+  can:
+  - hepsi
+reports: []
+terms: {}
+coming_soon: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+notes:
+  tr: 'Tek kullanıcı varsayımı: roller yalnız tanımdır, uygulamada tek rol vardır.'
+  en: 'Single-user assumption: roles are definitions only; the app has a single role.'

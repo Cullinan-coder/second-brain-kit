@@ -1,0 +1,370 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+axes:
+  meslek:
+    ogrenci:
+      name:
+        tr: Öğrenci
+        en: Student
+      desc:
+        tr: Okul, ders, kartlar, sınav planı.
+        en: School, courses, cards, exam planning.
+      add:
+      - gmail
+      - calendar
+      - dates
+      - courses
+      - cards
+      - tasks_plan
+      - memory_ui
+      - voice
+      - imports_life
+    ajans:
+      name:
+        tr: Ajans / Freelancer
+        en: Agency / Freelancer
+      desc:
+        tr: CRM, mail, projeler, teklif ve saat takibi.
+        en: CRM, mail, projects, quotes and time tracking.
+      add:
+      - gmail
+      - imap
+      - calendar
+      - dates
+      - contacts
+      - drive
+      - derived
+      - digest
+      - projects
+      - github
+      - automation
+      - whatsapp
+      - career
+      - comms
+    yazilimci:
+      name:
+        tr: Yazılımcı
+        en: Developer
+      desc:
+        tr: Projeler, GitHub, Claude Code hafızası, gece koşusu.
+        en: Projects, GitHub, Claude Code memory, night run.
+      add:
+      - projects
+      - github
+      - sessions
+      - claude_hooks
+      - flush
+      - night
+      - automation
+      - browser
+      - brain
+      - search
+    akademisyen:
+      name:
+        tr: Akademisyen
+        en: Academic
+      desc:
+        tr: Ders, kaynakça, arama, akademik kaynaklar.
+        en: Courses, references, search, scholarly sources.
+      add:
+      - courses
+      - cards
+      - drive
+      - local_files
+      - brain
+      - search
+      - voice
+      - imports_life
+      - imports_media
+    girisimci:
+      name:
+        tr: Girişimci
+        en: Founder
+      desc:
+        tr: Mail, CRM, otomasyon, finans ve yaşam düzeni.
+        en: Mail, CRM, automation, finances and routine.
+      add:
+      - gmail
+      - imap
+      - calendar
+      - contacts
+      - drive
+      - derived
+      - digest
+      - automation
+      - whatsapp
+      - telegram
+      - career
+      - comms
+      - life
+    satis:
+      name:
+        tr: Satış / CRM
+        en: Sales / CRM
+      desc:
+        tr: Kişi, mail, WhatsApp, LinkedIn, takip hatırlatmaları.
+        en: Contacts, mail, WhatsApp, LinkedIn, follow-up reminders.
+      add:
+      - gmail
+      - imap
+      - contacts
+      - calendar
+      - whatsapp
+      - linkedin
+      - sms
+      - derived
+      - digest
+      - automation
+      - career
+      - comms
+    icerik:
+      name:
+        tr: İçerik üreticisi
+        en: Content creator
+      desc:
+        tr: Yakalama, medya, LinkedIn gönderisi, ses ve görsel üretim.
+        en: Capture, media, LinkedIn posts, voice and image generation.
+      add:
+      - media
+      - browser
+      - linkedin
+      - drive
+      - voice
+      - image_gen
+      - imports_media
+      - comms
+    arastirmaci:
+      name:
+        tr: Araştırmacı
+        en: Researcher
+      desc:
+        tr: Derin arama, tarayıcı geçmişi, kartlar, akademik kaynaklar.
+        en: Deep search, browser history, cards, scholarly sources.
+      add:
+      - brain
+      - search
+      - browser
+      - local_files
+      - drive
+      - cards
+      - voice
+      - vision
+      - automation
+      - imports_life
+      - imports_media
+  donanim:
+    guclu_gpu:
+      name:
+        tr: Güçlü ekran kartı (14 GB+ VRAM)
+        en: Strong GPU (14 GB+ VRAM)
+      desc:
+        tr: 14B yazı + 8B görüntü modeli yerelde.
+        en: 14B text + 8B vision models locally.
+      models:
+        profile: full
+        local_model: true
+      'off': []
+    orta:
+      name:
+        tr: Orta (8-14 GB VRAM)
+        en: Mid-range (8-14 GB VRAM)
+      desc:
+        tr: 8B yazı + 4B görüntü modeli; ağır izleme kapalı.
+        en: 8B text + 4B vision; heavy watching off.
+      models:
+        profile: medium
+        local_model: true
+      'off':
+      - screen_watch
+      - wake_word
+    zayif_bulut:
+      name:
+        tr: Zayıf laptop / bulut
+        en: Weak laptop / cloud
+      desc:
+        tr: 'Ekran kartı yok ya da < 4 GB: asistan bulut API ile.'
+        en: 'No GPU or < 4 GB: assistant uses a cloud API.'
+      models:
+        profile: cloud
+        local_model: false
+      'off':
+      - vision
+      - screen_watch
+      - wake_word
+      - voice
+    mac_apple:
+      name:
+        tr: Mac (Apple Silicon)
+        en: Mac (Apple Silicon)
+      desc:
+        tr: Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
+        en: 'Unified memory: mid profile under 16 GB, full from 32 GB.'
+      models:
+        profile: medium
+        local_model: true
+        profile_if_ram_gb_ge:
+          '32': full
+      'off':
+      - wake_word
+      - screen_watch
+  gizlilik:
+    tam_yerel:
+      name:
+        tr: Tam yerel
+        en: Fully local
+      desc:
+        tr: Hiçbir istek buluta gitmez; yalnız yerel model.
+        en: No request leaves the machine; local models only.
+      privacy_profile:
+        mode: tam_yerel
+        permission_profile: sıkı
+        cloud_send: never
+        mask: true
+      models:
+        local_model: true
+        cloud: false
+      'off':
+      - image_gen
+    karma:
+      name:
+        tr: Karma
+        en: Mixed
+      desc:
+        tr: Özel notlar yerelde; genel işler buluta gidebilir, maskeleme açık.
+        en: Private notes stay local; general work may use the cloud, masking on.
+      privacy_profile:
+        mode: karma
+        permission_profile: normal
+        cloud_send: masked
+        mask: true
+      models:
+        cloud: true
+      'off': []
+    bulut:
+      name:
+        tr: Bulut öncelikli
+        en: Cloud first
+      desc:
+        tr: Bulut modeller öncelikli; gizli etiketli notlar yine yerelde.
+        en: Cloud models first; notes tagged private still stay local.
+      privacy_profile:
+        mode: bulut
+        permission_profile: normal
+        cloud_send: masked
+        mask: true
+      models:
+        cloud: true
+        prefer_cloud: true
+      'off': []
+  yogunluk:
+    minimal:
+      name:
+        tr: Minimal
+        en: Minimal
+      desc:
+        tr: Yalnız kasa + Obsidian + asistan.
+        en: Just the vault, Obsidian and the assistant.
+      modules:
+      - assistant
+      - capture
+      - inbox
+      - claude_hooks
+      - setup
+      - privacy
+      - models
+    gunluk:
+      name:
+        tr: Günlük hayat
+        en: Everyday
+      desc:
+        tr: Mail, takvim, arama, hafıza ve plan; ağır özellikler kapalı.
+        en: Mail, calendar, search, memory and planning; heavy features off.
+      modules:
+      - assistant
+      - capture
+      - inbox
+      - claude_hooks
+      - setup
+      - privacy
+      - models
+      - gmail
+      - calendar
+      - dates
+      - contacts
+      - digest
+      - derived
+      - memory_ui
+      - brain
+      - flush
+      - sessions
+      - projects
+      - local_files
+      - phone
+      - search
+      - ui_core
+      - tasks_plan
+      - cards
+    guc:
+      name:
+        tr: Güç kullanıcısı
+        en: Power user
+      desc:
+        tr: 'Her şey açık (ek özellikler hariç: uyandırma sözcüğü, ekran izleme, görsel üretme).'
+        en: 'Everything on (except opt-in extras: wake word, screen watching, image generation).'
+      modules:
+      - assistant
+      - automation
+      - brain
+      - browser
+      - calendar
+      - capture
+      - cards
+      - career
+      - claude_hooks
+      - comms
+      - computer
+      - contacts
+      - courses
+      - dates
+      - derived
+      - digest
+      - drive
+      - flush
+      - github
+      - gmail
+      - imap
+      - imports_comm
+      - imports_life
+      - imports_media
+      - imports_notes
+      - inbox
+      - life
+      - linkedin
+      - local_files
+      - media
+      - memory_ui
+      - models
+      - night
+      - phone
+      - privacy
+      - projects
+      - quality
+      - search
+      - sessions
+      - setup
+      - sms
+      - tasks_plan
+      - telegram
+      - ui_core
+      - vision
+      - voice
+      - whatsapp
+order:
+- yogunluk
+- meslek
+- gizlilik
+- donanim
+defaults:
+  meslek: null
+  donanim: orta
+  gizlilik: karma
+  yogunluk: gunluk

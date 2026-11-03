@@ -1,0 +1,34 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: memory_ui
+type: module
+name:
+  tr: Hafıza ve kişilik
+  en: Memory and personality
+desc:
+  tr: Asistan kimliği, ortak günlük, tercih öğrenme, hafıza düzenleyici, yansıma
+  en: Assistant identity, shared journal, preference learning, memory editor, reflection.
+category: assistant_memory
+module: memory_ui
+catalog_ids:
+- 72
+- 150
+- 151
+- 152
+- 153
+- 154
+- 155
+- 156
+- 157
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ogrenci

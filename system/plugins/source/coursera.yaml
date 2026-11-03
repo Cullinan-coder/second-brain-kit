@@ -1,0 +1,52 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: coursera
+type: source
+name:
+  tr: Coursera ilerlemesi
+  en: Coursera progress
+desc:
+  tr: Kurs ilerlemesi CSV/JSON → kurs kayıtları.
+  en: Course progress CSV/JSON → course records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Coursera kurs ilerlemesi için resmi bir toplu dışa aktarma yoktur. Kendin bir CSV hazırla: sütunlar
+      `course`, `progress` (yüzde) ve `completed` (tamamlanma tarihi); Türkçe başlıklar (kurs, ilerleme, tamamlanma)
+      da tanınır.
+
+      2. Kayıtları Coursera panonda ''Hesap → Tamamlananlar'' sayfasından elle derleyebilirsin; sertifikalar için
+      resmi yardım: https://learner.coursera.help
+
+      3. CSV''yi Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import coursera <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Coursera has no official bulk progress export. Prepare a CSV yourself: columns `course`, `progress`
+      (percent) and `completed` (completion date); Turkish headers (kurs, ilerleme, tamamlanma) are recognised too.
+
+      2. You can compile entries by hand from your Coursera dashboard; for certificates see the official help: https://learner.coursera.help
+
+      3. Drop the CSV on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import coursera <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: coursera
+health:
+  cli: sb import coursera <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

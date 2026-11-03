@@ -1,0 +1,38 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: voice
+type: module
+name:
+  tr: Ses
+  en: Voice
+desc:
+  tr: Konuşmayı yazıya çevirme (yerel Whisper), sesli cevap, sesli not, toplantı/ders kaydı
+  en: Local Whisper speech-to-text, spoken replies, voice notes, meeting/lecture recording.
+category: computer_voice
+module: voice
+catalog_ids:
+- 38
+- 39
+- 41
+- 42
+- 43
+- 44
+- 50
+- 51
+- 52
+- 84
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware:
+    ram_gb: 8
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

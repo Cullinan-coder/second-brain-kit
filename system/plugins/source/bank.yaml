@@ -1,0 +1,55 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: bank
+type: source
+name:
+  tr: Banka ekstresi (CSV)
+  en: Bank statement (CSV)
+desc:
+  tr: Banka hesap hareketleri CSV'si → işlem kayıtları. Hesap/kart numarası ve IBAN hiçbir yerde saklanmaz.
+  en: Bank statement CSV → transaction records. Account/card numbers and IBANs are never stored.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  how_to:
+    tr: '1. Bankanın internet bankacılığına/mobil uygulamasına gir (bu uygulamaya banka şifresi girilmez).
+
+      2. Hesap hareketleri / ekstre sayfasında tarih aralığını seç ve ''Excel/CSV olarak indir'' seçeneğini kullan
+      (bankaya göre yeri değişir; bazı bankalar yalnız Excel/PDF verir — Excel''i CSV olarak kaydet).
+
+      3. CSV''de tarih, açıklama ve tutar sütunları olmalı (Türkçe ve İngilizce başlıklar tanınır).
+
+      4. Dosyayı Veri yükleme ekranına bırak; önizlemede hesap/kart numarası görünmediğini ve tutarları kontrol
+      et, sonra içe aktar.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import bank <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Sign in to your bank''s online/mobile banking (never type bank passwords into this app).
+
+      2. On the account activity/statement page pick the date range and use ''download as Excel/CSV'' (location
+      varies by bank; some only give Excel/PDF — save Excel as CSV).
+
+      3. The CSV needs date, description and amount columns (Turkish and English headers are recognised).
+
+      4. Drop the file on the Data import screen; in the preview check that no account/card number shows and the
+      amounts look right, then import.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import bank <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: bank
+health:
+  cli: sb import bank <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

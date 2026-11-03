@@ -1,0 +1,47 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: todoist
+type: source
+name:
+  tr: Todoist
+  en: Todoist
+desc:
+  tr: Todoist görevleri → görev notları (yalnız açık görevler).
+  en: Todoist tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Todoist web: sol üst profil → Ayarlar → Yedeklemeler (Backups) → ''Yedekle''/indir; ya da bir proje
+      için ⋯ → Projeyi dışa aktar (CSV).
+
+      2. CSV dosyasını bilgisayara indir ve Veri yükleme ekranına bırak (yalnız açık görevler alınır).
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://todoist.com/help/articles/introduction-to-backups-pTI4vC
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import todoist <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Todoist web: top-left profile → Settings → Backups → create/download a backup; or for one project ⋯
+      → Export as CSV.
+
+      2. Download the CSV and drop it on the Data import screen (only open tasks are imported).
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://todoist.com/help/articles/introduction-to-backups-pTI4vC
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import todoist <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: todoist
+health:
+  cli: sb import todoist <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

@@ -1,0 +1,57 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: x
+type: source
+name:
+  tr: X (Twitter) arşivi
+  en: X (Twitter) archive
+desc:
+  tr: X arşivi → gönderiler.
+  en: X archive → posts.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. X''te (web) Ayarlar ve gizlilik → Hesabın → Verilerinin arşivini indir (Download an archive of your
+      data).
+
+      2. Kimlik doğrulamayı tamamla (şifre ve doğrulama kodu) ve ''Arşiv iste''ye bas.
+
+      3. Arşiv hazır olunca (genelde 24 saat içinde) X bildirim/e-posta gönderir; aynı sayfadan zip''i indir.
+
+      4. Zip''i Veri yükleme ekranına bırak; `data/tweets.js` benzeri dosyalar okunur.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://help.x.com/en/managing-your-account/how-to-download-your-x-archive
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import x <dosya> --dry-run` ile önce
+      dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. On X (web): Settings and privacy → Your account → Download an archive of your data.
+
+      2. Complete verification (password and code) and press ''Request archive''.
+
+      3. When ready (usually within 24 hours) X notifies you; download the zip from the same page.
+
+      4. Drop the zip on the Data import screen; files like `data/tweets.js` are read.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://help.x.com/en/managing-your-account/how-to-download-your-x-archive
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import x <file> --dry-run` first). The
+      file is read only on this computer.'
+  connector: x
+health:
+  cli: sb import x <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

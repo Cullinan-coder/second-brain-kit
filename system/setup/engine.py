@@ -35,17 +35,106 @@ def data_dir() -> Path:
     return Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
 
 
+def bundle_dir() -> Path | None:
+    """PyInstaller paketinde (Second Brain Setup.exe) açılmış gömülü dosyaların klasörü; paketli değilse None."""
+    mp = getattr(sys, "_MEIPASS", None)
+    return Path(mp) if mp else None
+
+
 def kit_dir() -> Path | None:
-    """Kit kökü (içinde system/ ve vault/ var) ya da None (kasadaki _system/setup'tan çalışıyorsak)."""
+    """Kit kökü (içinde system/ ve vault/ var) ya da None (kasadaki _system/setup'tan çalışıyorsak).
+    Paketli Setup'ta gömülü kit `sys._MEIPASS/kit` (ya da doğrudan `_MEIPASS`) altındadır."""
+    b = bundle_dir()
+    if b:
+        for c in (b / "kit", b):
+            if (c / "system" / "sb").exists():
+                return c
     return ROOT if (ROOT / "system" / "sb").exists() else None
 
 
 def code_dir() -> Path | None:
     """sb paketinin bulunduğu klasör (kitte system/, kasada _system/)."""
-    for p in (ROOT / "system", ROOT):
+    k = kit_dir()
+    packed = [k / "system"] if (k and bundle_dir()) else []          # paketli Setup: gömülü kit önce
+    for p in (*packed, ROOT / "system", ROOT):
         if (p / "sb").is_dir():
             return p
     return None
+
+
+# ------------------------------------------------------------------ uygulama başlatıcısı ve kısayollar
+APP_NAME = "Second Brain"
+
+
+def bundled_launcher() -> Path | None:
+    """Setup içine gömülü `Second Brain.exe` / `Second Brain.app` (paketli değilse None)."""
+    b = bundle_dir()
+    if not b:
+        return None
+    p = b / "launcher" / (APP_NAME + (".app" if sys.platform == "darwin" else ".exe"))
+    return p if p.exists() else None
+
+
+def apps_dir() -> Path:
+    """macOS uygulama klasörü (kullanıcıya özel, yönetici gerektirmez); `SB_APPS_DIR` ile değiştirilebilir."""
+    return Path(os.environ.get("SB_APPS_DIR") or Path.home() / "Applications")
+
+
+def launcher_path(data: Path, plat: str | None = None) -> Path:
+    """Kurulu başlatıcının yeri: Windows `<veri>/bin/Second Brain.exe`, macOS `~/Applications/Second Brain.app`."""
+    if (plat or sys.platform) == "darwin":
+        return apps_dir() / (APP_NAME + ".app")
+    return data / "bin" / (APP_NAME + ".exe")
+
+
+def launcher_exe(data: Path, plat: str | None = None) -> Path | None:
+    """Kurulu başlatıcının çalıştırılabilir dosyası (yoksa None)."""
+    p = launcher_path(data, plat)
+    if (plat or sys.platform) == "darwin":
+        p = p / "Contents" / "MacOS" / APP_NAME
+    return p if p.is_file() else None
+
+
+def install_launcher(data: Path, plat: str | None = None) -> Path | None:
+    """Gömülü başlatıcıyı kalıcı yere kopyalar (yoksa None döner; çağıran pythonw yoluna düşer)."""
+    src = bundled_launcher()
+    if not src:
+        return None
+    dst = launcher_path(data, plat)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if src.is_dir():
+        shutil.copytree(src, dst, dirs_exist_ok=True, symlinks=True)
+        exe = dst / "Contents" / "MacOS" / APP_NAME
+        if exe.exists():
+            exe.chmod(0o755)
+    else:
+        shutil.copy2(src, dst)
+    return dst
+
+
+def make_stub_app(dest: Path, system: Path) -> Path:
+    """Paketli başlatıcı yokken (kaynak koddan kurulum) macOS'ta `Second Brain.app` iskeleti: venv python'u `-m app.desktop` açar."""
+    import plistlib
+    mac = dest / "Contents" / "MacOS"
+    mac.mkdir(parents=True, exist_ok=True)
+    (dest / "Contents" / "Info.plist").write_bytes(plistlib.dumps({
+        "CFBundleName": APP_NAME, "CFBundleDisplayName": APP_NAME, "CFBundleExecutable": APP_NAME,
+        "CFBundleIdentifier": "com.secondbrain.app", "CFBundlePackageType": "APPL"}))
+    sh = mac / APP_NAME
+    sh.write_text(f'#!/bin/sh\ncd "{system}" || exit 1\nexec "{system}/.venv/bin/python" -m app.desktop "$@"\n', encoding="utf-8")
+    sh.chmod(0o755)
+    return dest
+
+
+def shortcut_script(prog: str, args: list[str], cwd: str) -> str:
+    """PowerShell: masaüstü + Başlat menüsü (kullanıcı) klasörüne `Second Brain.lnk` yazar (OneDrive'a taşınmış masaüstünü de bulur)."""
+    q = lambda s: "'" + str(s).replace("'", "''") + "'"       # noqa: E731
+    return ("$sh=New-Object -ComObject WScript.Shell;"
+            "foreach($f in @([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('Programs'))){"
+            "if(-not $f){continue};New-Item -ItemType Directory -Force $f|Out-Null;"
+            f"$s=$sh.CreateShortcut((Join-Path $f {q(APP_NAME + '.lnk')}));"
+            f"$s.TargetPath={q(prog)};$s.Arguments={q(' '.join(args))};$s.WorkingDirectory={q(cwd)};"
+            f"$s.Description={q(APP_NAME)};$s.IconLocation={q(prog + ',0')};$s.Save()}}")
 
 
 # ------------------------------------------------------------------ modüller ve hazır seçimler
@@ -158,6 +247,20 @@ def redact(text: str, secrets: list[str] | None = None) -> str:
     return text
 
 
+_SECRET_KEY_RE = re.compile(r"(?i)(password|passwd|secret|token|api[_-]?key|(^|_)key$|_pat$|şifre|credential|private)")
+
+
+def strip_secrets(obj, secrets: list[str] | None = None):
+    """Sihirbaz durumundan sır gibi görünen anahtarları atar, kalan metinleri maskeler (sır diske girmez)."""
+    if isinstance(obj, dict):
+        return {k: strip_secrets(v, secrets) for k, v in obj.items() if not (_SECRET_KEY_RE.search(str(k)) or str(k) in SECRET_KEYS)}
+    if isinstance(obj, list):
+        return [strip_secrets(v, secrets) for v in obj]
+    if isinstance(obj, str):
+        return redact(obj, secrets)
+    return obj
+
+
 def _keyring():
     try:
         import keyring
@@ -166,9 +269,38 @@ def _keyring():
         return None
 
 
+_NOWIN = 0x08000000 if WIN else 0                              # CREATE_NO_WINDOW (paketli pencereli uygulamada konsol açılmasın)
+
+
+def uv_bin() -> str:
+    """`uv` komutu: PATH'te varsa "uv"; yoksa `SB_UV` (paketli Setup'ın gömülü uv'si, ya da kalıcı kopyası); yoksa "uv"."""
+    p = os.environ.get("SB_UV")
+    if p and Path(p).is_file() and not shutil.which("uv"):
+        return p
+    return "uv"
+
+
+def install_uv(data: Path) -> str:
+    """Gömülü uv geçici klasörde (Setup kapanınca silinir) durur: PATH'te uv yoksa `data/bin/` altına kalıcı kopyala."""
+    p = os.environ.get("SB_UV")
+    if not p or not Path(p).is_file() or shutil.which("uv"):
+        return uv_bin()
+    dst = data / "bin" / Path(p).name
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    if not dst.exists():
+        shutil.copy2(p, dst)
+        try:
+            dst.chmod(0o755)
+        except OSError:
+            pass
+    os.environ["SB_UV"] = str(dst)
+    return str(dst)
+
+
 def _run_capture(cmd: list[str], timeout: int = 15, cwd: Path | None = None) -> tuple[int, str]:
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd, encoding="utf-8", errors="replace")
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd, encoding="utf-8", errors="replace",
+                           creationflags=_NOWIN)
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except Exception as e:
         return 127, str(e)
@@ -178,7 +310,8 @@ def _run_stream(cmd: list[str], log, cwd: Path | None = None) -> int:
     """Komutu çalıştırır, çıktıyı satır satır günlüğe yazar (günlük sırları maskeler)."""
     log("$ " + " ".join(cmd))
     try:
-        p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
+                             creationflags=_NOWIN)
     except Exception as e:
         log(f"  başlatılamadı: {e}")
         return 127
@@ -315,7 +448,7 @@ def copy_missing(src: Path, dst: Path) -> int:
 
 
 def sync_code(src: Path, dst: Path) -> None:
-    for item in ("sb", "tools", "tests", "docs", "skills", "integrations", "setup", "pyproject.toml", "uv.lock", ".python-version",
+    for item in ("sb", "app", "plugins", "tools", "tests", "docs", "skills", "integrations", "setup", "pyproject.toml", "uv.lock", ".python-version",
                  "VERSION", "features.yaml"):
         s, d = src / item, dst / item
         if s.is_dir():
@@ -346,10 +479,126 @@ def write_features(system: Path, modules: dict[str, bool]) -> None:
                  + y.safe_dump(data, allow_unicode=True, sort_keys=True), encoding="utf-8")
 
 
+def write_plugins(system: Path, pl: dict) -> None:
+    """`config/plugins.yaml`: sihirbazın 'bütün özellikler' seçimi (modül kimliği → bool, katalog maddesi → bool, sektör)."""
+    y = _yaml()
+    p = system / "config" / "plugins.yaml"
+    data = (y.safe_load(p.read_text(encoding="utf-8")) if p.exists() else None) or {}
+    data.setdefault("modules", {}).update({k: bool(v) for k, v in (pl.get("modules") or {}).items()})
+    data.setdefault("items", {}).update({str(k): bool(v) for k, v in (pl.get("items") or {}).items()})
+    if pl.get("sector"):
+        data["sector"] = pl["sector"]
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("# Seçilen özellikler (kurulum paneli yazdı): modules = manifest modülleri, items = katalog maddeleri.\n"
+                 + y.safe_dump(data, allow_unicode=True, sort_keys=True), encoding="utf-8")
+
+
+# ------------------------------------------------------------------ eklenti kataloğu (sb/plugins.py manifestleri)
+def plugins_mod():
+    """`sb.plugins` (yalnız okur, ağa çıkmaz). Kasadaki _system'den çalışmıyorsak code_dir() yola eklenir."""
+    cd = code_dir()
+    if cd and str(cd) not in sys.path:
+        sys.path.insert(0, str(cd))
+    from sb import plugins
+    return plugins
+
+
+def _lang(lang: str | None) -> str:
+    return "en" if str(lang or "").lower().startswith("en") else "tr"
+
+
+def _t(v, lang: str):
+    if isinstance(v, dict):
+        return v.get(lang) or v.get("tr") or v.get("en") or ""
+    return v
+
+
+def _loc_fields(fields: list[dict], lang: str) -> list[dict]:
+    return [{**f, "label": _t(f.get("label"), lang), **({"help": _t(f["help"], lang)} if f.get("help") else {})} for f in fields or []]
+
+
+def catalog(lang: str | None = "tr") -> dict:
+    """GET /api/catalog: {categories, modules, sources, mcps, sectors} — arayüz bunu çizer; her şey manifestten."""
+    lang, P = _lang(lang), plugins_mod()
+    cats = P.categories()
+    tree = {m["id"]: m for c in P.features_tree() for m in c["modules"]}
+    modules = []
+    for m in P.all("module"):
+        t = tree.get(m["id"]) or {"items": []}
+        modules.append({"id": m["id"], "name": _t(m["name"], lang), "desc": _t(m["desc"], lang), "category": m["category"],
+                        "default_on": bool(m.get("default_on", True)), "roadmap": bool(m.get("roadmap")),
+                        "requires": {**(m.get("requires") or {}), "fields": _loc_fields((m.get("requires") or {}).get("fields"), lang)},
+                        "items": [{"id": i["id"], "name": i["ad"], "cat": m["category"], "faz": i.get("faz"), "durum": i.get("durum")}
+                                  for i in t["items"]]})
+    sources = [{"id": m["id"], "name": _t(m["name"], lang), "desc": _t(m["desc"], lang), "parent": m.get("parent"), "category": m.get("category"),
+                "formats": m["import"]["formats"], "how_to": _t(m["import"]["how_to"], lang), "connector": m["import"].get("connector"),
+                "apps": (m.get("requires") or {}).get("apps") or []} for m in P.all("source")]
+    mcps = []
+    for m in P.all("mcp"):
+        mc = m["mcp"]
+        mcps.append({"id": m["id"], "name": _t(m["name"], lang), "desc": _t(m["desc"], lang), "install": mc.get("install"),
+                     "docs_url": mc.get("docs_url"), "remote": bool(mc.get("remote")),
+                     "env": _loc_fields((m.get("requires") or {}).get("fields"), lang), "note": _t(mc.get("note"), lang) or "",
+                     "default_on": bool(m.get("default_on", False))})
+    sectors = [{"id": m["id"], "name": _t(m["name"], lang), "desc": _t(m["desc"], lang), "modules": m.get("modules") or [],
+                "sources": m.get("sources") or [], "mcp": m.get("mcp") or [], "presets": m.get("presets") or {},
+                "roles": [{"id": r["id"], "name": _t(r.get("name"), lang)} for r in m.get("roles") or []]} for m in P.all("sector")]
+    return {"categories": [{"id": k, "name": _t(v, lang)} for k, v in cats.items()], "modules": modules, "sources": sources,
+            "mcps": mcps, "sectors": sectors}
+
+
+def donanim_recommendation() -> str | None:
+    """Donanım taramasından 4 eksen 'donanim' değeri (taranamazsa None)."""
+    try:
+        hw = hardware()
+        if str(hw.get("gpu") or "").startswith("Apple"):
+            return "mac_apple"
+        return {"full": "guclu_gpu", "medium": "orta", "small": "orta", "cloud": "zayif_bulut"}[recommend(hw)["profile"]]
+    except Exception:                                         # noqa: BLE001 — tarama başarısızsa öneri yok
+        return None
+
+
+def presets_axes(lang: str | None = "tr") -> dict:
+    lang, P = _lang(lang), plugins_mod()
+    axes = {ax: [{"id": k, "name": _t(v.get("name"), lang), "desc": _t(v.get("desc"), lang)} for k, v in (P.presets()["axes"].get(ax) or {}).items()]
+            for ax in P.AXES}
+    rec = donanim_recommendation()
+    return {"axes": axes, "recommended": {"donanim": rec} if rec else {}, "defaults": P.presets().get("defaults") or {}}
+
+
+def combine_axes(body: dict) -> dict:
+    P = plugins_mod()
+    for ax in P.AXES:
+        if body.get(ax) is not None and not isinstance(body[ax], str):
+            raise ValueError(f"{ax} metin olmalı")
+    ram = body.get("ram_gb")
+    res = P.combine(*[body.get(ax) or None for ax in P.AXES], ram_gb=float(ram) if isinstance(ram, (int, float)) else None)
+    mods = {m["id"]: bool(res["modules"].get(m["id"]) or res["extras"].get(m["id"])) for m in P.all("module")}
+    items = {str(i): mods[m["id"]] for m in P.all("module") for i in m.get("catalog_ids") or []}
+    chosen = [m for m in P.for_preset(**{ax: body.get(ax) or None for ax in P.AXES})]
+    return {"modules": mods, "items": items, "models": res["models"], "privacy_profile": res["privacy_profile"], "warnings": res["warnings"],
+            "sources": [m["id"] for m in chosen if m["type"] == "source"], "mcps": [m["id"] for m in chosen if m["type"] == "mcp"],
+            "axes": res["axes"]}
+
+
+def requirements_for(body: dict, lang: str | None = "tr") -> dict:
+    lang, P = _lang(lang), plugins_mod()
+    mods = body.get("modules") or {}
+    on = [k for k, v in mods.items() if v] if isinstance(mods, dict) else [str(x) for x in mods]
+    known = {m["id"] for m in P.all("module")}
+    on = [k for k in on if k in known]
+    srcs = [m["id"] for m in P.all("source") if m.get("parent") in on]
+    srcs += [x for x in body.get("sources") or [] if isinstance(x, str) and x not in srcs and P.get(x, "source")]
+    mcps = [x for x in body.get("mcps") or [] if isinstance(x, str) and P.get(x, "mcp")]
+    r = P.requirements({"modules": on, "sources": srcs, "mcp": mcps})
+    return {"accounts": r["accounts"], "fields": _loc_fields(r["fields"], lang), "secrets": r["secrets"], "imports": srcs, "mcps": mcps,
+            "apps": r["apps"], "hardware": r["hardware"]}
+
+
 # ------------------------------------------------------------------ motor
 STEPS = [("vault", "Kasa ve kod"), ("config", "Ayarlar"), ("secrets", "Sırlar (şifre kasası)"), ("deps", "Python ortamı"),
          ("claude", "Claude Code bağlantısı"), ("model", "Yerel model"), ("schedule", "Zamanlayıcı"), ("git", "Kasa git deposu"),
-         ("doctor", "Kontrol")]
+         ("doctor", "Kontrol"), ("shortcuts", "Kısayollar")]
 
 
 def _res(ok: bool, message: str) -> dict:
@@ -364,10 +613,10 @@ def _trash():
         return None
 
 
-def _imap_login(host: str, user: str, pw: str) -> tuple[bool, str]:
+def _imap_login(host: str, user: str, pw: str, port: int = 993) -> tuple[bool, str]:
     import imaplib
     try:
-        m = imaplib.IMAP4_SSL(host, 993, timeout=8)
+        m = imaplib.IMAP4_SSL(host, port, timeout=8)
         m.login(user, pw)
         m.logout()
         return True, "IMAP girişi başarılı"
@@ -403,6 +652,7 @@ class Engine:
         self.running = False
         self.error = ""
         self.job = ""
+        self._pct: int | None = None                           # yardımcı işlerde (indirme, içe aktarma) elle yüzde
         self.selection: dict = {"preset": "tam", "modules": preset_modules("tam"), "fields": {}}
         self._secrets: list[str] = []
         self._lock = threading.Lock()
@@ -416,8 +666,63 @@ class Engine:
     def progress(self) -> dict:
         with self._lock:
             done = sum(1 for s in self.steps if s["status"] in ("done", "skipped"))
-            return {"running": self.running, "job": self.job, "percent": round(100 * done / len(self.steps)),
+            pct = self._pct if self._pct is not None else round(100 * done / len(self.steps))
+            return {"running": self.running, "job": self.job, "percent": pct,
                     "steps": [dict(s) for s in self.steps], "log": list(self.lines), "error": self.error}
+
+    # -- yardımcı işler (model indirme, ollama kurulumu, içe aktarma, ses kurulumu): tek iş kilidi, /api/progress'te izlenir
+    def run_job(self, job: str, title: str, fn, wait: bool = False) -> bool:
+        """fn(set_percent) arka planda çalışır; hata mesajı sırsız `error`a yazılır. Başka iş sürüyorsa False."""
+        with self._lock:
+            if self.running:
+                return False
+            self.running, self.error, self.job, self._pct = True, "", job, 0
+            self.steps = [{"id": job, "title": title, "status": "running"}]
+            step = self.steps[0]
+
+        def set_pct(p: float) -> None:
+            self._pct = max(0, min(100, int(p)))
+
+        def work():
+            try:
+                fn(set_pct)
+                step["status"] = "done"
+                self._pct = 100
+            except Exception as e:                            # noqa: BLE001
+                step["status"] = "error"
+                self.error = redact(f"{title}: {e}", self._secrets)
+                self.log("HATA: " + self.error)
+            finally:
+                self.running = False
+        self._thread = threading.Thread(target=work, daemon=True)
+        self._thread.start()
+        if wait:
+            self._thread.join()
+        return True
+
+    # -- sihirbaz durumu (yarıda kalanı sürdürme): sırlar buraya ASLA yazılmaz
+    @property
+    def wizard_file(self) -> Path:
+        return self.data / "setup_wizard.json"
+
+    def wizard(self) -> dict:
+        try:
+            d = json.loads(self.wizard_file.read_text(encoding="utf-8"))
+            return {"step": d.get("step", 1), "data": d.get("data") or {}}
+        except Exception:
+            return {"step": 1, "data": {}}
+
+    def save_wizard(self, step, data) -> dict:
+        if not isinstance(data, dict):
+            raise ValueError("data bir nesne olmalı")
+        clean = strip_secrets(data, self._secrets)
+        raw = json.dumps({"step": step if isinstance(step, (int, str)) else 1, "data": clean, "updated": time.strftime("%Y-%m-%dT%H:%M:%S")},
+                         ensure_ascii=False, indent=1)
+        if len(raw) > 512 * 1024:
+            raise ValueError("sihirbaz verisi çok büyük")
+        self.data.mkdir(parents=True, exist_ok=True)
+        self.wizard_file.write_text(raw, encoding="utf-8")
+        return {"step": step, "data": clean}
 
     # -- durum (sürdürme)
     @property
@@ -426,7 +731,10 @@ class Engine:
 
     def public_selection(self) -> dict:
         f = {k: v for k, v in (self.selection.get("fields") or {}).items() if k not in SECRET_KEYS}
-        return {"preset": self.selection.get("preset"), "modules": self.selection.get("modules"), "fields": f}
+        out = {"preset": self.selection.get("preset"), "modules": self.selection.get("modules"), "fields": f}
+        if self.selection.get("plugins"):
+            out["plugins"] = self.selection["plugins"]
+        return out
 
     def save_state(self, done: list[str]) -> None:
         self.data.mkdir(parents=True, exist_ok=True)
@@ -453,6 +761,11 @@ class Engine:
         mods.update({k: bool(v) for k, v in (sel.get("modules") or {}).items()})
         fields = {k: str(v) for k, v in (sel.get("fields") or {}).items() if isinstance(v, (str, int, float))}
         self.selection = {"preset": preset, "modules": mods, "fields": fields}
+        pl = sel.get("plugins") if sel.get("plugins") is not None else self.selection.get("plugins")
+        if isinstance(pl, dict):
+            self.selection["plugins"] = {"modules": {str(k): bool(v) for k, v in (pl.get("modules") or {}).items()},
+                                         "items": {str(k): bool(v) for k, v in (pl.get("items") or {}).items()},
+                                         "sector": str(pl.get("sector") or "")}
         self._secrets = [v for k, v in fields.items() if k in SECRET_KEYS and v]
         if fields.get("vault"):
             self.vault = Path(os.path.expanduser(fields["vault"])).resolve()
@@ -536,8 +849,8 @@ class Engine:
         except Exception:
             self.running = False
             raise
-        for s in self.steps:
-            s["status"] = "done" if s["id"] in done else "pending"
+        self._pct = None
+        self.steps = [{"id": i, "title": t, "status": "done" if i in done else "pending"} for i, t in STEPS]
         self._thread = threading.Thread(target=self._run_steps, args=(done,), daemon=True)
         self._thread.start()
         if wait:
@@ -570,8 +883,22 @@ class Engine:
             raise RuntimeError("Kasa klasörü belirtilmedi")
         return self.vault / "_system"
 
+    def code_root(self) -> Path:
+        """sb kodunun çalışacağı klasör: kurulu kasa _system, yoksa kit/system, yoksa bu kodun kendisi."""
+        if self.vault and (self.vault / "_system" / "sb").is_dir():
+            return self.vault / "_system"
+        k = kit_dir()
+        return (k / "system") if k else (code_dir() or ROOT)
+
+    def sb_cmd(self, *args: str) -> list[str]:
+        """`sb <args>` komutu; SB_VAULT/SB_DATA ortamı başlatıcı kodla verilir (_run_* ortam parametresi almaz)."""
+        boot = ("import os,sys;os.environ['SB_VAULT']=sys.argv[1];os.environ['SB_DATA']=sys.argv[2];sys.argv=['sb']+sys.argv[3:];"
+                "from sb.__main__ import main;sys.exit(main())")
+        return [uv_bin(), "run", "--directory", str(self.code_root()), "python", "-X", "utf8", "-c", boot,
+                str(self.vault or ""), str(self.data), *args]
+
     def _py(self) -> list[str]:
-        return ["uv", "run", "--directory", str(self._system()), "python", "-X", "utf8"]
+        return [uv_bin(), "run", "--directory", str(self._system()), "python", "-X", "utf8"]
 
     def _step_vault(self):
         kit = kit_dir()
@@ -603,7 +930,7 @@ class Engine:
             p = cfg / n
             return (y.safe_load(p.read_text(encoding="utf-8")) if p.exists() else None) or {}
         prof = load("profile.yaml")
-        for k in ("name", "full_name", "bio", "timezone", "github_user", "workspace"):
+        for k in ("name", "full_name", "bio", "timezone", "github_user", "workspace", "org", "role"):
             if f.get(k):
                 prof[k] = f[k]
         (cfg / "profile.yaml").write_text("# Kişi profili (kurulum paneli yazdı)\n" + y.safe_dump(prof, allow_unicode=True, sort_keys=False), encoding="utf-8")
@@ -618,6 +945,9 @@ class Engine:
         (cfg / "accounts.yaml").write_text("# Hesaplar (gizli bilgi YOK; şifreler işletim sistemi şifre kasasında)\n"
                                            + y.safe_dump(acc, allow_unicode=True, sort_keys=False), encoding="utf-8")
         write_features(sysd, self.selection["modules"])
+        pl = self.selection.get("plugins")
+        if pl:
+            write_plugins(sysd, pl)
         cs = f.get("client_secret")
         if cs and Path(os.path.expanduser(cs)).is_file():
             dst = self.data / "secrets" / "client_secret.json"
@@ -646,10 +976,11 @@ class Engine:
         sysd = self._system()
         if not (sysd / "pyproject.toml").exists():
             raise RuntimeError(f"{sysd} içinde pyproject.toml yok (kod kopyalanmadı)")
-        if _run_stream(["uv", "sync"], self.log, sysd):
+        uv = install_uv(self.data)
+        if _run_stream([uv, "sync"], self.log, sysd):
             raise RuntimeError("uv sync başarısız")
         if (sysd / "tools" / "install_cli.py").exists():
-            _run_stream(["uv", "run", "--directory", str(sysd), "python", str(sysd / "tools" / "install_cli.py")], self.log)
+            _run_stream([uv, "run", "--directory", str(sysd), "python", str(sysd / "tools" / "install_cli.py")], self.log)
 
     def _step_claude(self):
         claude = shutil.which("claude")
@@ -658,7 +989,7 @@ class Engine:
             return True
         sysd = self._system()
         _run_stream([claude, "mcp", "remove", "second-brain", "-s", "user"], lambda m: None)
-        _run_stream([claude, "mcp", "add", "second-brain", "--scope", "user", "--", "uv", "run", "--directory", str(sysd), "python", "-m", "sb.mcp_server"], self.log)
+        _run_stream([claude, "mcp", "add", "second-brain", "--scope", "user", "--", uv_bin(), "run", "--directory", str(sysd), "python", "-m", "sb.mcp_server"], self.log)
 
     def _step_model(self):
         if not PRESETS.get(self.selection["preset"], {}).get("local_model", True) or not shutil.which("ollama"):
@@ -695,12 +1026,36 @@ class Engine:
         h = self.health()
         self.log("  " + (h.get("summary") or h.get("message", "")))
 
+    def _step_shortcuts(self):
+        """Uygulama başlatıcısını kur + masaüstü ve Başlat menüsü (macOS: ~/Applications) kısayolu `Second Brain`."""
+        plat = sys.platform
+        if plat not in ("win32", "darwin"):
+            self.log("  bu sistemde kısayol yok: atlandı")
+            return True
+        try:
+            from . import autostart
+        except ImportError:                                   # engine.py doğrudan çalıştırıldı
+            import autostart  # type: ignore
+        installed = install_launcher(self.data, plat)
+        if plat == "darwin":
+            if installed:
+                self.log(f"  uygulama kuruldu: {installed}")
+            else:
+                dest = make_stub_app(launcher_path(self.data, plat), self.code_root())
+                self.log(f"  başlatıcı uygulama yazıldı: {dest}")
+            return
+        prog, args, cwd = autostart.launch_command(self, False, plat)
+        rc, out = _run_capture(["powershell", "-NoProfile", "-Command", shortcut_script(prog, args, cwd)], 30)
+        if rc != 0:
+            raise RuntimeError("kısayol oluşturulamadı: " + out.strip()[:200])
+        self.log(f"  masaüstü + Başlat menüsü kısayolu: {APP_NAME} → {prog}")
+
     # -- sağlık
     def health(self) -> dict:
         sysd = self._system() if self.vault else (code_dir() or ROOT)
         if not (sysd / "sb").is_dir():
             return {"ok": False, "rows": [], "summary": "", "message": "sb henüz kurulu değil"}
-        rc, out = _run_capture(["uv", "run", "--directory", str(sysd), "python", "-X", "utf8", "-m", "sb", "doctor"], 120)
+        rc, out = _run_capture([uv_bin(), "run", "--directory", str(sysd), "python", "-X", "utf8", "-m", "sb", "doctor"], 120)
         return {**parse_doctor(out), "returncode": rc}
 
     # -- güncelleme

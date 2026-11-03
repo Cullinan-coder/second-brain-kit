@@ -1,0 +1,45 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: pocket
+type: source
+name:
+  tr: Pocket
+  en: Pocket
+desc:
+  tr: Pocket okuma listesi (ril_export.html/CSV) → bağlantı kayıtları.
+  en: Pocket reading list (ril_export.html/CSV) → link records.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .html
+  - .csv
+  how_to:
+    tr: '1. Pocket hizmetinin kapatıldığı duyuruldu (2025); yeni dışa aktarma almak mümkün olmayabilir. Güncel durum
+      için: https://support.mozilla.org/products/pocket
+
+      2. Daha önce aldığın `ril_export.html` ya da CSV dosyan varsa Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import pocket <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Pocket''s shutdown was announced (2025); a new export may no longer be possible. Current status: https://support.mozilla.org/products/pocket
+
+      2. If you already have a `ril_export.html` or CSV file, drop it on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import pocket <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: pocket
+health:
+  cli: sb import pocket <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

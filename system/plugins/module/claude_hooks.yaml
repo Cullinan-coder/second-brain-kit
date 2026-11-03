@@ -1,0 +1,28 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: claude_hooks
+type: module
+name:
+  tr: Claude Code hafızası
+  en: Claude Code memory
+desc:
+  tr: Kancalar, son oturum kartları, makbuz, skill'ler
+  en: Hooks, last-session cards, receipts, skills.
+category: assistant_memory
+module: claude_hooks
+catalog_ids:
+- 221
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Claude Code
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:yazilimci

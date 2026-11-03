@@ -1,0 +1,74 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: instagram
+type: source
+name:
+  tr: Instagram verileri
+  en: Instagram data
+desc:
+  tr: Instagram 'bilgilerini indir' (JSON) → DM'ler ve gönderiler.
+  en: Instagram 'download your information' (JSON) → DMs and posts.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: me
+    label:
+      tr: Sohbetlerde senin adın
+      en: Your name in chats
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Mesajların hangisinin sana ait olduğunu anlamak için.
+      en: Used to tell which messages are yours.
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. Instagram uygulaması ya da web: Ayarlar → Hesap Merkezi (Accounts Center) → Bilgilerin ve izinlerin
+      → Bilgilerini indir (Download your information).
+
+      2. Bilgilerini indir → İndirme/aktarma talebi oluştur → profilini seç → ''Bilgilerinin bir kısmı'' ya da ''Tüm
+      bilgilerin''; mesajlar ve gönderiler seçili olsun.
+
+      3. Biçim olarak JSON seç (HTML değil). Tarih aralığı: tümü. Cihaza indirmeyi seç ve talebi gönder.
+
+      4. Hazır olunca e-posta/bildirim gelir (dakikalardan günlere); bağlantıdan zip''i indir.
+
+      5. Zip''i Veri yükleme ekranına bırak; ''Sen'' alanına Instagram adını yaz.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://help.instagram.com/181231772500920
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import instagram <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Instagram app or web: Settings → Accounts Center → Your information and permissions → Download your
+      information.
+
+      2. Download your information → create an export → pick your profile → ''Some of your information'' or ''All
+      available information''; keep messages and posts ticked.
+
+      3. Choose JSON as the format (not HTML), date range ''All time'', export to device and submit.
+
+      4. You get an email/notification when ready (minutes to days); download the zip from the link.
+
+      5. Drop the zip on the Data import screen and type your Instagram name in ''You''.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://help.instagram.com/181231772500920
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import instagram <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: instagram
+health:
+  cli: sb import instagram <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

@@ -1,0 +1,28 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: quality
+type: module
+name:
+  tr: Kalite ve gözlemlenebilirlik
+  en: Quality and observability
+desc:
+  tr: Uçtan uca test, çökme raporu, performans panosu, Yenilikler ekranı.
+  en: End-to-end tests, crash reports, performance board, what's new.
+category: privacy_quality
+module: null
+catalog_ids:
+- 247
+- 248
+- 249
+- 250
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc

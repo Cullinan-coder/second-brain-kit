@@ -1,0 +1,43 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sqlite
+type: mcp
+name:
+  tr: SQLite
+  en: SQLite
+desc:
+  tr: 'Bir SQLite dosyasını sorgular. NOT: paket arşivlendi.'
+  en: 'Queries a SQLite file. NOTE: package is archived.'
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: sqlite_path
+    label:
+      tr: SQLite dosya yolu
+      en: SQLite file path
+    kind: path
+    secret: false
+    required: true
+    help:
+      tr: ''
+      en: ''
+  secrets: []
+  hardware: {}
+  apps:
+  - uv
+mcp:
+  command: uvx
+  args:
+  - mcp-server-sqlite
+  - --db-path
+  - '{sqlite_path}'
+  env: {}
+  install: uvx mcp-server-sqlite --help
+  docs_url: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/sqlite
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci

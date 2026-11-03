@@ -1,0 +1,48 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: brain
+type: module
+name:
+  tr: Beyin dizini
+  en: Brain index
+desc:
+  tr: Bütün kaynaklarda anlam araması, kişi bağlantıları, kümeleme, analizler
+  en: Semantic search, person links, clustering and analyses across all sources.
+category: search_brain
+module: brain
+catalog_ids:
+- 118
+- 119
+- 120
+- 121
+- 122
+- 123
+- 124
+- 125
+- 126
+- 127
+- 128
+- 129
+- 130
+- 131
+- 132
+- 133
+- 134
+- 135
+- 136
+- 137
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware:
+    ram_gb: 8
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:yazilimci
+- meslek:akademisyen
+- meslek:arastirmaci

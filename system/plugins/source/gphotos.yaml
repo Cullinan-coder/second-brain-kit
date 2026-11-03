@@ -1,0 +1,62 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: gphotos
+type: source
+name:
+  tr: Google Fotoğraflar meta verisi
+  en: Google Photos metadata
+desc:
+  tr: Fotoğraf yan dosyaları (JSON) → tarih/yer kayıtları; fotoğrafın kendisi okunmaz.
+  en: Photo sidecar files (JSON) → date/place records; photos themselves are not read.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - klasör
+  - .json
+  how_to:
+    tr: '1. takeout.google.com → ''Tümünün seçimini kaldır'' → yalnız ''Google Fotoğraflar''ı işaretle (isteğe bağlı
+      olarak belirli albümleri seç).
+
+      2. Dosya türü .zip, biçim varsayılan; dışa aktarmayı oluştur ve e-postadaki bağlantıdan indir (fotoğraflar
+      büyük olabilir; yalnız albüm seçmek boyutu küçültür).
+
+      3. Zip''i bir klasöre aç; fotoğrafların yanındaki `.json` yan dosyaları (tarih, yer bilgisi) gerekli olan
+      kısımdır.
+
+      4. Klasörü Veri yükleme ekranına bırak; yalnız yan dosyalar okunur, fotoğraf içeriği okunmaz.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.google.com/photos/answer/10502587
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import gphotos <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. takeout.google.com → ''Deselect all'' → tick only ''Google Photos'' (optionally pick specific albums).
+
+      2. File type .zip, default format; create the export and download from the emailed link (photos can be huge;
+      choosing only albums keeps it small).
+
+      3. Unpack the zip into a folder; the `.json` sidecar files next to photos (date, location) are the needed
+      part.
+
+      4. Drop the folder on the Data import screen; only the sidecar files are read, never the photo content.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.google.com/photos/answer/10502587
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import gphotos <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: gphotos
+health:
+  cli: sb import gphotos <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

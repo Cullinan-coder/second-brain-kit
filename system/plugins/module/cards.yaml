@@ -1,0 +1,31 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: cards
+type: module
+name:
+  tr: Bilgi kartları
+  en: Knowledge cards
+desc:
+  tr: Notlardan kart üretme ve aralıklı tekrar
+  en: Generates cards from notes and spaced repetition.
+category: assistant_memory
+module: cards
+catalog_ids:
+- 158
+- 159
+- 160
+- 161
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

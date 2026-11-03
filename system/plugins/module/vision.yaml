@@ -1,0 +1,28 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: vision
+type: module
+name:
+  tr: Ekran ve kamera
+  en: Screen and camera
+desc:
+  tr: Ekranı/kamerayı okuyup anlatma
+  en: Reads and describes the screen or camera.
+category: computer_voice
+module: vision
+catalog_ids:
+- 45
+- 46
+- 48
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware:
+    gpu_vram_gb: 8
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:arastirmaci

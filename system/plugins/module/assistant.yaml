@@ -1,0 +1,35 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: assistant
+type: module
+name:
+  tr: Yerel asistan
+  en: Local assistant
+desc:
+  tr: Obsidian yan paneli ve telefondan sohbet
+  en: Obsidian side panel and phone chat.
+category: assistant_memory
+module: assistant
+catalog_ids:
+- 54
+- 55
+- 56
+- 59
+- 60
+- 61
+- 64
+- 65
+- 73
+- 74
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

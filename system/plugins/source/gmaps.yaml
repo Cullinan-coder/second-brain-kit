@@ -1,0 +1,59 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: gmaps
+type: source
+name:
+  tr: Google Haritalar zaman çizelgesi
+  en: Google Maps Timeline
+desc:
+  tr: Konum geçmişi (zaman çizelgesi) → yer kayıtları.
+  en: Location history (Timeline) → place records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .json
+  - klasör
+  how_to:
+    tr: '1. Google zaman çizelgesi verisi artık çoğunlukla telefonda (cihaz üzerinde) saklanır; dışa aktarma yolu
+      cihaza ve sürüme göre değişir.
+
+      2. Android: Ayarlar → Konum → Konum hizmetleri → Zaman çizelgesi → ''Zaman çizelgesi verilerini dışa aktar''
+      (cihaz üzerindeki veriyi bir JSON dosyasına yazar). Eski hesabında bulut yedeği varsa takeout.google.com''da
+      ''Konum Geçmişi (Zaman Çizelgesi)'' de çıkar.
+
+      3. Çıkan JSON dosyasını (örn. Records.json / Timeline.json) bilgisayara aktar ve Veri yükleme ekranına bırak.
+
+      4. Menü adları sürüme göre değişir; resmi yardım sayfasına bak: https://support.google.com/maps/answer/6258979
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import gmaps <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Google Timeline data is now mostly stored on the device; the export path depends on device and version.
+
+      2. Android: Settings → Location → Location services → Timeline → ''Export Timeline data'' (writes the on-device
+      data to a JSON file). If you still have cloud-backed history, ''Location History (Timeline)'' also appears
+      in takeout.google.com.
+
+      3. Move the resulting JSON file (e.g. Records.json / Timeline.json) to this computer and drop it on the Data
+      import screen.
+
+      4. Menu names vary by version; see the official help: https://support.google.com/maps/answer/6258979
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import gmaps <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: gmaps
+health:
+  cli: sb import gmaps <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

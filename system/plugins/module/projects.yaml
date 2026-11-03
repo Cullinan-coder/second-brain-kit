@@ -1,0 +1,47 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: projects
+type: module
+name:
+  tr: Projeler ve GitHub
+  en: Projects and GitHub
+desc:
+  tr: Kod projelerini tarar; proje dosyası derler
+  en: Scans code projects and compiles a project file.
+category: school_project
+module: projects
+catalog_ids: []
+requires:
+  accounts:
+  - github
+  fields:
+  - key: workspace
+    label:
+      tr: Kod projeleri klasörü
+      en: Code projects folder
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Git depolarının bulunduğu üst klasör.
+      en: Parent folder of your git repos.
+  - key: github_user
+    label:
+      tr: GitHub kullanıcı adı
+      en: GitHub username
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: github.com/<ad> adresindeki ad.
+      en: The name in github.com/<name>.
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ajans
+- meslek:yazilimci

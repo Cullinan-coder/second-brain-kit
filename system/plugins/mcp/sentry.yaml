@@ -1,0 +1,30 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sentry
+type: mcp
+name:
+  tr: Sentry
+  en: Sentry
+desc:
+  tr: Hata kayıtları ve sorunlar (Sentry'nin uzak MCP sunucusu).
+  en: Errors and issues (Sentry's remote MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - sentry
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+mcp:
+  command: null
+  args: []
+  env: {}
+  install: null
+  docs_url: https://docs.sentry.io/product/sentry-mcp/
+  remote: true
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci

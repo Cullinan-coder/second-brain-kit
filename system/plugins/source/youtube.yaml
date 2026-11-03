@@ -1,0 +1,62 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: youtube
+type: source
+name:
+  tr: YouTube izleme geçmişi
+  en: YouTube watch history
+desc:
+  tr: İzleme geçmişi ve abonelikler (Takeout) → kayıtlar.
+  en: Watch history and subscriptions (Takeout) → records.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .json
+  - .html
+  - .csv
+  how_to:
+    tr: '1. takeout.google.com → ''Tümünün seçimini kaldır'' → ''YouTube ve YouTube Music''i işaretle.
+
+      2. ''Tüm YouTube verileri dahil'' düğmesinden yalnız ''geçmiş'' ve ''abonelikler''i seç; ''Çoklu biçimler''
+      düğmesinden geçmiş için JSON seç (HTML de okunur).
+
+      3. .zip olarak dışa aktar, e-postadaki bağlantıdan indir; `Geçmiş/izleme geçmişi.json` ve `abonelikler.csv`
+      dosyaları gereken kısımdır.
+
+      4. Zip''i ya da bu dosyaları Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.google.com/youtube/answer/7126369
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import youtube <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. takeout.google.com → ''Deselect all'' → tick ''YouTube and YouTube Music''.
+
+      2. Via ''All YouTube data included'' choose only ''history'' and ''subscriptions''; via ''Multiple formats''
+      set JSON for history (HTML is also read).
+
+      3. Export as .zip and download from the emailed link; `history/watch-history.json` and `subscriptions.csv`
+      are the needed files.
+
+      4. Drop the zip or those files on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.google.com/youtube/answer/7126369
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import youtube <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: youtube
+health:
+  cli: sb import youtube <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

@@ -1,0 +1,24 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: screen_watch
+type: module
+name:
+  tr: Ekran izleme
+  en: Screen watching
+desc:
+  tr: İzin verilince belirli süre ekranı okuyup gün özeti çıkarır (görüntü saklanmaz)
+  en: With permission, reads the screen for a period and writes a day summary (no images stored).
+category: computer_voice
+module: screen_watch
+catalog_ids:
+- 47
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware:
+    gpu_vram_gb: 8
+  apps: []
+health:
+  cli: sb doctor
+default_on: false
+presets: []

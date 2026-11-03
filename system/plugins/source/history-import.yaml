@@ -1,0 +1,75 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: history-import
+type: source
+name:
+  tr: ChatGPT / Claude / Gemini sohbet geçmişi
+  en: ChatGPT / Claude / Gemini chat history
+desc:
+  tr: Eski yapay zeka sohbetleri → aylık sohbet notları.
+  en: Old AI chats → monthly chat notes.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - .json
+  - klasör
+  how_to:
+    tr: '1. ChatGPT: chatgpt.com → profil → Ayarlar → Veri kontrolleri (Data controls) → Verileri dışa aktar (Export
+      data) → Dışa aktarmayı onayla. E-postayla gelen bağlantıdan zip''i indir (bağlantı kısa süre geçerlidir);
+      içinde `conversations.json` bulunur.
+
+      2. Claude.ai: claude.ai → profil/ayarlar → Gizlilik (Privacy) → Verileri dışa aktar (Export data); e-postayla
+      gelen bağlantıdan zip''i indir (içinde `conversations.json`). Menü adı değişirse resmi yardım: https://support.claude.com
+
+      3. Gemini: Google Takeout''tan ''Etkinliğim → Gemini Uygulamaları'' seç (Google Takeout kaynağına bak).
+
+      4. Dosyayı Veri yükleme ekranına bırak. ÖNCE önizleme: kaç sohbetin hangi aylara gideceği gösterilir, hiçbir
+      şey yazılmaz (onay kapısı).
+
+      5. Hassas konuları ''hariç tut'' kelimeleriyle ya da tarih aralığıyla ele; özel sohbetleri ''özel'' işaretle
+      (bağlama girmez). Onaylayınca `40-Kaynaklar/Sohbet geçmişi/` altında ay başına bir not oluşur.
+
+      6. İstersen sonra Claude''a ''geçmişi bilgiye damıt'' de (gecmis-import skill''i kavram notları çıkarır).
+
+      Dışa aktarım yalnız yerelde okunur, hiçbir yere gönderilmez.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import history-import <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. ChatGPT: chatgpt.com → profile → Settings → Data controls → Export data → Confirm export. Download the
+      zip from the emailed link (it expires quickly); it contains `conversations.json`.
+
+      2. Claude.ai: claude.ai → profile/settings → Privacy → Export data; download the zip from the emailed link
+      (contains `conversations.json`). If the menu is renamed, see the official help: https://support.claude.com
+
+      3. Gemini: choose ''My Activity → Gemini Apps'' in Google Takeout (see the Google Takeout source).
+
+      4. Drop the file on the Data import screen. A PREVIEW comes first: how many chats go to which months; nothing
+      is written (approval gate).
+
+      5. Filter sensitive topics with exclude words or a date range; mark private chats ''private'' (kept out of
+      context). After approval one note per month is created under `40-Kaynaklar/Sohbet geçmişi/`.
+
+      6. Optionally ask Claude afterwards to ''distil the history into knowledge'' (the gecmis-import skill writes
+      concept notes).
+
+      The export is read locally only and sent nowhere.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import history-import <file> --dry-run`
+      first). The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

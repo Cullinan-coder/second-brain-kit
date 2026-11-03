@@ -1,0 +1,31 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: memory
+type: mcp
+name:
+  tr: Bellek (bilgi grafı)
+  en: Memory (knowledge graph)
+desc:
+  tr: Yerel bilgi grafı ile konuşmalar arası basit bellek.
+  en: Simple cross-conversation memory backed by a local knowledge graph.
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-memory'
+  env: {}
+  install: npm view @modelcontextprotocol/server-memory version
+  docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/memory
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets: []

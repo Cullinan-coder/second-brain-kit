@@ -2,6 +2,16 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.3 — 2026-11-04 (kurulum sihirbazı + masaüstü uygulaması)
+- **`Second Brain Setup.exe` / `.app`:** tek satırlık komut kurulum dosyasını masaüstüne indirir (depo gizli: `gh auth login` ya da `SB_GH_TOKEN`).
+  12 adımlı sihirbaz: hoş geldin → hazır seçim (meslek / donanım / gizlilik / yoğunluk) → **bütün özellikler** (50 modül, 250 madde, arama,
+  gereksinim rozetleri) → kişisel bilgiler → hesaplar (Google adım adım, birden çok IMAP) → API anahtarları → yerel modeller (Ollama, ses, GPU) →
+  MCP (Claude Code bağlantısı, 18 hazır MCP, kendi MCP'n) → veri yükleme (39 kaynak; her birinde "nasıl alınır", sürükle-bırak, önizleme) →
+  telefon → başlangıç (otomatik açılsın mı) → özet ve kurulum. Türkçe/İngilizce, yarıda kalanı sürdürme.
+- **`Second Brain.exe` / `.app`:** tek pencere, tepsi simgesi, masaüstü ve Başlat menüsü kısayolu; **"Çalışmaya başla"** — güncelleme, sağlık,
+  günlük işler, modelleri ısıtma, hazır. Ayarlar kipi: sihirbazın bütün sayfaları sekme olarak.
+- **Eklenti tanımları** (`plugins/`): her özellik, kaynak, MCP ve sektör bir tanım dosyası; tekstil sektör paketi örneği.
+
 ## 0.9.2 — 2026-11-03 (güvenlik incelemesi)
 - **Kritik:** Spotify geri dönüş sayfasında yansıyan XSS kapatıldı (adres çubuğundaki metin kaçışlanır, sıkı CSP).
 - **Telefon paylaşımı:** siteler arası formla kasaya veri yazdırma kapatıldı — paylaşım önizleme sayfasına gider, "Beyne at"a basmadan kaydedilmez.

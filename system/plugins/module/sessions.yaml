@@ -1,0 +1,26 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sessions
+type: module
+name:
+  tr: Claude Code oturumları
+  en: Claude Code sessions
+desc:
+  tr: Proje oturum günlükleri
+  en: Per-project session logs.
+category: school_project
+module: sessions
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Claude Code
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:yazilimci

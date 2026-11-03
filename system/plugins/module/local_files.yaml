@@ -1,0 +1,26 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: local_files
+type: module
+name:
+  tr: Bilgisayar dosyaları
+  en: Computer files
+desc:
+  tr: Klasör notları ve belge içerik dizini
+  en: Folder notes and a document content index.
+category: school_project
+module: local_files
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:arastirmaci

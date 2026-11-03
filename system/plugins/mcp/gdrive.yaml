@@ -1,0 +1,43 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: gdrive
+type: mcp
+name:
+  tr: Google Drive
+  en: Google Drive
+desc:
+  tr: 'Drive dosyalarını arar ve okur. NOT: paket arşivlendi; OAuth kurulumu gerekir (docs_url).'
+  en: 'Searches and reads Drive files. NOTE: package is archived; needs OAuth setup (docs_url).'
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gdrive_credentials
+    label:
+      tr: Kaydedilmiş OAuth kimlik dosyası yolu
+      en: Path to the saved OAuth credentials file
+    kind: path
+    secret: false
+    required: true
+    help:
+      tr: docs_url'deki adımlarla üretilir.
+      en: Produced by the steps at docs_url.
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-gdrive'
+  env:
+    GDRIVE_CREDENTIALS_PATH: '{gdrive_credentials}'
+  install: npm view @modelcontextprotocol/server-gdrive version
+  docs_url: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/gdrive
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets: []

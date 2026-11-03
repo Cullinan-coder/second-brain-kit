@@ -41,9 +41,49 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 try:
+    from . import accounts as A
+    from . import autostart as AS
     from . import engine as E
+    from . import imports as IM
+    from . import mcp as M
 except ImportError:                                           # python setup/server.py gibi doğrudan çalıştırma
+    import accounts as A  # type: ignore
+    import autostart as AS  # type: ignore
     import engine as E  # type: ignore
+    import imports as IM  # type: ignore
+    import mcp as M  # type: ignore
+
+
+def _merge_selection(sel: dict, s: dict) -> dict:
+    """apply.selection: bilinen çekirdek modüller `modules`a, bütün manifest modül/madde seçimi `plugins`e (plugins.yaml)."""
+    mods = {k: bool(v) for k, v in s["modules"].items()} if isinstance(s.get("modules"), dict) else {}
+    core = {k: v for k, v in mods.items() if k in E._ALL}
+    sel = {**sel, "modules": {**(sel.get("modules") or {}), **core}}
+    sel["plugins"] = {"modules": mods, "items": s.get("items") if isinstance(s.get("items"), dict) else {}, "sector": str(s.get("sector") or "")}
+    return sel
+
+
+def _profile_basic(e, b: dict) -> dict:
+    import os
+    name, vault = str(b.get("name") or "").strip(), str(b.get("vault") or "").strip()
+    if not name or not vault:
+        raise ValueError("ad ve kasa klasörü gerekli")
+    tz = str(b.get("timezone") or "Europe/Istanbul").strip()
+    try:
+        from zoneinfo import ZoneInfo
+        ZoneInfo(tz)
+    except Exception:                                         # noqa: BLE001
+        raise ValueError(f"geçersiz saat dilimi: {tz}")
+    vp = Path(os.path.expanduser(vault)).resolve()
+    if vp.is_file():
+        raise ValueError("kasa bir dosya olamaz")
+    f = {"name": name, "full_name": str(b.get("full_name") or "").strip(), "vault": str(vp), "timezone": tz}
+    for k in ("org", "role"):
+        if b.get(k):
+            f[k] = str(b[k]).strip()[:120]
+    e.selection["fields"].update({k: v for k, v in f.items() if v})
+    e.vault = vp
+    return {"ok": True, "fields": f}
 
 UI = Path(__file__).resolve().parent / "ui"
 MAX_BODY = 1 << 20
@@ -140,11 +180,15 @@ class Handler(BaseHTTPRequestHandler):
             ctype = "text/javascript"
         self._send(200, p.read_bytes(), ctype + ("; charset=utf-8" if ctype.startswith("text/") else ""))
 
+    def _started(self, ok: bool) -> None:
+        return self._json(202, {"started": True}) if ok else self._json(409, {"error": "başka bir iş sürüyor"})
+
     def _api(self, method: str, path: str, q: dict) -> None:
         e = self.eng
         route = (method, path)
         if route == ("GET", "/api/presets"):
-            return self._json(200, {"presets": E.PRESETS, "modules": E.modules_meta(), "categories": E.CATEGORIES})
+            return self._json(200, {"presets": E.PRESETS, "modules": E.modules_meta(), "categories": E.CATEGORIES,
+                                    **E.presets_axes((q.get("lang") or ["tr"])[0])})
         if route == ("GET", "/api/fields"):
             preset = (q.get("preset") or [e.selection.get("preset") or "tam"])[0]
             mods = E.preset_modules(preset)
@@ -158,7 +202,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"hardware": hw, "recommend": E.recommend(hw)})
         if route == ("POST", "/api/apply"):
             b = self._body()
-            if not e.apply({"preset": b.get("preset"), "modules": b.get("modules"), "fields": b.get("fields")}, resume=bool(b.get("resume"))):
+            sel = {"preset": b.get("preset"), "modules": b.get("modules"), "fields": b.get("fields")}
+            if isinstance(b.get("selection"), dict):
+                sel = _merge_selection(sel, b["selection"])
+            if not e.apply(sel, resume=bool(b.get("resume"))):
                 return self._json(409, {"error": "başka bir iş sürüyor"})
             return self._json(202, {"started": True})
         if route == ("GET", "/api/progress"):
@@ -189,6 +236,75 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(keys, list):
                 raise ValueError("keys listesi gerekli")
             return self._json(200, e.disable_modules([str(k) for k in keys]))
+        # ---- 1.0 sihirbaz sözleşmesi (docs/v1-kurulum-sartname.md)
+        lang = (q.get("lang") or ["tr"])[0]
+        if route == ("GET", "/api/catalog"):
+            return self._json(200, E.catalog(lang))
+        if route == ("POST", "/api/combine"):
+            return self._json(200, E.combine_axes(self._body()))
+        if route == ("POST", "/api/requirements"):
+            return self._json(200, E.requirements_for(self._body(), lang))
+        if route == ("GET", "/api/wizard"):
+            return self._json(200, e.wizard())
+        if route == ("POST", "/api/wizard"):
+            b = self._body()
+            return self._json(200, e.save_wizard(b.get("step", 1), b.get("data") or {}))
+        if route == ("POST", "/api/profile/basic"):
+            return self._json(200, _profile_basic(e, self._body()))
+        if route == ("POST", "/api/account/google"):
+            return self._json(200, A.add_google(e, self._body()))
+        if route == ("POST", "/api/account/imap"):
+            return self._json(200, A.add_imap(e, self._body()))
+        if route == ("GET", "/api/accounts"):
+            return self._json(200, A.list_accounts(e))
+        if route == ("POST", "/api/account/remove"):
+            return self._json(200, A.remove_account(e, self._body()))
+        if route == ("POST", "/api/secret"):
+            return self._json(200, A.set_secret(e, self._body()))
+        if route == ("GET", "/api/secrets"):
+            return self._json(200, A.list_secrets(e))
+        if route == ("GET", "/api/ollama"):
+            return self._json(200, A.ollama_info())
+        if route == ("POST", "/api/ollama/install"):
+            return self._started(A.ollama_install(e))
+        if route == ("POST", "/api/models/pull"):
+            return self._started(A.pull_model(e, str(self._body().get("name") or "")))
+        if route == ("POST", "/api/voice/setup"):
+            return self._started(A.voice_setup(e, bool(self._body().get("gpu"))))
+        if route == ("GET", "/api/mcp"):
+            return self._json(200, M.overview(lang))
+        if route == ("POST", "/api/mcp/install"):
+            return self._json(200, M.install(e, self._body()))
+        if route == ("POST", "/api/mcp/custom"):
+            return self._json(200, M.custom(e, self._body()))
+        if route == ("POST", "/api/mcp/remove"):
+            return self._json(200, M.remove(e, self._body()))
+        if route == ("POST", "/api/import/upload"):
+            n = self.headers.get("Content-Length") or ""
+            if not n.isdigit():
+                self.close_connection = True
+                raise ValueError("Content-Length gerekli")
+            if int(n) > IM.MAX_UPLOAD:                         # gövdeyi okumadan reddet
+                self.close_connection = True
+                return self._json(413, {"error": "dosya çok büyük"})
+            try:
+                return self._json(200, IM.upload(e, (q.get("source") or [""])[0], (q.get("name") or [""])[0], self.rfile, int(n)))
+            except ValueError:
+                self.close_connection = True                   # okunmamış gövde bağlantıyı bozmasın
+                raise
+        if route == ("POST", "/api/import/preview"):
+            return self._json(200, IM.preview(e, self._body()))
+        if route == ("POST", "/api/import/run"):
+            return self._started(IM.run(e, self._body()))
+        if route == ("GET", "/api/imports"):
+            return self._json(200, IM.history(e))
+        if route == ("GET", "/api/phone"):
+            return self._json(200, A.phone_info())
+        if route == ("GET", "/api/autostart"):
+            return self._json(200, AS.status(e))
+        if route == ("POST", "/api/autostart"):
+            b = self._body()
+            return self._json(200, AS.apply(e, b.get("on"), b.get("minimized", True) is not False))
         if route == ("POST", "/api/shutdown"):
             self._json(200, {"ok": True})
             threading.Thread(target=self.server.shutdown, daemon=True).start()

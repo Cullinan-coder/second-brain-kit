@@ -1,0 +1,48 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: trello
+type: source
+name:
+  tr: Trello
+  en: Trello
+desc:
+  tr: Trello görevleri → görev notları (yalnız açık görevler).
+  en: Trello tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Trello''da panoyu aç → sağ üst menü (⋯) → Yazdır, dışa aktar ve paylaş (Print, export, and share) →
+      JSON olarak dışa aktar (Export as JSON).
+
+      2. Açılan JSON''u kaydet (sağ tık → Farklı kaydet); her pano için tekrarla ve dosyaları Veri yükleme ekranına
+      bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.atlassian.com/trello/docs/exporting-data-from-trello/
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import trello <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Trello open the board → top-right menu (⋯) → Print, export, and share → Export as JSON.
+
+      2. Save the JSON that opens (right-click → Save as); repeat per board and drop the files on the Data import
+      screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.atlassian.com/trello/docs/exporting-data-from-trello/
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import trello <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: trello
+health:
+  cli: sb import trello <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

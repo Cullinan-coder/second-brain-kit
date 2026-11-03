@@ -1,0 +1,46 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: linear
+type: source
+name:
+  tr: Linear
+  en: Linear
+desc:
+  tr: Linear görevleri → görev notları (yalnız açık görevler).
+  en: Linear tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Linear''da Ayarlar → Çalışma alanı → İçe/Dışa aktar (Import/Export) → Dışa aktar CSV (yönetici yetkisi
+      gerekebilir).
+
+      2. Gelen CSV''yi Veri yükleme ekranına bırak. Menü yeri sürüme göre değişebilir: https://linear.app/docs
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://linear.app/docs
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import linear <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Linear: Settings → Workspace → Import/Export → Export CSV (admin rights may be required).
+
+      2. Drop the CSV on the Data import screen. The menu location may vary: https://linear.app/docs
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://linear.app/docs
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import linear <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: linear
+health:
+  cli: sb import linear <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

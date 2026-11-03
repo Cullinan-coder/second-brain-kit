@@ -1,0 +1,37 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: second-brain
+type: mcp
+name:
+  tr: Second Brain (kendi MCP'miz)
+  en: Second Brain (our own MCP)
+desc:
+  tr: Kasada ve arşivde arama, proje/ders/kişi dosyaları, bugün ve özet araçlarını Claude Code/Desktop'a verir.
+  en: Gives Claude Code/Desktop tools to search the vault and archive and to read project, course, person files,
+    today and recap.
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+mcp:
+  command: python
+  args:
+  - -m
+  - sb.mcp_server
+  env: {}
+  install: claude mcp add --scope user second-brain -- <python> -m sb.mcp_server
+  docs_url: docs/v1-plan.md
+  remote: false
+  note:
+    tr: <python> yerine Second Brain'in sanal ortamındaki python yolu yazılır (kurulum bunu otomatik doldurur).
+    en: Replace <python> with the python of Second Brain's virtual environment (setup fills it in).
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

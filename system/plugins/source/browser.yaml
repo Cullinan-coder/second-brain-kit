@@ -1,0 +1,61 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: browser
+type: source
+name:
+  tr: Tarayıcı geçmişi ve yer imleri
+  en: Browser history and bookmarks
+desc:
+  tr: Chrome/Edge/Brave/Firefox geçmişi ve yer imleri (giriş ve banka sayfaları hariç).
+  en: Chrome/Edge/Brave/Firefox history and bookmarks (login and bank pages excluded).
+category: imports
+parent: browser
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - History
+  - Bookmarks
+  - places.sqlite
+  how_to:
+    tr: '1. Dışa aktarma gerekmez: `sb import browser --discover` bilgisayardaki tarayıcı profillerini bulur ve
+      dosya yollarını listeler.
+
+      2. Tarayıcı açıksa veritabanı kilitli olabilir; uygulama dosyayı geçici klasöre kopyalayıp salt okunur açar
+      (tarayıcıyı kapatmak şart değildir).
+
+      3. Bir dosya seçip içe aktar: Chrome/Edge/Brave için `History` ve `Bookmarks`, Firefox için `places.sqlite`.
+      Son kaç günün alınacağı (`--days`, varsayılan 365) ayarlanır.
+
+      4. Oturum/şifre/token içeren kayıtlar ve bankacılık/e-Devlet adresleri hiç okunmaz. Alternatif: Google Takeout''tan
+      Chrome geçmişi.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import browser <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. No export needed: `sb import browser --discover` finds browser profiles on this computer and lists the
+      file paths.
+
+      2. If the browser is open the database may be locked; the app copies the file to a temp folder and opens it
+      read-only (closing the browser is not required).
+
+      3. Pick a file and import: `History` and `Bookmarks` for Chrome/Edge/Brave, `places.sqlite` for Firefox. The
+      number of recent days is set with `--days` (default 365).
+
+      4. Records with sessions/passwords/tokens and banking/e-Devlet addresses are never read. Alternative: Chrome
+      history from Google Takeout.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import browser <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: browser
+health:
+  cli: sb import browser <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:yazilimci
+- meslek:icerik
+- meslek:arastirmaci

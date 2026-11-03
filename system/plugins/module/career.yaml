@@ -1,0 +1,39 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: career
+type: module
+name:
+  tr: Kariyer ve iş
+  en: Career and business
+desc:
+  tr: Mini CRM, teklif/fatura, saat takibi, başvuru, CV, portfolyo.
+  en: Mini CRM, quotes/invoices, time tracking, applications, CV, portfolio.
+category: career_life
+module: null
+catalog_ids:
+- 204
+- 205
+- 206
+- 207
+- 208
+- 209
+- 210
+- 211
+- 212
+- 213
+- 214
+- 215
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

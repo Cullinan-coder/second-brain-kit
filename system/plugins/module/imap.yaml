@@ -1,0 +1,65 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: imap
+type: module
+name:
+  tr: Şirket/okul maili (IMAP)
+  en: Work/school mail (IMAP)
+desc:
+  tr: IMAP hesaplarını salt okunur arşivler
+  en: Archives IMAP accounts read-only.
+category: mail
+module: imap
+catalog_ids: []
+requires:
+  accounts:
+  - imap
+  fields:
+  - key: imap_alias
+    label:
+      tr: IMAP takma adı (ör. is)
+      en: IMAP alias (e.g. work)
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Hesabı kısa adla tanır.
+      en: Short name for this account.
+  - key: imap_email
+    label:
+      tr: IMAP e-posta
+      en: IMAP email
+    kind: email
+    secret: false
+    required: true
+  - key: imap_host
+    label:
+      tr: IMAP sunucusu
+      en: IMAP server
+    kind: text
+    secret: false
+    required: true
+    help:
+      tr: Ör. mail.sirketim.com; sağlayıcının yardım sayfasında yazar.
+      en: E.g. mail.example.com; listed in your provider's help pages.
+  - key: imap_password
+    label:
+      tr: IMAP şifresi (uygulama şifresi)
+      en: IMAP password (app password)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: Yalnız işletim sistemi şifre kasasına yazılır.
+      en: Stored only in the OS keychain.
+  secrets:
+  - imap_password
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

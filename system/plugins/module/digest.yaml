@@ -1,0 +1,38 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: digest
+type: module
+name:
+  tr: Sabah özeti maili
+  en: Morning digest mail
+desc:
+  tr: Her gün özet maili ve günlük not
+  en: A daily summary mail and a daily note.
+category: mail
+module: digest
+catalog_ids: []
+requires:
+  accounts:
+  - imap
+  fields:
+  - key: notify_to
+    label:
+      tr: Özet maili alıcısı
+      en: Digest recipient
+    kind: email
+    secret: false
+    required: false
+    help:
+      tr: Sabah özetinin gideceği adres.
+      en: Address that receives the morning digest.
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

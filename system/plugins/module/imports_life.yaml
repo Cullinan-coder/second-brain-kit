@@ -1,0 +1,37 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: imports_life
+type: module
+name:
+  tr: Yaşam ve akademik içe aktarmalar
+  en: Life and academic imports
+desc:
+  tr: Fotoğraf, Haritalar, banka CSV, e-Devlet, sosyal, sağlık, ekran süresi, akademik kaynaklar, kurslar, iş ilanları.
+  en: Photos, Maps, bank CSV, e-Devlet, social, health, screen time, scholarly sources, courses, job listings.
+category: imports
+module: null
+catalog_ids:
+- 105
+- 106
+- 107
+- 108
+- 109
+- 110
+- 111
+- 113
+- 114
+- 115
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

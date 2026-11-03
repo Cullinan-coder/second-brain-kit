@@ -1,0 +1,31 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: puppeteer
+type: mcp
+name:
+  tr: Puppeteer
+  en: Puppeteer
+desc:
+  tr: 'Tarayıcıyı komutla gezdirir, ekran görüntüsü alır. NOT: paket arşivlendi; yenisi için Playwright.'
+  en: 'Drives a browser, takes screenshots. NOTE: package is archived; prefer Playwright.'
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-puppeteer'
+  env: {}
+  install: npm view @modelcontextprotocol/server-puppeteer version
+  docs_url: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/puppeteer
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets: []

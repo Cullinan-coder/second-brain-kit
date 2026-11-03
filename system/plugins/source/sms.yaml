@@ -1,0 +1,80 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sms
+type: source
+name:
+  tr: SMS ve aramalar
+  en: SMS and calls
+desc:
+  tr: Android SMS/arama yedeği (XML, Drive üzerinden) → mesajlar.
+  en: Android SMS/call backup (XML via Drive) → messages.
+category: imports
+parent: sms
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  - key: client_secret
+    label:
+      tr: Google client_secret.json yolu
+      en: Path to Google client_secret.json
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Google Cloud'da OAuth istemcisi oluşturup indir (docs/google-cloud-kurulum.md).
+      en: Create an OAuth client in Google Cloud and download it (docs/google-cloud-kurulum.md).
+  secrets: []
+  hardware: {}
+  apps:
+  - SMS Backup & Restore (Android)
+import:
+  formats:
+  - .xml
+  how_to:
+    tr: '1. Android telefona ''SMS Backup & Restore'' (SyncTech) uygulamasını kur ve gerekli izinleri ver.
+
+      2. Uygulamada Yedekle (Back up) → SMS ve Arama kayıtlarını seç (medya/MMS gerekmez) → yedekleme konumu olarak
+      Google Drive''ı seç ve hesabı bağla.
+
+      3. Zamanlanmış yedekleme aç (ör. günlük) ki yedek Drive''a düzenli yüklensin.
+
+      4. Second Brain Google hesabına Drive salt-okunur izniyle bağlanır; `sb sms-sync` yedeği çekip içe aktarır
+      (Drive''a ya da telefona hiçbir şey yazılmaz).
+
+      5. Ayrıntılı kurulum ve sorun giderme: docs/telefon-sms-kurulum.md
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import sms <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Install ''SMS Backup & Restore'' (SyncTech) on the Android phone and grant the permissions.
+
+      2. In the app: Back up → select SMS and Call logs (media/MMS not needed) → choose Google Drive as the location
+      and sign in.
+
+      3. Turn on a schedule (e.g. daily) so backups are uploaded to Drive regularly.
+
+      4. Second Brain reads Drive with read-only access; `sb sms-sync` pulls and imports the backup (nothing is
+      written to Drive or the phone).
+
+      5. Detailed setup and troubleshooting: docs/telefon-sms-kurulum.md
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import sms <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:satis
+docs: docs/telefon-sms-kurulum.md

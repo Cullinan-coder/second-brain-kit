@@ -1,0 +1,37 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+mail:
+  tr: Mail ve takvim
+  en: Mail and calendar
+messaging:
+  tr: Telefon ve mesaj
+  en: Phone and messaging
+school_project:
+  tr: Okul ve proje
+  en: School and projects
+assistant_memory:
+  tr: Asistan ve hafıza
+  en: Assistant and memory
+computer_voice:
+  tr: Bilgisayar ve ses
+  en: Computer and voice
+setup:
+  tr: Kurulum ve model
+  en: Setup and models
+interface:
+  tr: Arayüz ve mobil
+  en: Interface and mobile
+search_brain:
+  tr: Arama ve beyin
+  en: Search and brain
+productivity:
+  tr: Verimlilik ve iletişim
+  en: Productivity and communication
+career_life:
+  tr: Kariyer ve yaşam
+  en: Career and life
+privacy_quality:
+  tr: Gizlilik ve kalite
+  en: Privacy and quality
+imports:
+  tr: Veri kaynakları
+  en: Data sources

@@ -1,0 +1,52 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: rss
+type: source
+name:
+  tr: RSS ve haber bültenleri
+  en: RSS and newsletters
+desc:
+  tr: RSS/Atom akışları (config/rss.yaml) → makale kayıtları. Ağ kullanan tek bağlayıcı.
+  en: RSS/Atom feeds (config/rss.yaml) → article records. The only connector that uses the network.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - config/rss.yaml
+  how_to:
+    tr: '1. Dosya gerekmez: izlemek istediğin akışların adreslerini `config/rss.yaml` dosyasına yaz (kurulum paneli
+      de bu dosyayı yazar).
+
+      2. Bir sitenin RSS adresini bulmak için sayfanın kaynağında ''rss'' ya da ''atom'' ara, ya da sitenin /feed
+      ve /rss.xml adreslerini dene.
+
+      3. `sb import rss` akışları çeker ve yeni makaleleri kaydeder; ilk çalıştırmada `--dry-run` ile ne geleceğini
+      gör.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import rss <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. No file needed: list the feed URLs to follow in `config/rss.yaml` (the setup panel writes this file
+      too).
+
+      2. To find a site''s feed, search the page source for ''rss'' or ''atom'', or try the site''s /feed and /rss.xml.
+
+      3. `sb import rss` fetches the feeds and stores new articles; use `--dry-run` the first time to see what would
+      come.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import rss <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: rss
+health:
+  cli: sb import rss --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

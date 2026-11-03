@@ -1,0 +1,45 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: privacy
+type: module
+name:
+  tr: Gizlilik ve güvenlik
+  en: Privacy and security
+desc:
+  tr: Gizlilik paneli, bulut maskeleme, kasa şifreleme, denetim günlüğü, izin profilleri, yedek.
+  en: Privacy panel, cloud masking, vault encryption, audit log, permission profiles, backups.
+category: privacy_quality
+module: null
+catalog_ids:
+- 239
+- 240
+- 241
+- 242
+- 243
+- 244
+- 245
+- 246
+requires:
+  accounts: []
+  fields:
+  - key: vault_key
+    label:
+      tr: Kasa şifreleme parolası
+      en: Vault encryption passphrase
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: Kaybedersen kasa açılamaz; yedeğini sakla.
+      en: If lost the vault cannot be opened; keep a backup.
+  secrets:
+  - vault_key
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

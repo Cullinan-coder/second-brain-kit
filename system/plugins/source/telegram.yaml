@@ -1,0 +1,67 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: telegram
+type: source
+name:
+  tr: Telegram arşivi
+  en: Telegram archive
+desc:
+  tr: Telegram Desktop dışa aktarımı (result.json) → mesajlar.
+  en: Telegram Desktop export (result.json) → messages.
+category: imports
+parent: imports_comm
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: me
+    label:
+      tr: Sohbetlerde senin adın
+      en: Your name in chats
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Mesajların hangisinin sana ait olduğunu anlamak için.
+      en: Used to tell which messages are yours.
+  secrets: []
+  hardware: {}
+  apps:
+  - Telegram Desktop
+import:
+  formats:
+  - .json
+  how_to:
+    tr: '1. Bilgisayarda Telegram Desktop''ı aç (mobil uygulama toplu dışa aktarım yapmaz).
+
+      2. Tüm hesap: Ayarlar (Settings) → Gelişmiş (Advanced) → Telegram verilerini dışa aktar (Export Telegram data).
+      Tek sohbet: sohbeti aç → sağ üst ⋮ → Sohbet geçmişini dışa aktar.
+
+      3. Biçim olarak ''Makine tarafından okunabilir JSON'' (Machine-readable JSON) seç. Fotoğraf/video/dosya kutularının
+      işaretini kaldır (yalnız metin gerekli, dosya küçük kalır).
+
+      4. Dışa aktar''a bas; çıkan klasörde `result.json` bulunur.
+
+      5. `result.json` dosyasını Veri yükleme ekranına bırak; ''Sen'' alanına Telegram''daki adını yaz.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import telegram <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Open Telegram Desktop on your computer (the mobile app has no bulk export).
+
+      2. Whole account: Settings → Advanced → Export Telegram data. Single chat: open it → top-right ⋮ → Export
+      chat history.
+
+      3. Choose the format ''Machine-readable JSON''. Untick photos/videos/files (only text is needed; keeps the
+      file small).
+
+      4. Press Export; the output folder contains `result.json`.
+
+      5. Drop `result.json` on the Data import screen and type your Telegram name in ''You''.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import telegram <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: telegram
+health:
+  cli: sb import telegram <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

@@ -1,0 +1,47 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: brave-search
+type: mcp
+name:
+  tr: Brave Arama
+  en: Brave Search
+desc:
+  tr: 'Brave Search API ile web arama. NOT: eski paket arşivlendi; Brave''in güncel sunucusu için docs_url.'
+  en: 'Web search via the Brave Search API. NOTE: the old package is archived; see docs_url for Brave''s current
+    server.'
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - brave
+  fields:
+  - key: brave_key
+    label:
+      tr: Brave Search API anahtarı
+      en: Brave Search API key
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: brave.com/search/api adresinden alınır.
+      en: Obtained at brave.com/search/api.
+  secrets:
+  - brave_key
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-brave-search'
+  env:
+    BRAVE_API_KEY: '{brave_key}'
+  install: npm view @modelcontextprotocol/server-brave-search version
+  docs_url: https://github.com/brave/brave-search-mcp-server
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:arastirmaci
+- meslek:icerik

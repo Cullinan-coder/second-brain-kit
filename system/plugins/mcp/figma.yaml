@@ -1,0 +1,30 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: figma
+type: mcp
+name:
+  tr: Figma
+  en: Figma
+desc:
+  tr: Figma tasarımlarını koda/okumaya açar (Figma'nın MCP sunucusu).
+  en: Exposes Figma designs for reading/coding (Figma's MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - figma
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+mcp:
+  command: null
+  args: []
+  env: {}
+  install: null
+  docs_url: https://help.figma.com/
+  remote: true
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:icerik

@@ -1,0 +1,29 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: atlassian
+type: mcp
+name:
+  tr: Jira / Atlassian
+  en: Jira / Atlassian
+desc:
+  tr: Jira ve Confluence (Atlassian'ın uzak MCP sunucusu).
+  en: Jira and Confluence (Atlassian's remote MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - atlassian
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+mcp:
+  command: null
+  args: []
+  env: {}
+  install: null
+  docs_url: https://www.atlassian.com/platform/remote-mcp-server
+  remote: true
+health:
+  cli: sb doctor
+default_on: false
+presets: []

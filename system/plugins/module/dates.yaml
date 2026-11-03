@@ -1,0 +1,27 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: dates
+type: module
+name:
+  tr: Tarih çıkarma
+  en: Date extraction
+desc:
+  tr: Mail/SMS'ten teslim ve randevu tarihlerini çıkarıp onaya sunar
+  en: Extracts deadlines and appointments from mail/SMS and asks for approval.
+category: mail
+module: dates
+catalog_ids:
+- 174
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:ajans

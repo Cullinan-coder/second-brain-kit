@@ -1,0 +1,31 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sequential-thinking
+type: mcp
+name:
+  tr: Sıralı düşünme
+  en: Sequential Thinking
+desc:
+  tr: Karmaşık sorunları adım adım düşünmeye yarayan araç.
+  en: A tool for step-by-step reasoning on complex problems.
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-sequential-thinking'
+  env: {}
+  install: npm view @modelcontextprotocol/server-sequential-thinking version
+  docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets: []

@@ -1,0 +1,31 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: fetch
+type: mcp
+name:
+  tr: Web getir (Fetch)
+  en: Fetch
+desc:
+  tr: Web sayfalarını çekip modele okunur metin olarak verir.
+  en: Fetches web pages and gives them to the model as readable text.
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - uv
+mcp:
+  command: uvx
+  args:
+  - mcp-server-fetch
+  env: {}
+  install: uvx mcp-server-fetch --help
+  docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/fetch
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- yogunluk:guc

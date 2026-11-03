@@ -1,0 +1,38 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: comms
+type: module
+name:
+  tr: İletişim yardımcıları
+  en: Communication helpers
+desc:
+  tr: Mail taslağı, zincir özeti, takip, kişiye özel ton, ilişki sağlığı.
+  en: Mail drafts, thread summaries, follow-ups, tone, relationship health.
+category: productivity
+module: null
+catalog_ids:
+- 180
+- 181
+- 182
+- 183
+- 185
+- 187
+- 188
+- 189
+- 190
+- 191
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis
+- meslek:icerik

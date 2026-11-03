@@ -1,0 +1,28 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: capture
+type: module
+name:
+  tr: Beyne at
+  en: Capture to brain
+desc:
+  tr: Ctrl+Alt+B, Gönder › Beyne At, ekran görüntüsü, web/video özeti
+  en: Hotkey, Share > Capture, screenshots, web/video summaries.
+category: assistant_memory
+module: capture
+catalog_ids:
+- 66
+- 77
+- 85
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

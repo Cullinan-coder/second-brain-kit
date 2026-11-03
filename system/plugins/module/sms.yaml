@@ -1,0 +1,48 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: sms
+type: module
+name:
+  tr: SMS ve aramalar
+  en: SMS and calls
+desc:
+  tr: Telefon yedeğinden SMS/arama
+  en: SMS and call log from a phone backup.
+category: messaging
+module: sms
+catalog_ids:
+- 76
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  - key: client_secret
+    label:
+      tr: Google client_secret.json yolu
+      en: Path to Google client_secret.json
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Google Cloud'da OAuth istemcisi oluşturup indir (docs/google-cloud-kurulum.md).
+      en: Create an OAuth client in Google Cloud and download it (docs/google-cloud-kurulum.md).
+  secrets: []
+  hardware: {}
+  apps:
+  - SMS Backup & Restore (Android)
+health:
+  cli: sb doctor
+default_on: true
+docs: docs/telefon-sms-kurulum.md
+presets:
+- yogunluk:guc
+- meslek:satis

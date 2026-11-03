@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: zotero
+type: source
+name:
+  tr: Zotero kütüphanesi
+  en: Zotero library
+desc:
+  tr: Zotero veritabanı (zotero.sqlite) → kaynak kayıtları.
+  en: Zotero database (zotero.sqlite) → paper records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Zotero
+import:
+  formats:
+  - .sqlite
+  how_to:
+    tr: '1. Zotero''da Düzenle (Mac: Zotero) → Ayarlar → Gelişmiş → Dosyalar ve Klasörler → ''Veri dizini konumu''nu
+      bul.
+
+      2. O klasörde `zotero.sqlite` dosyası bulunur (Zotero açıkken kilitli olabilir; uygulama geçici kopyadan okur).
+
+      3. Dosyayı Veri yükleme ekranına bırak. Alternatif: Dosya → Kütüphaneyi dışa aktar → BibTeX (bibtex kaynağına
+      bak).
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import zotero <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Zotero: Edit (Mac: Zotero) → Settings → Advanced → Files and Folders → find ''Data Directory Location''.
+
+      2. That folder contains `zotero.sqlite` (may be locked while Zotero is open; the app reads a temporary copy).
+
+      3. Drop the file on the Data import screen. Alternative: File → Export Library → BibTeX (see the bibtex source).
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import zotero <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: zotero
+health:
+  cli: sb import zotero <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

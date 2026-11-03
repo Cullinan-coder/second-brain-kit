@@ -1,0 +1,45 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: phone
+type: module
+name:
+  tr: Telefon erişimi
+  en: Phone access
+desc:
+  tr: Asistana telefondan Tailscale ile erişim
+  en: Reach the assistant from your phone over Tailscale.
+category: messaging
+module: phone
+catalog_ids:
+- 75
+- 78
+- 79
+- 80
+- 81
+- 82
+- 83
+- 86
+requires:
+  accounts:
+  - tailscale
+  fields:
+  - key: tailscale_name
+    label:
+      tr: Tailscale cihaz adı
+      en: Tailscale device name
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: tailscale status çıktısındaki bilgisayar adı.
+      en: Machine name shown by tailscale status.
+  secrets: []
+  hardware: {}
+  apps:
+  - Tailscale
+health:
+  cli: sb doctor
+default_on: true
+docs: docs/telefon-pwa.md
+presets:
+- yogunluk:gunluk
+- yogunluk:guc

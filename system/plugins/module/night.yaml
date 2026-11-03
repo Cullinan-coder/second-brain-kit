@@ -1,0 +1,26 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: night
+type: module
+name:
+  tr: Gece koşusu
+  en: Night run
+desc:
+  tr: İstenince gece işlerini Claude Code'a sırayla yaptırır
+  en: Runs queued night jobs through Claude Code in order.
+category: assistant_memory
+module: night
+catalog_ids:
+- 228
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Claude Code
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:yazilimci

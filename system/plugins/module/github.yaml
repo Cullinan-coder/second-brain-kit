@@ -1,0 +1,39 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: github
+type: module
+name:
+  tr: GitHub derin
+  en: GitHub deep
+desc:
+  tr: Issue, PR, commit ve release kayıtları
+  en: Issues, PRs, commits and releases.
+category: school_project
+module: github
+catalog_ids:
+- 98
+- 99
+requires:
+  accounts:
+  - github
+  fields:
+  - key: github_user
+    label:
+      tr: GitHub kullanıcı adı
+      en: GitHub username
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: github.com/<ad> adresindeki ad.
+      en: The name in github.com/<name>.
+  secrets: []
+  hardware: {}
+  apps:
+  - gh
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:yazilimci

@@ -1,0 +1,23 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: wake_word
+type: module
+name:
+  tr: Uyandırma sözcüğü
+  en: Wake word
+desc:
+  tr: '''Hey <asistan>'' ile dinlemeye başlar (yalnız sekme açıkken)'
+  en: Starts listening on 'Hey <assistant>' (only while the tab is open).
+category: computer_voice
+module: wake_word
+catalog_ids:
+- 40
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: false
+presets: []

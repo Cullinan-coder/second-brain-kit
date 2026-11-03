@@ -1,0 +1,87 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: icloud
+type: source
+name:
+  tr: iCloud mail, takvim, kişiler
+  en: iCloud mail, calendar, contacts
+desc:
+  tr: iCloud IMAP + CalDAV/CardDAV.
+  en: iCloud IMAP + CalDAV/CardDAV.
+category: imports
+parent: imports_comm
+catalog_ids: []
+requires:
+  accounts:
+  - icloud
+  - imap
+  fields:
+  - key: imap_alias
+    label:
+      tr: IMAP takma adı (ör. is)
+      en: IMAP alias (e.g. work)
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Hesabı kısa adla tanır.
+      en: Short name for this account.
+  - key: imap_email
+    label:
+      tr: IMAP e-posta
+      en: IMAP email
+    kind: email
+    secret: false
+    required: true
+  - key: imap_password
+    label:
+      tr: IMAP şifresi (uygulama şifresi)
+      en: IMAP password (app password)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: Yalnız işletim sistemi şifre kasasına yazılır.
+      en: Stored only in the OS keychain.
+  secrets:
+  - imap_password
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - hesap
+  how_to:
+    tr: '1. Apple hesabında iki faktörlü kimlik doğrulama açık olmalı.
+
+      2. account.apple.com (eski adı appleid.apple.com) → Oturum açma ve güvenlik → Uygulamaya özel parolalar →
+      yeni parola oluştur (ör. ''Second Brain'').
+
+      3. Sunucu: imap.mail.me.com, bağlantı noktası 993 (SSL); kullanıcı adı iCloud adresin. Kurulumda ön ayar ''icloud''.
+
+      4. Takvim/kişiler için CalDAV adresi https://caldav.icloud.com ve CardDAV https://contacts.icloud.com (aynı
+      uygulama parolasıyla); `sb caldav-sync icloud`.
+
+      5. Resmi yardım: https://support.apple.com/102654
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import icloud <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Two-factor authentication must be on for the Apple Account.
+
+      2. account.apple.com (formerly appleid.apple.com) → Sign-In and Security → App-Specific Passwords → generate
+      one (e.g. ''Second Brain'').
+
+      3. Server: imap.mail.me.com, port 993 (SSL); username is your iCloud address. Pick the ''icloud'' preset in
+      setup.
+
+      4. For calendar/contacts use CalDAV https://caldav.icloud.com and CardDAV https://contacts.icloud.com (same
+      app password); `sb caldav-sync icloud`.
+
+      5. Official help: https://support.apple.com/102654
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import icloud <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc

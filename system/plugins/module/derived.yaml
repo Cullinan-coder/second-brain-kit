@@ -1,0 +1,41 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: derived
+type: module
+name:
+  tr: Fatura ve kargo
+  en: Invoices and parcels
+desc:
+  tr: Maillerden fatura ve kargo kayıtları
+  en: Invoice and parcel records derived from mail.
+category: mail
+module: derived
+catalog_ids:
+- 116
+- 117
+- 232
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

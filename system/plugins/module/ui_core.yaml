@@ -1,0 +1,35 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: ui_core
+type: module
+name:
+  tr: Arayüz ve tasarım
+  en: Interface and design
+desc:
+  tr: Tasarım sistemi, ana panel, komut paleti, bildirimler, masaüstü uygulaması, graf/zaman çizelgesi.
+  en: Design system, dashboard, command palette, notifications, desktop app, graph/timeline views.
+category: interface
+module: null
+catalog_ids:
+- 53
+- 57
+- 58
+- 62
+- 63
+- 67
+- 68
+- 69
+- 70
+- 71
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc

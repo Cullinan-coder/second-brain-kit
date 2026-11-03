@@ -1,0 +1,40 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: tasks_plan
+type: module
+name:
+  tr: Görev ve planlama
+  en: Tasks and planning
+desc:
+  tr: Kanban, günlük plan, alışkanlık, OKR, haftalık gözden geçirme, toplantı hazırlığı.
+  en: Kanban, daily plan, habits, OKRs, weekly review, meeting prep.
+category: productivity
+module: null
+catalog_ids:
+- 162
+- 163
+- 165
+- 166
+- 167
+- 168
+- 169
+- 170
+- 171
+- 172
+- 173
+- 175
+- 176
+- 179
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ogrenci

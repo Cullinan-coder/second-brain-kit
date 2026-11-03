@@ -1,0 +1,30 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: linear
+type: mcp
+name:
+  tr: Linear
+  en: Linear
+desc:
+  tr: Linear sorunlarını ve projelerini okur/yazar (Linear'ın uzak MCP sunucusu).
+  en: Reads/writes Linear issues and projects (Linear's remote MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - linear
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+mcp:
+  command: null
+  args: []
+  env: {}
+  install: null
+  docs_url: https://linear.app/docs/mcp
+  remote: true
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci

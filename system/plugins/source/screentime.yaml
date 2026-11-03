@@ -1,0 +1,49 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: screentime
+type: source
+name:
+  tr: Ekran süresi / uygulama kullanımı
+  en: Screen time / app usage
+desc:
+  tr: ManicTime/RescueTime vb. CSV → kullanım kayıtları.
+  en: ManicTime/RescueTime etc. CSV → usage records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  how_to:
+    tr: '1. Kullandığın ekran süresi aracından CSV dışa aktar: RescueTime (web: Reports → ilgili rapor → CSV indir),
+      ManicTime (Dışa aktar → CSV) gibi. Menüler sürüme göre değişir; aracın yardım sayfasına bak.
+
+      2. CSV''de uygulama adı, süre ve tarih sütunları olmalı (Türkçe/İngilizce başlıklar tanınır).
+
+      3. Dosyayı Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import screentime <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Export a CSV from your screen-time tool: RescueTime (web: Reports → the report → download CSV), ManicTime
+      (Export → CSV), etc. Menus vary; see the tool''s help page.
+
+      2. The CSV needs application, duration and date columns (Turkish/English headers are recognised).
+
+      3. Drop the file on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import screentime <file> --dry-run`
+      first). The file is read only on this computer.'
+  connector: screentime
+health:
+  cli: sb import screentime <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

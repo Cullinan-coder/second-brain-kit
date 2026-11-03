@@ -1,0 +1,49 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: raindrop
+type: source
+name:
+  tr: Raindrop.io yer imleri
+  en: Raindrop.io bookmarks
+desc:
+  tr: Raindrop dışa aktarımı (CSV) → bağlantı kayıtları.
+  en: Raindrop export (CSV) → link records.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  how_to:
+    tr: '1. raindrop.io''ya giriş yap → Ayarlar → Dışa aktar (Export) ya da yedekler bölümünden CSV olarak indir
+      (menü adı değişebilir).
+
+      2. CSV''yi Veri yükleme ekranına bırak.
+
+      3. Resmi yardım: https://help.raindrop.io
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import raindrop <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Sign in to raindrop.io → Settings → Export (or the backups section) and download as CSV (menu name may
+      change).
+
+      2. Drop the CSV on the Data import screen.
+
+      3. Official help: https://help.raindrop.io
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import raindrop <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: raindrop
+health:
+  cli: sb import raindrop <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

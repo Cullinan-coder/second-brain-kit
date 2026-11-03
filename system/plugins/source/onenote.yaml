@@ -1,0 +1,49 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: onenote
+type: source
+name:
+  tr: OneNote
+  en: OneNote
+desc:
+  tr: OneNote sayfaları (.docx/.html) → kasa notları.
+  en: OneNote pages (.docx/.html) → vault notes.
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - OneNote
+import:
+  formats:
+  - klasör
+  - .docx
+  - .html
+  how_to:
+    tr: '1. OneNote masaüstünde bir sayfa/bölüm için: Dosya → Dışa Aktar → Sayfa/Bölüm/Not defteri seç → biçim olarak
+      Word Belgesi (.docx) ya da Web Sayfası (.html).
+
+      2. Dışa aktarma menüsü sürüme göre (Windows/Mac/web) farklıdır; takılırsan resmi yardım: https://support.microsoft.com/office/export-onenote-notes
+
+      3. Çıkan dosyaları bir klasöre koy ve klasörü Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import onenote <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In OneNote desktop for a page/section: File → Export → choose Page/Section/Notebook → format Word Document
+      (.docx) or Web Page (.html).
+
+      2. The export menu differs by version (Windows/Mac/web); if stuck see the official help: https://support.microsoft.com/office/export-onenote-notes
+
+      3. Put the files in one folder and drop it on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import onenote <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: onenote
+health:
+  cli: sb import onenote <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

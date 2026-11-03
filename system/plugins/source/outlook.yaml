@@ -1,0 +1,90 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: outlook
+type: source
+name:
+  tr: Outlook / Microsoft 365 mail
+  en: Outlook / Microsoft 365 mail
+desc:
+  tr: Outlook posta ve takvim (IMAP + yayımlı takvim bağlantısı).
+  en: Outlook mail and calendar (IMAP + published calendar link).
+category: imports
+parent: imports_comm
+catalog_ids: []
+requires:
+  accounts:
+  - outlook
+  - imap
+  fields:
+  - key: imap_alias
+    label:
+      tr: IMAP takma adı (ör. is)
+      en: IMAP alias (e.g. work)
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Hesabı kısa adla tanır.
+      en: Short name for this account.
+  - key: imap_email
+    label:
+      tr: IMAP e-posta
+      en: IMAP email
+    kind: email
+    secret: false
+    required: true
+  - key: imap_password
+    label:
+      tr: IMAP şifresi (uygulama şifresi)
+      en: IMAP password (app password)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: Yalnız işletim sistemi şifre kasasına yazılır.
+      en: Stored only in the OS keychain.
+  secrets:
+  - imap_password
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - hesap
+  how_to:
+    tr: '1. Kişisel Outlook.com hesabı: outlook.com → Ayarlar → Posta → E-postayı eşitle → POP ve IMAP''ta IMAP
+      erişimine izin ver.
+
+      2. Hesabında iki adımlı doğrulama açıksa microsoft hesap güvenliği sayfasından bir ''uygulama parolası'' oluştur
+      ve onu kullan.
+
+      3. Sunucu: outlook.office365.com, bağlantı noktası 993 (SSL). Kurulumda hesap ön ayarı olarak ''outlook''
+      seçilir.
+
+      4. Takvim için: Outlook web → Ayarlar → Takvim → Paylaşılan takvimler → Takvimi yayımla → ICS bağlantısını
+      kopyala; bağlantıyı hesap ayarına yapıştır (`sb caldav-sync outlook`).
+
+      5. Kurumsal Microsoft 365''te IMAP genellikle yönetici tarafından kapalıdır ve parola yerine OAuth gerekir;
+      bu durumda BT yöneticine sor. Resmi yardım: https://support.microsoft.com/office/pop-imap-and-smtp-settings-8361e398-8af4-4e97-b147-6c6c4ac95353
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import outlook <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Personal Outlook.com: outlook.com → Settings → Mail → Sync email → allow IMAP access under POP and IMAP.
+
+      2. If two-step verification is on, create an ''app password'' on the Microsoft account security page and use
+      it.
+
+      3. Server: outlook.office365.com, port 993 (SSL). Pick the ''outlook'' account preset in setup.
+
+      4. Calendar: Outlook web → Settings → Calendar → Shared calendars → Publish a calendar → copy the ICS link;
+      paste it in the account setting (`sb caldav-sync outlook`).
+
+      5. On work Microsoft 365, IMAP is often disabled by admins and OAuth is required; ask your IT admin. Official
+      help: https://support.microsoft.com/office/pop-imap-and-smtp-settings-8361e398-8af4-4e97-b147-6c6c4ac95353
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import outlook <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc

@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: github
+type: mcp
+name:
+  tr: GitHub
+  en: GitHub
+desc:
+  tr: Depo, issue, PR ve kod araması (GitHub'ın resmi MCP sunucusu).
+  en: Repos, issues, PRs and code search (GitHub's official MCP server).
+category: setup
+catalog_ids: []
+requires:
+  accounts:
+  - github
+  fields:
+  - key: github_pat
+    label:
+      tr: GitHub kişisel erişim belirteci (PAT)
+      en: GitHub personal access token (PAT)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: GitHub > Settings > Developer settings > Personal access tokens; yalnız gereken izinleri ver.
+      en: GitHub > Settings > Developer settings > Personal access tokens; grant only the needed scopes.
+  secrets:
+  - github_pat
+  hardware: {}
+  apps:
+  - Docker
+mcp:
+  command: docker
+  args:
+  - run
+  - -i
+  - --rm
+  - -e
+  - GITHUB_PERSONAL_ACCESS_TOKEN
+  - ghcr.io/github/github-mcp-server
+  env:
+    GITHUB_PERSONAL_ACCESS_TOKEN: '{github_pat}'
+  install: docker pull ghcr.io/github/github-mcp-server
+  docs_url: https://github.com/github/github-mcp-server
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci
+- meslek:ajans

@@ -1,0 +1,48 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: arxiv
+type: source
+name:
+  tr: arXiv sorguları
+  en: arXiv queries
+desc:
+  tr: arXiv arama sorguları (config/rss.yaml `arxiv:`) → makale kayıtları.
+  en: arXiv search queries (config/rss.yaml `arxiv:`) → paper records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - config/rss.yaml
+  how_to:
+    tr: '1. Dosya gerekmez: `config/rss.yaml` içindeki `arxiv:` bölümüne izlemek istediğin arama sorgularını yaz
+      (ör. konu anahtar kelimeleri).
+
+      2. `sb import arxiv` sorguları arXiv''den çeker; ilk seferde `--dry-run` ile dene.
+
+      3. arXiv API kullanım ilkeleri: https://info.arxiv.org/help/api/index.html
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import arxiv <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. No file needed: put the search queries to follow under `arxiv:` in `config/rss.yaml` (e.g. topic keywords).
+
+      2. `sb import arxiv` fetches the queries from arXiv; try `--dry-run` first.
+
+      3. arXiv API usage policy: https://info.arxiv.org/help/api/index.html
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import arxiv <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: arxiv
+health:
+  cli: sb import arxiv --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

@@ -1,0 +1,27 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: browser
+type: module
+name:
+  tr: Tarayıcı geçmişi
+  en: Browser history
+desc:
+  tr: Chrome/Edge/Firefox geçmişi ve yer imleri (giriş/banka sayfaları hariç)
+  en: Chrome/Edge/Firefox history and bookmarks (login/bank pages excluded).
+category: school_project
+module: browser
+catalog_ids:
+- 100
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:yazilimci
+- meslek:icerik
+- meslek:arastirmaci

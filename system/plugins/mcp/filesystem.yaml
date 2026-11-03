@@ -1,0 +1,44 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: filesystem
+type: mcp
+name:
+  tr: Dosya sistemi
+  en: Filesystem
+desc:
+  tr: İzin verilen klasörlerde dosya okuma/yazma/arama.
+  en: Read/write/search files inside allowed folders.
+category: setup
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: allowed_dir
+    label:
+      tr: İzin verilen klasör
+      en: Allowed folder
+    kind: path
+    secret: false
+    required: true
+    help:
+      tr: Yalnız bu klasörün içine erişilir.
+      en: Access is limited to this folder.
+  secrets: []
+  hardware: {}
+  apps:
+  - Node.js
+mcp:
+  command: npx
+  args:
+  - -y
+  - '@modelcontextprotocol/server-filesystem'
+  - '{allowed_dir}'
+  env: {}
+  install: npm view @modelcontextprotocol/server-filesystem version
+  docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
+  remote: false
+health:
+  cli: sb doctor
+default_on: false
+presets:
+- meslek:yazilimci
+- meslek:arastirmaci

@@ -1,0 +1,49 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: courses
+type: module
+name:
+  tr: Okul (ÖBS/LMS)
+  en: School (SIS/LMS)
+desc:
+  tr: Ders notları, ders dosyaları, ders derlemesi
+  en: Course notes, course files and course summaries.
+category: school_project
+module: courses
+catalog_ids:
+- 178
+- 192
+- 193
+- 194
+- 195
+- 196
+- 197
+- 198
+- 199
+- 200
+- 201
+- 202
+- 203
+requires:
+  accounts:
+  - school
+  fields:
+  - key: school_url
+    label:
+      tr: Okul sistemi adresi (ÖBS/LMS)
+      en: School system URL (SIS/LMS)
+    kind: url
+    secret: false
+    required: false
+    help:
+      tr: Girişin yapıldığı adres.
+      en: Sign-in address.
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen

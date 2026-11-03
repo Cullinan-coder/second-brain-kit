@@ -1,0 +1,51 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: udemy
+type: source
+name:
+  tr: Udemy ilerlemesi
+  en: Udemy progress
+desc:
+  tr: Kurs ilerlemesi CSV/JSON → kurs kayıtları.
+  en: Course progress CSV/JSON → course records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Udemy kurs ilerlemesi için resmi bir toplu dışa aktarma yoktur. Kendin bir CSV hazırla: sütunlar `course`,
+      `progress` (yüzde) ve `completed` (tamamlanma tarihi).
+
+      2. Öğrenimim (My learning) sayfasındaki kurs adlarını ve ilerleme yüzdelerini elle listele; resmi yardım:
+      https://support.udemy.com
+
+      3. CSV''yi Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import udemy <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Udemy has no official bulk progress export. Prepare a CSV yourself: columns `course`, `progress` (percent)
+      and `completed` (completion date).
+
+      2. List course names and progress percentages from your My learning page by hand; official help: https://support.udemy.com
+
+      3. Drop the CSV on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import udemy <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: udemy
+health:
+  cli: sb import udemy <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

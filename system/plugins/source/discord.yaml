@@ -1,0 +1,55 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: discord
+type: source
+name:
+  tr: Discord veri paketi
+  en: Discord data package
+desc:
+  tr: Discord 'verilerimi iste' paketi → mesajlar.
+  en: Discord 'request my data' package → messages.
+category: imports
+parent: imports_comm
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. Discord''da Kullanıcı Ayarları (dişli) → Gizlilik ve Güvenlik (Privacy & Safety) → ''Tüm verilerimi
+      iste'' (Request all of my Data).
+
+      2. Mesajlar kutusunun işaretli olduğundan emin ol, isteği onayla; Discord e-postana bir indirme bağlantısı
+      gönderir (birkaç güne kadar sürebilir).
+
+      3. E-postadaki bağlantıdan zip dosyasını indir (bağlantı süreli geçerlidir).
+
+      4. Zip''i açmadan Veri yükleme ekranına bırak; içindeki `messages/` klasörü okunur.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.discord.com/hc/articles/360004027692
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import discord <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Discord open User Settings (cog) → Privacy & Safety → ''Request all of my Data''.
+
+      2. Make sure Messages is ticked and confirm the request; Discord emails a download link (can take a few days).
+
+      3. Download the zip from the email link (the link expires).
+
+      4. Drop the zip as-is on the Data import screen; the `messages/` folder inside is read.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.discord.com/hc/articles/360004027692
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import discord <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: discord
+health:
+  cli: sb import discord <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

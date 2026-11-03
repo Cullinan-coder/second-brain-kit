@@ -1,0 +1,49 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: kindle
+type: source
+name:
+  tr: Kindle vurguları
+  en: Kindle highlights
+desc:
+  tr: Kindle 'My Clippings.txt' → vurgu/not kayıtları.
+  en: Kindle 'My Clippings.txt' → highlight/note records.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Kindle
+import:
+  formats:
+  - .txt
+  how_to:
+    tr: '1. Kindle''ı USB kabloyla bilgisayara bağla; çıkarılabilir sürücü olarak görünür.
+
+      2. Sürücüdeki `documents` klasöründe `My Clippings.txt` dosyasını bul (vurgu, not ve yer imlerin burada birikir).
+
+      3. Dosyayı bilgisayara kopyala ve Veri yükleme ekranına bırak (Türkçe ve İngilizce cihaz dili okunur).
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import kindle <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Connect the Kindle to the computer by USB cable; it shows as a removable drive.
+
+      2. In the `documents` folder find `My Clippings.txt` (your highlights, notes and bookmarks accumulate there).
+
+      3. Copy the file to the computer and drop it on the Data import screen (Turkish and English device languages
+      are read).
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import kindle <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: kindle
+health:
+  cli: sb import kindle <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

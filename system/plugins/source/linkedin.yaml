@@ -1,0 +1,61 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: linkedin
+type: source
+name:
+  tr: LinkedIn veri arşivi
+  en: LinkedIn data archive
+desc:
+  tr: LinkedIn arşivi → profil, bağlantılar, mesajlar.
+  en: LinkedIn archive → profile, connections, messages.
+category: imports
+parent: linkedin
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  how_to:
+    tr: '1. LinkedIn''de profil simgen (Ben) → Ayarlar ve Gizlilik → Veri gizliliği → ''Verilerinin bir kopyasını
+      al'' (Get a copy of your data).
+
+      2. ''İstediğin belirli verileri seç'' ya da ''Tam arşiv'' seçeneğini işaretle (bağlantılar, mesajlar, profil
+      için ''Daha fazlası'' kutuları); ''Arşiv iste''ye bas.
+
+      3. LinkedIn şifreni ister; ardından e-postaya bir indirme bağlantısı gönderir (bağlantılı veriler yaklaşık
+      10 dakikada, tam arşiv 24 saate kadar).
+
+      4. Zip''i indir ve kasada `00-Inbox/_imports` klasörüne koy (git''e girmez); sonra `sb linkedin-import` çalıştır
+      ya da Veri yükleme ekranından yükle.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://www.linkedin.com/help/linkedin/answer/a1339364
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import linkedin <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. On LinkedIn: your profile icon (Me) → Settings & Privacy → Data privacy → ''Get a copy of your data''.
+
+      2. Pick ''Want something in particular?'' or the full archive (tick Connections, Messages, Profile); press
+      ''Request archive''.
+
+      3. LinkedIn asks for your password and emails a download link (selected data in about 10 minutes, full archive
+      up to 24 hours).
+
+      4. Download the zip and put it into the vault''s `00-Inbox/_imports` folder (not tracked by git); then run
+      `sb linkedin-import` or upload it on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://www.linkedin.com/help/linkedin/answer/a1339364
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import linkedin <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:satis
+- meslek:icerik

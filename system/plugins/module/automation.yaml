@@ -1,0 +1,38 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: automation
+type: module
+name:
+  tr: Otomasyonlar ve ajanlar
+  en: Automations and agents
+desc:
+  tr: Kurallar (her X olduğunda Y), hazır ajanlar, onay kuyruğu
+  en: Rules (whenever X then Y), ready-made agents, approval queue.
+category: assistant_memory
+module: automation
+catalog_ids:
+- 216
+- 217
+- 218
+- 219
+- 222
+- 223
+- 224
+- 225
+- 226
+- 227
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:yazilimci
+- meslek:girisimci
+- meslek:satis
+- meslek:arastirmaci

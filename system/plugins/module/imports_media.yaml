@@ -1,0 +1,32 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: imports_media
+type: module
+name:
+  tr: Medya ve okuma içe aktarmaları
+  en: Media and reading imports
+desc:
+  tr: Kindle, Pocket/Raindrop, YouTube, Spotify, RSS.
+  en: Kindle, Pocket/Raindrop, YouTube, Spotify, RSS.
+category: imports
+module: null
+catalog_ids:
+- 101
+- 102
+- 103
+- 104
+- 112
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

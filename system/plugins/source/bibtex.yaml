@@ -1,0 +1,45 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: bibtex
+type: source
+name:
+  tr: BibTeX dosyası
+  en: BibTeX file
+desc:
+  tr: BibTeX (.bib) → kaynak kayıtları.
+  en: BibTeX (.bib) → paper records.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .bib
+  how_to:
+    tr: '1. Zotero''da Dosya → Kütüphaneyi dışa aktar → biçim BibTeX → kaydet. Mendeley/EndNote/Google Scholar''da
+      (''Alıntı yap'' → BibTeX) benzer şekilde .bib üretilir.
+
+      2. .bib dosyasını Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import bibtex <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. In Zotero: File → Export Library → format BibTeX → save. Mendeley/EndNote/Google Scholar (''Cite'' →
+      BibTeX) produce a .bib similarly.
+
+      2. Drop the .bib file on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import bibtex <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: bibtex
+health:
+  cli: sb import bibtex <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

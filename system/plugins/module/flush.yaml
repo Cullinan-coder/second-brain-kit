@@ -1,0 +1,25 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: flush
+type: module
+name:
+  tr: Oturum özetleri
+  en: Session summaries
+desc:
+  tr: Sıkıştırma öncesi / oturum sonu yerel model özeti
+  en: Local-model summary before compaction / at session end.
+category: assistant_memory
+module: flush
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:yazilimci

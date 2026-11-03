@@ -1,0 +1,46 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: media
+type: module
+name:
+  tr: Spotify ve YouTube
+  en: Spotify and YouTube
+desc:
+  tr: Şarkı/video açma
+  en: Play songs and videos.
+category: computer_voice
+module: media
+catalog_ids: []
+requires:
+  accounts:
+  - spotify
+  fields:
+  - key: spotify_client_id
+    label:
+      tr: Spotify client id
+      en: Spotify client id
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: developer.spotify.com'da uygulama oluştur.
+      en: Create an app at developer.spotify.com.
+  - key: spotify_client_secret
+    label:
+      tr: Spotify client secret
+      en: Spotify client secret
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: Aynı uygulamanın sayfasında.
+      en: On the same app page.
+  secrets:
+  - spotify_client_secret
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:icerik

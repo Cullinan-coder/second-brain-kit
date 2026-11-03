@@ -1,0 +1,75 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: takeout
+type: source
+name:
+  tr: Google Takeout
+  en: Google Takeout
+desc:
+  tr: Gemini sohbetleri, etkinlik, Chrome, Keep, YouTube, Play → kasa.
+  en: Gemini chats, activity, Chrome, Keep, YouTube, Play → vault.
+category: imports
+parent: imports_life
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  how_to:
+    tr: '1. takeout.google.com adresine git ve Google hesabınla giriş yap.
+
+      2. ''Tümünün seçimini kaldır'' de, sonra yalnız şunları işaretle: Etkinliğim (My Activity), Chrome, Keep,
+      YouTube ve YouTube Music, (isteğe bağlı) Play Store. Gemini sohbetleri ''Etkinliğim'' içinde ''Gemini Uygulamaları''
+      olarak gelir.
+
+      3. Etkinliğim ve YouTube için ''Tüm etkinlik verileri / Biçimler'' düğmesinden biçimi JSON yap (varsayılan
+      HTML''dir; JSON daha güvenilir okunur). YouTube''da yalnız ''geçmiş'' ve ''abonelikler'' yeterli.
+
+      4. Sonraki adım → Aktarım yöntemi: e-postayla bağlantı gönder; Sıklık: bir kez dışa aktar; Dosya türü: .zip;
+      Boyut: 2 GB (büyükse birden çok zip çıkar).
+
+      5. ''Dışa aktarma oluştur''a bas. Hazır olunca e-posta gelir (dakikalar-günler); bağlantıdan zip''leri 7 gün
+      içinde indir.
+
+      6. Zip''leri AÇMADAN Veri yükleme ekranına bırak (ya da `sb takeout <zip> ...`); önce ''dry-run'' ile ne alınacağı
+      sayılır. Fotoğraflar ve posta (mbox) bilerek alınmaz.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.google.com/accounts/answer/3024190
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import takeout <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Go to takeout.google.com and sign in with your Google account.
+
+      2. Click ''Deselect all'', then tick only: My Activity, Chrome, Keep, YouTube and YouTube Music, (optionally)
+      Play Store. Gemini chats come under ''My Activity'' as ''Gemini Apps''.
+
+      3. For My Activity and YouTube use the ''All activity data included / Multiple formats'' button and set the
+      format to JSON (default is HTML; JSON is read more reliably). For YouTube just ''history'' and ''subscriptions''
+      are enough.
+
+      4. Next step → Delivery: send download link via email; Frequency: export once; File type: .zip; Size: 2 GB
+      (larger exports are split into several zips).
+
+      5. Press ''Create export''. You get an email when ready (minutes to days); download the zips within 7 days.
+
+      6. Drop the zips WITHOUT unpacking on the Data import screen (or `sb takeout <zip> ...`); a dry run first
+      counts what will be taken. Photos and mail (mbox) are deliberately skipped.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.google.com/accounts/answer/3024190
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import takeout <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: null
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:akademisyen
+- meslek:arastirmaci

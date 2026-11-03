@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: evernote
+type: source
+name:
+  tr: Evernote
+  en: Evernote
+desc:
+  tr: Evernote ENEX dışa aktarımı → kasa notları.
+  en: Evernote ENEX export → vault notes.
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .enex
+  how_to:
+    tr: '1. Evernote masaüstü uygulamasını aç (web sürümü ENEX dışa aktarmayı sınırlayabilir).
+
+      2. Sol listede bir not defterine sağ tıkla → ''Not defterini dışa aktar'' (Export Notebook) → biçim: ENEX
+      (.enex) → kaydet. Seçili notlar için: notları seç → Dosya → Notları dışa aktar.
+
+      3. Her not defteri için tekrarla; .enex dosyalarını Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://help.evernote.com/hc/articles/209005557
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import evernote <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Open the Evernote desktop app (the web app may limit ENEX export).
+
+      2. Right-click a notebook in the left list → ''Export Notebook'' → format ENEX (.enex) → save. For selected
+      notes: select notes → File → Export Notes.
+
+      3. Repeat per notebook; drop the .enex files on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://help.evernote.com/hc/articles/209005557
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import evernote <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: evernote
+health:
+  cli: sb import evernote <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

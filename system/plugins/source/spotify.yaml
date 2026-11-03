@@ -1,0 +1,65 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: spotify
+type: source
+name:
+  tr: Spotify dinleme geçmişi
+  en: Spotify listening history
+desc:
+  tr: Spotify 'Extended streaming history' → dinleme kayıtları.
+  en: Spotify 'Extended streaming history' → listening records.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts:
+  - spotify
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .json
+  - klasör
+  how_to:
+    tr: '1. Spotify web: spotify.com/account/privacy (Hesap → Gizlilik ayarları) adresine git ve giriş yap.
+
+      2. ''Verilerini indir'' bölümünde ''Genişletilmiş akış geçmişi'' (Extended streaming history) kutusunu işaretle
+      ve ''Veri iste''ye bas.
+
+      3. Spotify e-postana bir onay bağlantısı gönderir; bağlantıya tıklayıp isteği onaylamazsan istek iptal olur.
+
+      4. Hazırlanması ~30 güne kadar sürebilir; hazır olunca e-posta ile indirme bağlantısı gelir. Zip''ten çıkan
+      `Streaming_History_Audio_*.json` dosyaları gereken kısımdır (kısa ''hesap verisi'' paketindeki `StreamingHistory*.json`
+      de okunur).
+
+      5. Dosyaları (ya da klasörü) Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.spotify.com/article/data-rights-and-privacy-settings/
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import spotify <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Spotify web: go to spotify.com/account/privacy (Account → Privacy settings) and sign in.
+
+      2. Under ''Download your data'' tick ''Extended streaming history'' and press ''Request data''.
+
+      3. Spotify emails a confirmation link; if you don''t click it the request is cancelled.
+
+      4. Preparation can take up to ~30 days; you then get an emailed download link. The `Streaming_History_Audio_*.json`
+      files in the zip are what''s needed (the short account-data package''s `StreamingHistory*.json` is also read).
+
+      5. Drop the files (or folder) on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.spotify.com/article/data-rights-and-privacy-settings/
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import spotify <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: spotify
+health:
+  cli: sb import spotify <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:akademisyen
+- meslek:icerik
+- meslek:arastirmaci

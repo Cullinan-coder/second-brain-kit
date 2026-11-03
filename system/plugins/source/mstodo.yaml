@@ -1,0 +1,47 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: mstodo
+type: source
+name:
+  tr: Microsoft To Do
+  en: Microsoft To Do
+desc:
+  tr: Microsoft To Do görevleri → görev notları (yalnız açık görevler).
+  en: Microsoft To Do tasks → task notes (open tasks only).
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .csv
+  - .json
+  how_to:
+    tr: '1. Microsoft To Do''nun uygulama içi dışa aktarımı yoktur; Microsoft hesabından veri talebi ya da Graph
+      tabanlı üçüncü taraf araçlar gerekir. Güncel yöntem için resmi yardım sayfasına bak.
+
+      2. JSON dışa aktarım dosyan varsa Veri yükleme ekranına bırak.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://support.microsoft.com/todo
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import mstodo <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Microsoft To Do has no in-app export; a Microsoft account data request or Graph-based third-party tools
+      are needed. See the official help for the current method.
+
+      2. If you have a JSON export file, drop it on the Data import screen.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://support.microsoft.com/todo
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import mstodo <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: mstodo
+health:
+  cli: sb import mstodo <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

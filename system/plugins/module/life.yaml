@@ -1,0 +1,34 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: life
+type: module
+name:
+  tr: Kişisel yaşam
+  en: Personal life
+desc:
+  tr: Harcama, abonelik, seyahat, sağlık hatırlatma, tarif, günlük.
+  en: Spending, subscriptions, travel, health reminders, recipes, journal.
+category: career_life
+module: null
+catalog_ids:
+- 229
+- 230
+- 231
+- 233
+- 234
+- 235
+- 236
+- 237
+- 238
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc
+- meslek:girisimci

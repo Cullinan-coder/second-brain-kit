@@ -1,0 +1,68 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: slack
+type: source
+name:
+  tr: Slack dışa aktarımı
+  en: Slack export
+desc:
+  tr: Slack çalışma alanı dışa aktarımı → mesajlar.
+  en: Slack workspace export → messages.
+category: imports
+parent: imports_comm
+catalog_ids: []
+requires:
+  accounts: []
+  fields:
+  - key: me
+    label:
+      tr: Sohbetlerde senin adın
+      en: Your name in chats
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Mesajların hangisinin sana ait olduğunu anlamak için.
+      en: Used to tell which messages are yours.
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. Çalışma alanı sahibi/yöneticisi olarak giriş yap (normal üye tüm çalışma alanını dışa aktaramaz).
+
+      2. Slack''te çalışma alanı adı → Ayarlar ve yönetim (Settings & administration) → Çalışma alanı ayarları →
+      İçe/Dışa veri aktarma (Import/Export Data) → Dışa aktar (Export).
+
+      3. Dışa aktarma aralığını seç ve başlat; hazır olunca Slack e-posta atar, oradan zip''i indir. Ücretsiz ve
+      standart planlarda yalnız herkese açık kanallar çıkar; özel mesajlar için plana göre Slack''ten talep gerekir.
+
+      4. Zip''i (içinde kanal klasörleri ve users.json) Veri yükleme ekranına bırak; ''Sen'' alanına Slack görünen
+      adını yaz.
+
+      Adımlar sağlayıcı tarafında zamanla değişebilir; takılırsan resmi yardım sayfasına bak: https://slack.com/help/articles/201658943
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import slack <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Sign in as workspace owner/admin (regular members cannot export the whole workspace).
+
+      2. In Slack: workspace name → Settings & administration → Workspace settings → Import/Export Data → Export.
+
+      3. Pick the date range and start; Slack emails when ready, download the zip. Free and Standard plans export
+      public channels only; private messages need a request to Slack depending on plan.
+
+      4. Drop the zip (channel folders and users.json inside) on the Data import screen and type your Slack display
+      name in ''You''.
+
+      Steps can change on the provider''s side; if stuck see the official help page: https://slack.com/help/articles/201658943
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import slack <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: slack
+health:
+  cli: sb import slack <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

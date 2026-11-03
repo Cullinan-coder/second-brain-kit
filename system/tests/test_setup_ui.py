@@ -25,23 +25,48 @@ def test_i18n_iki_dilde_tam():
     assert all(v.strip() for lang in d.values() for v in lang.values())
 
 
+JS_FILES = ["setup.js", "wizard.js", "settings.js"]
+STEP_IDS = "welcome presets features profile accounts keys models mcp data phone startup summary".split()
+
+
+def _js():
+    return chr(10).join((UI / f).read_text(encoding="utf-8") for f in JS_FILES)
+
+
 def test_kullanilan_anahtarlar_tanimli():
-    js = (UI / "setup.js").read_text(encoding="utf-8")
     html = (UI / "index.html").read_text(encoding="utf-8")
-    keys = set(re.findall(r"\bt\('([\w.]+)'", js)) | set(re.findall(r'data-i18n(?:-title)?="([\w.]+)"', html))
+    keys = set(re.findall(r"t\('([\w.]+)'", _js())) | set(re.findall(r'data-i18n(?:-title)?="([\w.]+)"', html))
     tr = _i18n()["tr"]
     assert not [k for k in keys if not k.endswith(".") and k not in tr]
     # dinamik anahtarlar
-    dyn = [f"tab.{x}" for x in "kur hesaplar model sihirbaz guncelle saglik kaldir gunluk".split()]
-    dyn += [f"cat.{c}" for c in "mail google data ai assist other".split()]
+    dyn = [f"tab.{x}" for x in "features accounts keys models mcp data phone startup update health uninstall log".split()]
+    dyn += [f"step.{s}.{p}" for s in STEP_IDS for p in "td"]
+    dyn += [f"axis.{a}{x}" for a in "meslek donanim gizlilik yogunluk".split() for x in ("", ".d")]
     dyn += [f"st.{s}" for s in "bekliyor calisiyor tamam hata".split()]
-    dyn += [f"tour.{i}.{p}" for i in range(1, 6) for p in "tx"]
-    for wiz, n in {"google": 7, "spotify": 4, "telegram": 4, "tailscale": 4}.items():
+    dyn += [f"sum.{s}" for s in "done skipped todo".split()]
+    dyn += [f"req.{s}" for s in "acct key gpu other".split()]
+    dyn += [f"scope.{s}" for s in "gmail calendar contacts drive".split()]
+    dyn += [f"imap.{s}" for s in "gmail outlook icloud yandex custom host port user password".split()]
+    dyn += [f"profile.{s}" for s in "name full_name vault timezone org role".split()]
+    dyn += [f"welcome.p.{i}" for i in range(1, 5)] + [f"tour.{i}.{p}" for i in range(1, 6) for p in "tx"]
+    dyn += [f"g.{i}.{p}" for i in range(1, 8) for p in "tx"]
+    dyn += ["svc.spotify.id", "svc.spotify.secret", "svc.telegram.token", "svc.github.pat"]
+    for wiz, n in {"spotify": 4, "telegram": 4, "tailscale": 4, "github": 3}.items():
         dyn += [f"wiz.{wiz}.name"] + [f"wiz.{wiz}.{i}" for i in range(1, n + 1)]
     assert not [k for k in dyn if k not in tr]
 
 
-@pytest.mark.parametrize("name", ["index.html", "setup.css", "setup.js"])
+def test_adim_bilesenleri_ve_ayarlar_kipi():
+    js = _js()
+    for s in STEP_IDS:
+        assert f"R.{s} =" in js, s
+    assert "mode" in js and "'settings'" in js
+    ui = (UI / "index.html").read_text(encoding="utf-8")
+    for f in JS_FILES:
+        assert f'src="{f}"' in ui
+
+
+@pytest.mark.parametrize("name", ["index.html", "setup.css", "setup.js", "wizard.js", "settings.js"])
 def test_dis_kaynak_yok(name):
     src = (UI / name).read_text(encoding="utf-8")
     assert not re.search(r"https?://|(?<![\w:])//cdn|@import\s+url", src), name
@@ -51,20 +76,29 @@ def test_dis_kaynak_yok(name):
 
 
 def test_ham_innerhtml_yok():
-    js = (UI / "setup.js").read_text(encoding="utf-8")
-    assert not re.search(r"innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(", js)
+    assert not re.search(r"innerHTML|outerHTML|insertAdjacentHTML|document\.write|eval\(", _js())
 
 
 def test_sifre_alani_ve_jeton():
-    js = (UI / "setup.js").read_text(encoding="utf-8")
+    js = _js()
     assert "X-Setup-Token" in js and "'password'" in js and "wipeSecrets" in js
     stored = re.findall(r"localStorage\.setItem\(([^)]*)\)", js)
     assert stored and not any("password" in s or "fields" in s for s in stored)
 
 
+def test_api_sozlesmesi_uclari_kullaniliyor():
+    js = _js()
+    for ep in ("/api/catalog", "/api/presets", "/api/combine", "/api/requirements", "/api/wizard", "/api/profile/basic", "/api/account/google",
+               "/api/account/imap", "/api/accounts", "/api/secret", "/api/secrets", "/api/ollama", "/api/models/pull", "/api/voice/setup", "/api/mcp",
+               "/api/mcp/install", "/api/mcp/custom", "/api/import/upload", "/api/import/preview", "/api/import/run", "/api/imports", "/api/phone",
+               "/api/autostart", "/api/apply", "/api/progress"):
+        assert ep in js, ep
+
+
 @pytest.mark.skipif(not shutil.which("node"), reason="node yok")
-def test_js_sozdizimi():
-    r = subprocess.run(["node", "--check", str(UI / "setup.js")], capture_output=True, text=True)
+@pytest.mark.parametrize("name", JS_FILES)
+def test_js_sozdizimi(name):
+    r = subprocess.run(["node", "--check", str(UI / name)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
 
 

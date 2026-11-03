@@ -1,0 +1,29 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: imports_notes
+type: module
+name:
+  tr: Not ve görev içe aktarmaları
+  en: Notes and task imports
+desc:
+  tr: Notion, Keep, Apple Notlar, OneNote, Evernote, Todoist, Trello, Jira, Linear.
+  en: Notion, Keep, Apple Notes, OneNote, Evernote, Todoist, Trello, Jira, Linear.
+category: imports
+module: null
+catalog_ids:
+- 93
+- 94
+- 95
+- 96
+- 97
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc

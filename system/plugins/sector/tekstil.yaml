@@ -1,0 +1,227 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: tekstil
+type: sector
+name:
+  tr: Tekstil — Şirket Asistanı (Kyass pilotu)
+  en: Textile — Company Assistant (Kyass pilot)
+desc:
+  tr: 'Tekstil firması için firma sunucusunda çalışan, rol bazlı rapor veren asistan: satış, gelir-gider, mail özeti;
+    üretim/defo modülü yakında.'
+  en: 'A company assistant running on the firm''s server for a textile company, giving role-based reports: sales,
+    income-expense, mail digest; production/defect module coming soon.'
+category: setup
+catalog_ids: []
+default_on: false
+default: false
+presets:
+  meslek: girisimci
+  donanim: orta
+  gizlilik: tam_yerel
+  yogunluk: gunluk
+modules:
+- gmail
+- imap
+- calendar
+- dates
+- drive
+- derived
+- digest
+- local_files
+- brain
+- search
+- career
+- comms
+- automation
+- whatsapp
+- assistant
+- memory_ui
+- privacy
+- tasks_plan
+sources:
+- bank
+- whatsapp
+- outlook
+mcp:
+- second-brain
+- filesystem
+roles:
+- id: patron
+  name:
+    tr: Patron
+    en: Owner
+  reports:
+  - satis_raporu
+  - gelir_gider
+  - mail_ozeti
+  - uretim_ozeti
+  can:
+  - hepsini_gor
+  - rapor_zamanla
+- id: muhasebe
+  name:
+    tr: Muhasebe
+    en: Accounting
+  reports:
+  - gelir_gider
+  - mail_ozeti
+  can:
+  - fatura_gor
+  - banka_gor
+- id: satis
+  name:
+    tr: Satış
+    en: Sales
+  reports:
+  - satis_raporu
+  - mail_ozeti
+  can:
+  - musteri_gor
+  - teklif_taslak
+- id: uretim
+  name:
+    tr: Üretim
+    en: Production
+  reports:
+  - uretim_ozeti
+  can:
+  - uretim_gor
+  - defo_gor
+reports:
+- id: satis_raporu
+  name:
+    tr: Satış raporu
+    en: Sales report
+  schedule: haftalik
+  source:
+  - gmail
+  - imap
+  - derived
+  note:
+    tr: Sayıları kod hesaplar, model yalnız yorumlar.
+    en: Code computes the numbers; the model only comments.
+- id: gelir_gider
+  name:
+    tr: Gelir-gider raporu
+    en: Income-expense report
+  schedule: aylik
+  source:
+  - bank
+  - derived
+  note:
+    tr: Banka CSV'sinden numarasız özet; tutarları kod toplar.
+    en: Number-free summary from bank CSV; code sums the amounts.
+- id: mail_ozeti
+  name:
+    tr: Mail özeti
+    en: Mail digest
+  schedule: gunluk
+  source:
+  - gmail
+  - imap
+  note:
+    tr: Cevap bekleyenler ve teslim tarihleri öne çıkar.
+    en: Highlights unanswered mail and deadlines.
+- id: uretim_ozeti
+  name:
+    tr: Üretim özeti
+    en: Production summary
+  schedule: gunluk
+  source: []
+  status: yakinda
+terms:
+  musteri:
+    tr: müşteri / marka
+    en: customer / brand
+  siparis:
+    tr: sipariş / iş emri
+    en: order / work order
+  defo:
+    tr: defo (iğne/platin izi vb. kumaş kusuru)
+    en: defect (needle/sinker marks etc.)
+  makine:
+    tr: örgü makinesi
+    en: knitting machine
+coming_soon:
+- id: uretim_defo
+  name:
+    tr: Üretim ve defo tespiti
+    en: Production and defect detection
+  desc:
+    tr: Seamless örgü makinesinde akustik iğne/platin izi tespiti; üretim hattı verisi. Henüz kodlanmadı.
+    en: Acoustic needle/sinker mark detection on seamless knitting machines; production line data. Not coded yet.
+  status: yakinda
+  hardware:
+    sensor: mikrofon / akustik sensör
+requires:
+  accounts:
+  - google
+  - imap
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  - key: client_secret
+    label:
+      tr: Google client_secret.json yolu
+      en: Path to Google client_secret.json
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Google Cloud'da OAuth istemcisi oluşturup indir (docs/google-cloud-kurulum.md).
+      en: Create an OAuth client in Google Cloud and download it (docs/google-cloud-kurulum.md).
+  - key: imap_alias
+    label:
+      tr: IMAP takma adı (ör. is)
+      en: IMAP alias (e.g. work)
+    kind: text
+    secret: false
+    required: false
+    help:
+      tr: Hesabı kısa adla tanır.
+      en: Short name for this account.
+  - key: imap_email
+    label:
+      tr: IMAP e-posta
+      en: IMAP email
+    kind: email
+    secret: false
+    required: true
+  - key: imap_host
+    label:
+      tr: IMAP sunucusu
+      en: IMAP server
+    kind: text
+    secret: false
+    required: true
+    help:
+      tr: Ör. mail.sirketim.com; sağlayıcının yardım sayfasında yazar.
+      en: E.g. mail.example.com; listed in your provider's help pages.
+  - key: imap_password
+    label:
+      tr: IMAP şifresi (uygulama şifresi)
+      en: IMAP password (app password)
+    kind: secret
+    secret: true
+    required: true
+    help:
+      tr: Yalnız işletim sistemi şifre kasasına yazılır.
+      en: Stored only in the OS keychain.
+  secrets:
+  - imap_password
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+notes:
+  tr: 'Çok kullanıcı ve rol zorlaması bu pakette YOK: roller yalnız tanımdır; yetki ileride veri katmanında uygulanacak
+    (docs/v1-plan.md, Uyarlanabilirlik ilkesi). Veri firma sunucusunda yerel kalır.'
+  en: 'Multi-user and role enforcement are NOT in this pack: roles are definitions only; authorization will be applied
+    in the data layer later (docs/v1-plan.md, adaptability principle). Data stays local on the firm''s server.'

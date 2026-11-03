@@ -1,0 +1,46 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: keep
+type: source
+name:
+  tr: Google Keep notları
+  en: Google Keep notes
+desc:
+  tr: Keep notları (Takeout) → kasa notları.
+  en: Keep notes (Takeout) → vault notes.
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. takeout.google.com → ''Tümünün seçimini kaldır'' → yalnız ''Keep''i işaretle.
+
+      2. Dosya türü .zip; dışa aktarmayı oluştur ve e-postadaki bağlantıdan indir.
+
+      3. Zip''i açmadan Veri yükleme ekranına bırak (içinde Keep/*.json bulunur; çöp kutusundaki notlar alınmaz).
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import keep <dosya> --dry-run` ile
+      önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. takeout.google.com → ''Deselect all'' → tick only ''Keep''.
+
+      2. File type .zip; create the export and download from the emailed link.
+
+      3. Drop the zip as-is on the Data import screen (it contains Keep/*.json; trashed notes are skipped).
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import keep <file> --dry-run` first).
+      The file is read only on this computer.'
+  connector: keep
+health:
+  cli: sb import keep <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc

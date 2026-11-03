@@ -1,0 +1,52 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: calendar
+type: module
+name:
+  tr: Google Takvim
+  en: Google Calendar
+desc:
+  tr: Takvimi kasaya alır; onaylı ekleme ve silme
+  en: Brings the calendar into the vault; approved add and delete only.
+category: mail
+module: calendar
+catalog_ids:
+- 164
+- 177
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  - key: client_secret
+    label:
+      tr: Google client_secret.json yolu
+      en: Path to Google client_secret.json
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Google Cloud'da OAuth istemcisi oluşturup indir (docs/google-cloud-kurulum.md).
+      en: Create an OAuth client in Google Cloud and download it (docs/google-cloud-kurulum.md).
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+docs: docs/google-cloud-kurulum.md
+presets:
+- yogunluk:gunluk
+- yogunluk:guc
+- meslek:ogrenci
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

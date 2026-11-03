@@ -1,0 +1,29 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: imports_comm
+type: module
+name:
+  tr: Mesaj içe aktarmaları
+  en: Messaging imports
+desc:
+  tr: Outlook, iCloud, Telegram, Discord, Slack arşivleri.
+  en: Outlook, iCloud, Telegram, Discord, Slack archives.
+category: imports
+module: null
+catalog_ids:
+- 88
+- 89
+- 90
+- 91
+- 92
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:guc

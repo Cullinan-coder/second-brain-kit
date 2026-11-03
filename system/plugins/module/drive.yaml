@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: drive
+type: module
+name:
+  tr: Google Drive
+  en: Google Drive
+desc:
+  tr: Drive dosya listesi ve notları
+  en: Drive file list and notes.
+category: mail
+module: drive
+catalog_ids: []
+requires:
+  accounts:
+  - google
+  fields:
+  - key: gmail
+    label:
+      tr: Ana Gmail adresi
+      en: Main Gmail address
+    kind: email
+    secret: false
+    required: true
+    help:
+      tr: Google ile giriş yapılacak hesap.
+      en: Account used for Google sign-in.
+  - key: client_secret
+    label:
+      tr: Google client_secret.json yolu
+      en: Path to Google client_secret.json
+    kind: path
+    secret: false
+    required: false
+    help:
+      tr: Google Cloud'da OAuth istemcisi oluşturup indir (docs/google-cloud-kurulum.md).
+      en: Create an OAuth client in Google Cloud and download it (docs/google-cloud-kurulum.md).
+  secrets: []
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+docs: docs/google-cloud-kurulum.md
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:akademisyen
+- meslek:girisimci
+- meslek:icerik
+- meslek:arastirmaci

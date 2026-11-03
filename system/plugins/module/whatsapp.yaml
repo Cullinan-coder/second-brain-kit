@@ -1,0 +1,30 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: whatsapp
+type: module
+name:
+  tr: WhatsApp
+  en: WhatsApp
+desc:
+  tr: Onaylı mesaj taslağı ve gönderme
+  en: Approved message drafts and sending.
+category: messaging
+module: whatsapp
+catalog_ids:
+- 87
+- 184
+requires:
+  accounts:
+  - whatsapp
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - WhatsApp Desktop
+health:
+  cli: sb doctor
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:ajans
+- meslek:girisimci
+- meslek:satis

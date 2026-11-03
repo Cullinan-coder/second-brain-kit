@@ -1,0 +1,125 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: models
+type: module
+name:
+  tr: Model katmanı
+  en: Model layer
+desc:
+  tr: Sağlayıcılar, yönlendirici, görev başına model, maliyet takibi, yerel model yöneticisi.
+  en: Providers, router, per-task models, cost tracking, local model manager.
+category: setup
+module: null
+catalog_ids:
+- 23
+- 24
+- 25
+- 26
+- 27
+- 28
+- 29
+- 30
+- 31
+- 32
+- 33
+- 34
+- 35
+- 36
+- 37
+requires:
+  accounts:
+  - openai
+  - anthropic
+  - gemini
+  - openrouter
+  - groq
+  - deepseek
+  - mistral
+  fields:
+  - key: openai_key
+    label:
+      tr: OpenAI API anahtarı
+      en: OpenAI API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: platform.openai.com > API keys.
+      en: platform.openai.com > API keys.
+  - key: anthropic_key
+    label:
+      tr: Anthropic API anahtarı
+      en: Anthropic API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: console.anthropic.com > API keys.
+      en: console.anthropic.com > API keys.
+  - key: gemini_key
+    label:
+      tr: Gemini API anahtarı
+      en: Gemini API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: aistudio.google.com > Get API key.
+      en: aistudio.google.com > Get API key.
+  - key: openrouter_key
+    label:
+      tr: OpenRouter API anahtarı
+      en: OpenRouter API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: openrouter.ai > Keys.
+      en: openrouter.ai > Keys.
+  - key: groq_key
+    label:
+      tr: Groq API anahtarı
+      en: Groq API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: console.groq.com > API Keys.
+      en: console.groq.com > API Keys.
+  - key: deepseek_key
+    label:
+      tr: DeepSeek API anahtarı
+      en: DeepSeek API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: platform.deepseek.com > API keys.
+      en: platform.deepseek.com > API keys.
+  - key: mistral_key
+    label:
+      tr: Mistral API anahtarı
+      en: Mistral API key
+    kind: secret
+    secret: true
+    required: false
+    help:
+      tr: console.mistral.ai > API keys.
+      en: console.mistral.ai > API keys.
+  secrets:
+  - openai_key
+  - anthropic_key
+  - gemini_key
+  - openrouter_key
+  - groq_key
+  - deepseek_key
+  - mistral_key
+  hardware: {}
+  apps: []
+health:
+  cli: sb doctor
+default_on: true
+roadmap: true
+presets:
+- yogunluk:minimal
+- yogunluk:gunluk
+- yogunluk:guc

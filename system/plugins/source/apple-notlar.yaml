@@ -1,0 +1,51 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: apple-notlar
+type: source
+name:
+  tr: Apple Notlar
+  en: Apple Notes
+desc:
+  tr: Dışa aktarılmış Notlar (.html/.txt klasörü) → kasa notları.
+  en: Exported Notes (.html/.txt folder) → vault notes.
+category: imports
+parent: imports_notes
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Apple Notes
+import:
+  formats:
+  - klasör
+  - .html
+  - .txt
+  how_to:
+    tr: '1. Apple Notlar''ın tek tuşla ''hepsini dışa aktar'' özelliği yok; resmi yöntemleri ve sınırları için Apple
+      yardımına bak: https://support.apple.com/guide/notes/welcome/mac
+
+      2. Mac''te bir not: Dosya → PDF Olarak Dışa Aktar ya da notu açıp metni .txt/.html olarak kaydetmek mümkündür;
+      çok notu toplu çıkarmak için üçüncü taraf araçlar vardır (kendi güvenlik değerlendirmeni yap).
+
+      3. Notları bir klasöre .html ya da .txt olarak topla ve klasörü Veri yükleme ekranına bırak.
+
+      Dosyayı Second Brain''de Veri yükleme ekranına sürükle-bırak (ya da `sb import apple-notlar <dosya> --dry-run`
+      ile önce dene). Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Apple Notes has no one-click ''export everything''; see Apple''s help for the official methods and limits:
+      https://support.apple.com/guide/notes/welcome/mac
+
+      2. On a Mac a note can be exported via File → Export as PDF, or its text saved as .txt/.html; bulk export
+      needs third-party tools (assess their safety yourself).
+
+      3. Collect the notes as .html or .txt in one folder and drop the folder on the Data import screen.
+
+      Drag the file onto the Data import screen in Second Brain (or try `sb import apple-notlar <file> --dry-run`
+      first). The file is read only on this computer.'
+  connector: apple-notlar
+health:
+  cli: sb import apple-notlar <dosya> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
