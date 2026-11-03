@@ -87,6 +87,7 @@ def test_fields_depend_on_preset():
 
 # -- donanım
 def test_hardware_recommend(monkeypatch):
+    monkeypatch.setattr(E, "MAC", False)                                         # macOS CI: Apple Silicon yolu değil, NVIDIA yolu
     monkeypatch.setattr(E, "_run_capture", lambda cmd, timeout=15, cwd=None: (0, "NVIDIA RTX 4080, 16376"))
     hw = E.hardware()
     assert hw["vram_gb"] == 16.0 and E.recommend(hw)["profile"] == "full"

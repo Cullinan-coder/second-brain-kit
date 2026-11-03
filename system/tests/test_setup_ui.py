@@ -113,7 +113,10 @@ def test_main_sunucuyu_baslatir(monkeypatch):
 
 
 def test_kurulum_betikleri_paneli_cagirir():
-    kit = SETUP.parent / "kit"
+    # kaynak kasada _system/kit/, kurulmuş kitte kökte (system/ ya da _system/'ın üstü)
+    kit = next((d for d in (SETUP.parent / "kit", SETUP.parent.parent) if (d / "install.ps1").exists()), None)
+    if kit is None:
+        pytest.skip("kurulum betikleri bu kopyada yok")
     ps, sh = (kit / "install.ps1").read_text(encoding="utf-8"), (kit / "install.sh").read_text(encoding="utf-8")
     for s in (ps, sh):
         assert "setup/app.py" in s and "install.py" in s and "--cli" in s and "astral.sh/uv" in s

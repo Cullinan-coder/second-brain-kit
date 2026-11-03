@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.1 — 2026-11-03
+- Kurulum testleri kurulmuş kit düzeninde (betikler kökte) ve macOS'ta (Apple Silicon) da doğru çalışır (0.9.0 CI'da bulundu).
+
 ## 0.9.0 — 2026-11-03 (Faz 5: kurulum paneli + telefon)
 - **Kurulum paneli (masaüstü pencere):** tek satırla başlar (Windows `irm .../install.ps1 | iex`, macOS/Linux `curl ... | sh`; argümanla eski soru-cevap kurucusu).
   Sekmeler: Kur (hazır seçimler Tam / Bulut / Minimal / Öğrenci / Ajans + kategorili özellik kutuları), Hesaplar (bilgiler; şifreler yalnız
