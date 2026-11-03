@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.4 — 2026-11-04
+- Soru-cevap kurucusu (`install.py --cli`) uygulama ve eklenti tanımı klasörlerini de kopyalar; Windows derlemesi Türkçe çıktıda düşmez (0.9.3 CI'da bulundu).
+
 ## 0.9.3 — 2026-11-04 (kurulum sihirbazı + masaüstü uygulaması)
 - **`Second Brain Setup.exe` / `.app`:** tek satırlık komut kurulum dosyasını masaüstüne indirir (depo gizli: `gh auth login` ya da `SB_GH_TOKEN`).
   12 adımlı sihirbaz: hoş geldin → hazır seçim (meslek / donanım / gizlilik / yoğunluk) → **bütün özellikler** (50 modül, 250 madde, arama,
