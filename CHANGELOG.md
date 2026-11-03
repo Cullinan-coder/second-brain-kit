@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.5 — 2026-11-04
+- Paketleme testleri kurulmuş kasada (derleme dosyaları yokken) atlanır. Setup.exe ve .app 0.9.4'te ilk kez derlendi ve açıldı.
+
 ## 0.9.4 — 2026-11-04
 - Soru-cevap kurucusu (`install.py --cli`) uygulama ve eklenti tanımı klasörlerini de kopyalar; Windows derlemesi Türkçe çıktıda düşmez (0.9.3 CI'da bulundu).
 

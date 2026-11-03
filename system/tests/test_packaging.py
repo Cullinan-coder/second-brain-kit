@@ -25,11 +25,20 @@ def _first(*cands):
 PKG = _first(SYSTEM / "packaging", SYSTEM.parent / "packaging") if ((SYSTEM / "packaging").exists() or (SYSTEM.parent / "packaging").exists()) else SYSTEM / "packaging"
 
 
+def _pkg(name) -> Path:
+    """packaging/ yalnız kaynakta ve kitte var; kurulmuş kasada yoksa test atlanır."""
+    if not (PKG / name).exists():
+        pytest.skip("paketleme dosyaları bu kopyada yok")
+    return PKG / name
+
+
 def _kitfile(name):
     return _first(SYSTEM / "kit" / name, SYSTEM.parent / name)
 
 
 def _load(path: Path, name: str):
+    if not path.exists():                                     # kurulmuş kasada packaging/ yok (yalnız derlemede gerekir)
+        pytest.skip("paketleme dosyaları bu kopyada yok")
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -38,34 +47,34 @@ def _load(path: Path, name: str):
 
 @pytest.fixture(scope="module")
 def setup_entry():
-    return _load(PKG / "setup_entry.py", "sb_setup_entry")
+    return _load(_pkg("setup_entry.py"), "sb_setup_entry")
 
 
 @pytest.fixture(scope="module")
 def app_entry():
-    return _load(PKG / "app_entry.py", "sb_app_entry")
+    return _load(_pkg("app_entry.py"), "sb_app_entry")
 
 
 # ------------------------------------------------------------------ spec / build
 @pytest.mark.parametrize("name", ["setup.spec", "app.spec", "build.py", "setup_entry.py", "app_entry.py"])
 def test_packaging_files_parse(name):
-    src = (PKG / name).read_text(encoding="utf-8")
+    src = _pkg(name).read_text(encoding="utf-8")
     compile(src, name, "exec")
 
 
 def test_spec_contents():
-    s = (PKG / "setup.spec").read_text(encoding="utf-8")
+    s = _pkg("setup.spec").read_text(encoding="utf-8")
     assert "setup_entry.py" in s and "Second Brain Setup" in s and "BUNDLE" in s and "console=False" in s
     assert "kit/system" in s and "kit/vault" in s and "setup/ui" in s and "SB_UV_BIN" in s and "launcher" in s
     assert "webview" in s and "icon.ico" in s and "icon.icns" in s
-    a = (PKG / "app.spec").read_text(encoding="utf-8")
+    a = _pkg("app.spec").read_text(encoding="utf-8")
     assert "app_entry.py" in a and 'NAME = "Second Brain"' in a and "BUNDLE" in a and "console=False" in a
     for icon in ("icon.ico", "icon.icns"):
-        assert (PKG / icon).stat().st_size > 1000
+        assert _pkg(icon).stat().st_size > 1000
 
 
 def test_build_names_have_no_spaces():
-    b = _load(PKG / "build.py", "sb_build")
+    b = _load(_pkg("build.py"), "sb_build")
     assert " " not in b.RELEASE_WIN["setup"] and " " not in b.RELEASE_MAC["setup"]
     assert b.RELEASE_WIN["setup"].startswith("Second-Brain-Setup") and b.RELEASE_MAC["setup"].endswith(".zip")
 
