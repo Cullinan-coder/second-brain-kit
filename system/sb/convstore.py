@@ -187,6 +187,11 @@ def notify(title: str, body: str = "", kind: str = "info", link: str = "") -> di
         row["link"] = str(link)[:500]
     with _lock:
         _write_notifs(_read_notifs() + [row])
+    try:                                                       # telefona anlık bildirim (abonelik + pywebpush varsa)
+        from . import mobile
+        mobile.on_notify(row)
+    except Exception:                                          # noqa: BLE001 — bildirim gönderilemezse merkezde yine durur
+        pass
     return row
 
 

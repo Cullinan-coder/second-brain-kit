@@ -12,6 +12,7 @@ import random
 import re
 import shutil
 import subprocess
+import sys
 import time
 import urllib.request
 from datetime import datetime
@@ -121,7 +122,7 @@ def hardware() -> dict:
             hw["vram_gb"] = round(total * 0.7, 1)
             hw["vram_note"] = "birleşik bellek: RAM'in ~%70'i VRAM sayıldı"
         return hw
-    name, gb = parse_nvidia_smi(_run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"]))
+    name, gb = parse_nvidia_smi(_run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"], timeout=30))   # dizüstü: GPU uyanırken ilk çağrı yavaş
     if gb is not None:
         hw["gpu"], hw["vram_gb"] = name, gb
         return hw

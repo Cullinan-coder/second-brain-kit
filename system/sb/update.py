@@ -21,7 +21,7 @@ from .config import DATA, SYSTEM
 
 BACKUPS = DATA / "backups"
 PENDING = DATA / "update.pending"
-CODE = ("sb", "tools", "tests", "docs", "skills", "integrations", "VERSION", "features.yaml", "pyproject.toml", "uv.lock", ".python-version")
+CODE = ("sb", "tools", "tests", "docs", "skills", "integrations", "setup", "VERSION", "features.yaml", "pyproject.toml", "uv.lock", ".python-version")
 KEEP = 5
 
 

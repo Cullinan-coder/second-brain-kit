@@ -1,0 +1,26 @@
+{
+  "name": "İkinci Beyin",
+  "short_name": "Beyin",
+  "description": "Kişisel second brain asistanı",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "lang": "tr",
+  "icons": [
+    {"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+    {"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable"}
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [{"name": "files", "accept": [".pdf", ".docx", ".pptx", ".xlsx", ".txt", ".md", ".csv", ".png", ".jpg", ".jpeg", "image/*", "text/plain", "application/pdf"]}]
+    }
+  }
+}

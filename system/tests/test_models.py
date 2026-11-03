@@ -177,3 +177,10 @@ def test_cli_onay_istiyor(monkeypatch, capsys):
     a2 = argparse.Namespace(pull="", rm="x:1b", bench="", apply="", yes=False, n=5)
     monkeypatch.setattr(models, "remove", lambda n: called.append(n) or True)
     assert models.cli(a2) == 1 and not called
+
+
+def test_run_returns_command_output():
+    """_run hataları yuttuğu için eksik içe aktarma (sys) GPU'yu sessizce 'yok' gösteriyordu — gerçek bir komutla dene."""
+    import sys
+    from sb import models
+    assert models._run([sys.executable, "-c", "print('merhaba')"]).strip() == "merhaba"

@@ -1,7 +1,7 @@
 ---
 type: dashboard
 tags: [dashboard]
-kume: Küme - Bilgisayar Mühendisliği Ders Notları
+kume: Küme - Akademik ve Teknik Araştırmalar
 ---
 # Dashboard
 

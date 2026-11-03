@@ -1022,6 +1022,27 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 return self._send(200, f[0], f[1])
             if route.startswith("/api/v2/"):
                 return self._v2("GET")
+            if route in ("/sw.js", "/manifest.webmanifest"):                 # PWA: hizmet çalışanı kökten kapsamalı
+                f = static_file(route[1:])
+                if not f:
+                    return self._send(404, b'{"error":"yok"}')
+                self.send_response(200)
+                self.send_header("Content-Type", f[1])
+                self.send_header("Content-Length", str(len(f[0])))
+                self.send_header("Cache-Control", "no-cache")
+                if route == "/sw.js":
+                    self.send_header("Service-Worker-Allowed", "/")
+                self.end_headers()
+                self.wfile.write(f[0])
+                return
+            if route == "/share":                                             # paylaş hedefi / iOS Kestirme yedeği
+                if not self._authed():
+                    return self._send(200, PAIR_PAGE.encode("utf-8"), "text/html; charset=utf-8")
+                from urllib.parse import parse_qs, urlparse
+                from . import mobile
+                q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+                return self._send(200, mobile.share_page(q.get("title", ""), q.get("text", ""), q.get("url", "")).encode("utf-8"),
+                                  "text/html; charset=utf-8")
             if route == "/bubble" and not is_remote and (WEB / "bubble.html").exists():     # mini sohbet balonu (aynı kaynak)
                 return self._send(200, (WEB / "bubble.html").read_bytes(), "text/html; charset=utf-8")
             if route in ("/", "/index.html", "/classic"):

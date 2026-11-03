@@ -1,7 +1,6 @@
 ---
 type: dashboard
 tags: [dashboard, asistan]
-kume: Küme - Kişisel Proje ve Notlar
 ---
 # Asistan
 

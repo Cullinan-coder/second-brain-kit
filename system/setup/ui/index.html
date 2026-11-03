@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Second Brain Kurulum</title>
+<link rel="stylesheet" href="setup.css">
+</head>
+<body>
+<header class="top">
+  <h1 data-i18n="app.title">Second Brain Kurulum</h1>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+    <div class="fill" id="fill"></div><span id="pct">0%</span>
+  </div>
+  <div class="tools">
+    <button id="btn-lang" class="ghost" type="button" data-i18n-title="lang.switch">TR/EN</button>
+    <button id="btn-theme" class="ghost" type="button" data-i18n-title="theme.switch">◐</button>
+  </div>
+</header>
+<div id="banner" class="banner" hidden></div>
+<nav class="tabs" id="tabs" role="tablist">
+  <button role="tab" data-tab="kur" data-i18n="tab.kur">Kur</button>
+  <button role="tab" data-tab="hesaplar" data-i18n="tab.hesaplar">Hesaplar</button>
+  <button role="tab" data-tab="model" data-i18n="tab.model">Model</button>
+  <button role="tab" data-tab="sihirbaz" data-i18n="tab.sihirbaz">Sihirbazlar</button>
+  <button role="tab" data-tab="guncelle" data-i18n="tab.guncelle">Güncelle</button>
+  <button role="tab" data-tab="saglik" data-i18n="tab.saglik">Sağlık</button>
+  <button role="tab" data-tab="kaldir" data-i18n="tab.kaldir">Kaldır</button>
+  <button role="tab" data-tab="gunluk" data-i18n="tab.gunluk">Günlük</button>
+</nav>
+<main>
+  <section id="p-kur" class="panel" role="tabpanel">
+    <h2 data-i18n="kur.presets">Hazır seçimler</h2>
+    <div id="presets" class="cards"></div>
+    <h2 data-i18n="kur.modules">Özellikler</h2>
+    <div class="row"><button id="mod-all" class="ghost" type="button" data-i18n="kur.all">Hepsi</button>
+    <button id="mod-none" class="ghost" type="button" data-i18n="kur.none">Hiçbiri</button></div>
+    <div id="modules"></div>
+    <div class="row"><button id="apply" class="primary" type="button" data-i18n="kur.apply">Seçimi uygula</button><span id="apply-msg" class="muted"></span></div>
+  </section>
+  <section id="p-hesaplar" class="panel" role="tabpanel" hidden>
+    <p class="muted" data-i18n="hes.intro">Anahtarlar yalnız işletim sistemi kasasına yazılır.</p>
+    <div id="fields"></div>
+    <div class="row">
+      <button id="prof-export" class="ghost" type="button" data-i18n="hes.export">Profili indir</button>
+      <label class="ghost filebtn"><span data-i18n="hes.import">Profil yükle</span><input id="prof-file" type="file" accept="application/json,.json"></label>
+    </div>
+  </section>
+  <section id="p-model" class="panel" role="tabpanel" hidden>
+    <div id="hw"></div>
+    <button id="hw-refresh" class="ghost" type="button" data-i18n="model.refresh">Yeniden tara</button>
+  </section>
+  <section id="p-sihirbaz" class="panel" role="tabpanel" hidden>
+    <div id="wiz-list" class="cards"></div>
+    <div id="wiz-body"></div>
+  </section>
+  <section id="p-guncelle" class="panel" role="tabpanel" hidden>
+    <div id="upd"></div>
+    <div class="row"><button id="upd-check" class="ghost" type="button" data-i18n="upd.check">Denetle</button>
+    <button id="upd-run" class="primary" type="button" data-i18n="upd.run">Güncelle</button></div>
+  </section>
+  <section id="p-saglik" class="panel" role="tabpanel" hidden>
+    <button id="health-run" class="primary" type="button" data-i18n="sag.run">Sağlık kontrolü</button>
+    <div id="health"></div>
+  </section>
+  <section id="p-kaldir" class="panel" role="tabpanel" hidden>
+    <p data-i18n="kal.warn">Kasa notlarına dokunulmaz.</p>
+    <div class="row"><button id="un-plan" class="ghost" type="button" data-i18n="kal.plan">Ne yapılacağını göster</button></div>
+    <label class="check"><input type="checkbox" id="un-confirm"><span data-i18n="kal.confirm">Anladım, onaylıyorum</span></label>
+    <div class="row"><button id="un-run" class="danger" type="button" data-i18n="kal.do">Temiz kaldır</button></div>
+    <pre id="un-out" class="log"></pre>
+  </section>
+  <section id="p-gunluk" class="panel" role="tabpanel" hidden>
+    <ul id="steps" class="steps"></ul>
+    <pre id="log" class="log" aria-live="polite"></pre>
+  </section>
+</main>
+<div id="tour" class="modal" hidden role="dialog" aria-modal="true">
+  <div class="dialog"><h2 id="tour-title"></h2><p id="tour-text"></p>
+    <div class="row"><span id="tour-n" class="muted"></span>
+    <button id="tour-close" class="ghost" type="button" data-i18n="tour.close">Kapat</button>
+    <button id="tour-next" class="primary" type="button" data-i18n="tour.next">İleri</button></div></div>
+</div>
+<script src="setup.js"></script>
+</body>
+</html>

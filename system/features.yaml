@@ -26,7 +26,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 2
   ad: Tarayıcıda açılan yerel kurulum paneli
   kategori: kurulum
@@ -34,7 +34,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 3
   ad: Özellik kataloğu (features.yaml) ve özellik anahtarları
   kategori: kurulum
@@ -50,7 +50,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 5
   ad: Her özellik için açıklama ve gereksinim etiketi
   kategori: kurulum
@@ -66,7 +66,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 7
   ad: Panelde bilgi girişi; şifreler işletim sistemi kasasına
   kategori: kurulum
@@ -74,7 +74,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 8
   ad: Canlı kurulum günlüğü ve ilerleme
   kategori: kurulum
@@ -82,7 +82,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 9
   ad: Bağlantıyı test et düğmeleri
   kategori: kurulum
@@ -90,7 +90,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 10
   ad: Kurulum profilini dışa/içe aktarma
   kategori: kurulum
@@ -98,7 +98,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 11
   ad: Komut satırından sessiz kurulum (preset/config)
   kategori: kurulum
@@ -106,7 +106,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 12
   ad: Seçili özellikleri geri alma
   kategori: kurulum
@@ -114,7 +114,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: opus
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 13
   ad: İlk 10 dakika turu
   kategori: kurulum
@@ -122,7 +122,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 14
   ad: Google Cloud kurulum sihirbazı
   kategori: kurulum
@@ -130,7 +130,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 15
   ad: Spotify, Telegram, Tailscale sihirbazları
   kategori: kurulum
@@ -138,7 +138,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 16
   ad: Güncelleme sekmesi
   kategori: kurulum
@@ -146,7 +146,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 17
   ad: Temiz kaldırma
   kategori: kurulum
@@ -154,7 +154,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 18
   ad: Çok dilli panel (TR/EN)
   kategori: kurulum
@@ -162,7 +162,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 19
   ad: Yarıda kalan kurulumu sürdürme
   kategori: kurulum
@@ -170,7 +170,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 20
   ad: Sistem sağlığı sekmesi
   kategori: kurulum
@@ -178,7 +178,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 21
   ad: İmzalı sürüm paketi ve SHA-256
   kategori: kurulum
@@ -186,7 +186,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 22
   ad: Kurumsal toplu kurulum
   kategori: kurulum
@@ -194,7 +194,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 23
   ad: API sağlayıcıları (OpenAI, Anthropic, Gemini, OpenRouter, Groq, Mistral, DeepSeek)
   kategori: model
@@ -618,7 +618,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 76
   ad: Android SMS/arama otomatik eşitleme
   kategori: mobil
@@ -634,7 +634,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 78
   ad: Telefon push bildirimleri
   kategori: mobil
@@ -642,7 +642,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 79
   ad: Telefon widget'ı
   kategori: mobil
@@ -658,7 +658,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 81
   ad: Konum tabanlı hatırlatma
   kategori: mobil
@@ -674,7 +674,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 83
   ad: iOS Kestirmeler / Android Tasker
   kategori: mobil
@@ -682,7 +682,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 84
   ad: Saat üzerinden sesli not
   kategori: mobil
@@ -706,7 +706,7 @@ ozellikler:
   surum: 0.9.0
   uygulayan: sonnet
   denetleyen: opus
-  durum: planlandi
+  durum: tamamlandi
 - id: 87
   ad: WhatsApp mesaj arşivi
   kategori: kaynak

@@ -2,6 +2,19 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.0 — 2026-11-03 (Faz 5: kurulum paneli + telefon)
+- **Kurulum paneli (masaüstü pencere):** tek satırla başlar (Windows `irm .../install.ps1 | iex`, macOS/Linux `curl ... | sh`; argümanla eski soru-cevap kurucusu).
+  Sekmeler: Kur (hazır seçimler Tam / Bulut / Minimal / Öğrenci / Ajans + kategorili özellik kutuları), Hesaplar (bilgiler; şifreler yalnız
+  işletim sistemi kasasına, "Test et" düğmeleri), Model (donanım taraması ve öneri), Sihirbazlar (Google Cloud, Spotify, Telegram, Tailscale),
+  Güncelle, Sağlık, Kaldır (önce plan + onay; notlara asla dokunmaz), Günlük (canlı ilerleme). Türkçe/İngilizce, kurulum sonrası 5 adımlık tur,
+  yarıda kalan kurulumu sürdürme, profil dışa/içe aktarma. Panel yalnız 127.0.0.1'de, oturum jetonuyla.
+- **Sessiz/kurumsal kurulum:** `python setup/engine.py --preset ogrenci --profile profil.json --yes` (sırlar `SB_SECRET_<ALAN>`).
+- **Doğrulama:** her sürümde `SHA256SUMS`; `python setup/engine.py --verify <dosya> <sha256>`.
+- **Telefon:** uygulama gibi kurulur (PWA, çevrimdışı kabuk), herhangi bir uygulamadan "Paylaş → Beyne at", iOS Kestirme hedefi (`/share`),
+  çevrimdışı kuyruk (bağlantı gelince gönderir), anlık bildirim (Tailscale HTTPS + isteğe bağlı `pywebpush`), dış erişim tüneli planı
+  (Cloudflare Tunnel; e-posta doğrulamalı erişim politikası olmadan açılmaz). Rehber: `docs/telefon-pwa.md`.
+- **Düzeltme:** `sb models` / `sb doctor` ekran kartını hiç algılamıyordu (eksik içe aktarma) — artık doğru profil önerir.
+
 ## 0.8.1 — 2026-11-01
 - Kurulum ve güncelleme `integrations` klasörünü (Obsidian/tarayıcı/tepsi eklentileri) de kopyalar (0.8.0'da eksikti).
 - Takvime erişilemeyince (giriş yok) günlük plan çökmek yerine takvimsiz çıkar; testler hiçbir zaman gerçek Google Takvim'e gitmez.
