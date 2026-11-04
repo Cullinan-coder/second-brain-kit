@@ -10,13 +10,13 @@ from sb import api_mobile, chat, config, mobile, webroutes  # noqa: F401 — MOD
 from sb.webroutes import Ctx
 
 WEB = Path(mobile.__file__).parent / "web"
-SUB = {"endpoint": "https://push.example/abc", "keys": {"p256dh": "B" * 40, "auth": "a" * 16}}
+SUB = {"endpoint": "https://fcm.googleapis.com/fcm/send/abc", "keys": {"p256dh": "B" * 40, "auth": "a" * 16}}
 
 
 def call(method, path, data=None, raw=b"", ctype="", query=None):
     r = webroutes.find(method, path)
     assert r is not None, path
-    ctx = Ctx(method, path, data or {}, query or {}, raw, ctype, "s1", False, chat.Session(), None)
+    ctx = Ctx(method, path, data or {}, query or {}, raw, ctype, "s1", False, chat.Session(), None, None, "local")
     code, body, _, _ = webroutes.call(r, ctx)
     return code, json.loads(body)
 
@@ -102,7 +102,7 @@ def test_push_dead_subscription_removed(monkeypatch):
     def boom(s, p):
         raise E()
     monkeypatch.setattr(mobile, "_sender", boom)
-    mobile.subscribe(SUB)
+    mobile.subscribe(SUB, "local")
     assert mobile.push_send("x")["sent"] == 0 and mobile.subscriptions() == []
 
 

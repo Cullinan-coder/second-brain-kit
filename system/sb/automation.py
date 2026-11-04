@@ -15,7 +15,7 @@ from pathlib import Path
 
 import yaml
 
-from . import config
+from . import config, filelock
 
 DATA = config.DATA
 RULES_FILE = config.SYSTEM / "config" / "otomasyon.yaml"
@@ -46,8 +46,7 @@ def load_rules() -> list[dict]:
 
 
 def _save_rules(rules: list[dict]) -> None:
-    RULES_FILE.parent.mkdir(parents=True, exist_ok=True)
-    RULES_FILE.write_text(yaml.safe_dump(rules, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    filelock.atomic_write(RULES_FILE, yaml.safe_dump(rules, allow_unicode=True, sort_keys=False))
 
 
 def validate(rule: dict) -> dict:
@@ -71,20 +70,22 @@ def validate(rule: dict) -> dict:
 
 def add_rule(rule: dict) -> dict:
     r = validate(rule)
-    rules = load_rules()
-    if any(x["id"] == r["id"] for x in rules):
-        r["id"] += "-" + uuid.uuid4().hex[:4]
-    _save_rules(rules + [r])
+    with filelock.locked(RULES_FILE):                       # oku-değiştir-yaz süreçler arası kilitli (D-20)
+        rules = load_rules()
+        if any(x["id"] == r["id"] for x in rules):
+            r["id"] += "-" + uuid.uuid4().hex[:4]
+        _save_rules(rules + [r])
     return r
 
 
 def set_enabled(rid: str, on: bool) -> dict:
-    rules = load_rules()
-    for r in rules:
-        if r["id"] == rid:
-            r["acik"] = bool(on)
-            _save_rules(rules)
-            return r
+    with filelock.locked(RULES_FILE):
+        rules = load_rules()
+        for r in rules:
+            if r["id"] == rid:
+                r["acik"] = bool(on)
+                _save_rules(rules)
+                return r
     raise LookupError("kural bulunamadı")
 
 
@@ -97,8 +98,7 @@ def _state() -> dict:
 
 
 def _save_state(st: dict) -> None:
-    DATA.mkdir(parents=True, exist_ok=True)
-    _state_path().write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
+    filelock.atomic_write(_state_path(), json.dumps(st, ensure_ascii=False))
 
 
 # ---- tetik toplama: her olay bir bağlam sözlüğü
@@ -169,9 +169,7 @@ def _fmt(s, ctx: dict) -> str:
 def _queue(rule: dict, kind: str, title: str, detail: str, payload: dict) -> dict:
     rec = {"id": uuid.uuid4().hex[:8], "kural": rule["id"], "tur": kind, "baslik": title, "ayrinti": detail, "payload": payload,
            "durum": "bekliyor", "zaman": datetime.now().isoformat(timespec="seconds")}
-    DATA.mkdir(parents=True, exist_ok=True)
-    with _pending_path().open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    filelock.append_line(_pending_path(), json.dumps(rec, ensure_ascii=False))     # D-20: süreçler arası kilitli ekleme
     from . import convstore
     convstore.notify(f"Onay bekliyor: {title}", detail[:200], "onay")
     return rec
@@ -308,7 +306,7 @@ def _read_pending() -> list[dict]:
 
 
 def _write_pending(rows: list[dict]) -> None:
-    _pending_path().write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+    filelock.atomic_write(_pending_path(), "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
 
 
 def approvals(only_pending: bool = True) -> list[dict]:
@@ -316,21 +314,23 @@ def approvals(only_pending: bool = True) -> list[dict]:
 
 
 def decide(aid: str, ok: bool, calendar=None) -> dict:
-    rows = _read_pending()
-    rec = next((r for r in rows if r.get("id") == aid), None)
-    if not rec:
-        raise LookupError("onay kaydı bulunamadı")
-    if rec["durum"] != "bekliyor":
-        raise PermissionError("zaten sonuçlandı")
-    msg = "reddedildi"
-    if ok:
-        rec["durum"] = "onaylandi"                          # önce işaretle: çift yürütme olmasın
+    with filelock.locked(_pending_path()):                  # başka süreç araya kayıt eklerken satır kaybolmasın (D-20)
+        rows = _read_pending()
+        rec = next((r for r in rows if r.get("id") == aid), None)
+        if not rec:
+            raise LookupError("onay kaydı bulunamadı")
+        if rec["durum"] != "bekliyor":
+            raise PermissionError("zaten sonuçlandı")
+        rec["durum"] = "onaylandi" if ok else "reddedildi"   # önce işaretle: çift yürütme olmasın
         _write_pending(rows)
-        msg = _execute(rec, calendar)
-    else:
-        rec["durum"] = "reddedildi"
+    msg = _execute(rec, calendar) if ok else "reddedildi"   # yürütme (ağ çağrısı) kilit dışında
+    with filelock.locked(_pending_path()):
+        rows = _read_pending()
+        cur = next((r for r in rows if r.get("id") == aid), None)
+        if cur is not None:
+            cur["sonuc"] = msg
+            _write_pending(rows)
     rec["sonuc"] = msg
-    _write_pending(rows)
     return {"ok": True, "durum": rec["durum"], "sonuc": msg}
 
 

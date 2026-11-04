@@ -39,6 +39,8 @@ def find_export() -> Path | None:
 def extract(zpath: Path) -> Path:
     dest = DATA / "imports" / zpath.stem
     dest.mkdir(parents=True, exist_ok=True)
+    from .content import guard_zip
+    guard_zip(zpath)                                     # zip bombası denetimi (D-28)
     with zipfile.ZipFile(zpath) as z:
         for info in z.infolist():
             if info.filename.lower().endswith(".csv"):

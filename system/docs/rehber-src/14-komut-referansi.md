@@ -285,7 +285,27 @@ sb restore [--folder FOLDER] [--confirm] [rest ...]
 | `--folder FOLDER` | (açıklama yok) |
 | `--confirm` | (açıklama yok) |
 
-**Örnek:** `sb restore vault-2026-01-01.zip`
+**Örnek:** `sb restore vault-tum-20261104-150000.zip.enc` (şifreli yedek; düz `.zip` de okunur)
+
+### sb backup
+
+**Ne yapar:** şifreli kasa yedeği al (`~/.secondbrain/backups/vault-tum-*.zip.enc`); haftalık görev de alır, son 8 kalır. Şifreleme yoksa düz yedek ALMAZ.
+
+```
+sb backup
+```
+
+**Örnek:** `sb backup`
+
+### sb encrypt
+
+**Ne yapar:** `sb vault-encrypt` takma adı; ayrıca `--purge-history <klasör>` ile şifrelenmiş klasörün git geçmişindeki düz metni temizler (`--confirm` olmadan yalnız anlatır; önce tam şifreli yedek alır; uzak depoya ZORLA push gerekir).
+
+```
+sb encrypt [--folder FOLDER] [--confirm] [--purge-history PURGE_HISTORY] [rest ...]
+```
+
+**Örnek:** `sb encrypt --purge-history 30-Kariyer` (önizleme), `sb encrypt --purge-history 30-Kariyer --confirm`
 
 ### sb vault-encrypt
 

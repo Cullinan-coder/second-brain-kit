@@ -216,6 +216,22 @@ def daily(skip: set[str] | None = None, force: bool = False) -> int:
     return 0 if all(s["rc"] == 0 for s in steps) else 1
 
 
+def weekly_backup(log) -> str:
+    """Haftalık şifreli kasa yedeği (kasa anahtarıyla `.zip.enc`); son `backup_keep` (varsayılan 8) tutulur. Hata haftalığı düşürmez
+    ama rapora yazılır: anahtar okunamıyor / şifreleme kurulu değilse DÜZ yedek alınmaz."""
+    try:
+        from . import privacy
+        r = privacy.create_backup(scheduled=True)
+        if r.get("ok"):
+            msg = f"💾 Şifreli yedek alındı: {r['created'][0]}" + (f" (eski {len(r['removed'])} yedek silindi)" if r.get("removed") else "")
+        else:
+            msg = f"⚠ Yedek alınamadı: {r.get('message', '?')}"
+    except Exception as e:                                       # noqa: BLE001
+        msg = f"⚠ Yedek alınamadı: {type(e).__name__}: {str(e)[:150]}"
+    log(msg)
+    return msg
+
+
 def weekly() -> int:
     from . import digest, maildb
     log = _logger("weekly")
@@ -240,6 +256,7 @@ def weekly() -> int:
             log(f"hijyen/recap eklenemedi: {e}")
         iso = date.today().isocalendar()
         _write_note(f"{iso[0]}-W{iso[1]:02d} Haftalık", f"hafta:{iso[0]}-W{iso[1]:02d}", text)
+        text += "\n\n" + weekly_backup(log)
         log(git_sync(log))
         _deliver(text, log)
     return 0

@@ -258,9 +258,10 @@ def test_release_workflow():
     assert "v*" in on["push"]["tags"]
     job = wf["jobs"]["build"]
     assert set(job["strategy"]["matrix"]["os"]) == {"windows-latest", "macos-latest"}
-    assert wf["permissions"]["contents"] == "write"
+    assert wf["permissions"]["contents"] == "read"                                               # D-13: yazma izni yalnız publish işinde
+    assert wf["jobs"]["publish"]["permissions"]["contents"] == "write"
     text = json.dumps(wf)
-    assert "packaging/build.py" in text and "softprops/action-gh-release" in text and "GITHUB_TOKEN" in text and "pyinstaller" in text
+    assert "packaging/build.py" in text and "softprops/action-gh-release" in text and "GITHUB_TOKEN" in text and "--group build" in text
 
 
 def test_install_scripts_download_to_desktop():

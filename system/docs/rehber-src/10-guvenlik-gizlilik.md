@@ -96,10 +96,19 @@ sb vault-key --export <dosya>                    # anahtarı yedekle
 ```
 
 - Şifreleme `cryptography` ve `keyring` paketlerini ister; yoksa «cryptography/keyring kurulu değil» der.
-- Her şifrelemeden önce klasörün **düz yedeği** alınır; hata olursa hiçbir dosyaya dokunulmaz. Her not `.md.enc` olarak yazılır, düz kopya silinir ve doğrulanır. Yedek zip'in de **şifreli kopyası** yazılır; düz zip'i doğruladıktan sonra Geri Dönüşüm Kutusu'na atman önerilir (program kalıcı silmez).
+- Her şifrelemeden önce klasörün **şifreli yedeği** (`~/.secondbrain/backups/*.zip.enc`) alınır; düz metin zip diske hiç yazılmaz. Hata olursa hiçbir dosyaya dokunulmaz. Her not `.md.enc` olarak yazılır, düz kopya silinir ve doğrulanır. Geri dönmek için: `sb restore <yedek>.zip.enc --confirm`.
+- **Git geçmişi uyarısı:** şifreleme eski commit'leri DEĞİŞTİRMEZ. Klasörün düz metin notları git geçmişinde duruyorsa komut sonunda «kaç not, hangi commit aralığı» ile **açık uyarı** verir (kasayı GitHub'a ittiysen düz metin orada da vardır). Geçmişi temizlemek ayrı ve onaylı bir komuttur: `sb encrypt --purge-history "<klasör>"` (yalnız anlatır), `sb encrypt --purge-history "<klasör>" --confirm` (çalıştırır). Önce kasanın **tam yedeği** (şifreli zip + şifreli git paketi) alınır; `git filter-repo` kurulu değilse çalıştırmaz ve nasıl kurulacağını söyler. Geçmiş yeniden yazıldığı için sonrasında uzak depoya **zorla push** (`git push --force --all`) gerekir ve diğer cihazlarda kasa yeniden klonlanmalıdır; daha önce itilmiş düz metni sızmış say. Komut hiçbir zaman kendiliğinden çalışmaz.
 - **Anahtar şifre kasasındadır.** Anahtarı okuyamazsa **yeni anahtar üretmez** (eski şifreli notlar kalıcı kilitlenmesin diye) ve «anahtar zincirinde şifreleme anahtarı yok» der.
 - **Anahtarı mutlaka yedekle:** `sb vault-key --export <dosya>`; çıkan dosyayı parola yöneticisine/USB'ye koy. **Anahtarı kaybedersen şifreli notlar açılamaz.**
 - Şifreli klasörler asistan ve aramada okunamaz.
+
+## Yedekler (şifreli, haftalık)
+
+- `sb backup` (ve Gizlilik → Yedekler → Yedek al) kasanın **kasa anahtarıyla şifreli** yedeğini alır: `~/.secondbrain/backups/vault-tum-<tarih>.zip.enc`. Şifreleme kurulu değilse ya da anahtar okunamıyorsa **düz yedek alınmaz** (nedeni söylenir).
+- **Haftalık görev** (Pazar 15:00, `sb weekly`) aynı şifreli yedeği otomatik alır ve **son 8**'ini tutar (`config/gizlilik.yaml` → `backup_keep: 8`; klasör ve «geri yükleme öncesi» yedeklerine dokunulmaz).
+- `sb doctor` son yedeğin yaşını gösterir; **14 günden eskiyse** (ya da hiç yoksa) ✗ olur.
+- Yedeği geri yüklemek: `sb restore <yedek>.zip.enc` (önce ne olacağını söyler), `--confirm` ile uygular; önce mevcut dosyaların şifreli kopyası (`onceki-*.zip.enc`) alınır. Düz `.zip` yedekler de okunur.
+- **Yedek anahtarsız açılmaz:** `sb vault-key --export <dosya>` ile anahtarı ayrıca sakla. (Kod yedeği `system-*.zip` not içermez, şifrelenmez.)
 
 <a id="unutma-bir-bilgiyi-silme-istegi"></a>
 

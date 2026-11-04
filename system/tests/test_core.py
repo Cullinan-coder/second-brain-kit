@@ -1146,7 +1146,7 @@ def test_remote_pairing_lockout_and_cookie(tmp_path):
     for _ in range(5):
         a.pair("xxxxxx", now=10)
     assert a.pair(a.pin, now=20)[1].startswith("Çok fazla")                     # kilit: doğru kod da işe yaramaz
-    assert a.pair(a.pin, now=20 + 901)[0]                                       # 15 dk sonra açılır
+    assert a.pair(a.current_pin(20 + 901), now=20 + 901)[0]                                       # 15 dk sonra açılır
     a.revoke()
     assert a.devices() == 0 and not a.check_cookie(f"sbs={tok}")
 

@@ -28,6 +28,8 @@ def _load(src: Path) -> list[tuple[str, object]]:
     """(dosya adı, JSON) listesi: zip içinden, klasörden ya da tek dosyadan."""
     out = []
     if src.suffix.lower() == ".zip":
+        from .content import guard_zip
+        guard_zip(src)                                   # zip bombası denetimi (D-28)
         with zipfile.ZipFile(src) as z:
             for n in z.namelist():
                 if n.lower().endswith(".json") and ("conversations" in n.lower() or "myactivity" in n.lower().replace(" ", "")):

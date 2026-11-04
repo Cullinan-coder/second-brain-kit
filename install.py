@@ -110,7 +110,7 @@ def update(vault: Path) -> int:
     n = copy_missing(KIT / "vault", vault)
     sync_code(KIT / "system", system)
     say(f"  kod güncellendi: {system} (şablondan {n} yeni dosya)")
-    run(["uv", "sync"], cwd=system)
+    run(["uv", "sync", "--inexact"], cwd=system)
     run(["uv", "run", "--directory", str(system), "python", str(system / "tools" / "install_cli.py")])
     py = system / ".venv" / ("Scripts/python.exe" if WIN else "bin/python")
     if (Path.home() / ".claude" / "skills").exists() or shutil.which("claude"):
@@ -187,7 +187,7 @@ def main() -> int:
     say("  profil ve hesaplar yazıldı (config/profile.yaml, config/accounts.yaml)")
 
     head(4, "Python ortamı (uv sync) + `sb` komutu")
-    run(["uv", "sync"], cwd=system)
+    run(["uv", "sync", "--inexact"], cwd=system)
     run(["uv", "run", "--directory", str(system), "python", str(system / "tools" / "install_cli.py")])
     sb = ["uv", "run", "--directory", str(system), "python", "-X", "utf8", "-m", "sb"]
 

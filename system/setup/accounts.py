@@ -306,13 +306,24 @@ def ollama_info() -> dict:
 
 
 def _install_cmds() -> list[list[str]]:
+    """D-22: indirme ortak /tmp ya da düz %TEMP% dosyasına DEĞİL, bu çalıştırmaya özel yeni dizine yapılır;
+    Windows'ta kurucunun Authenticode imzası (geçerli + imzalayan Ollama), macOS'ta codesign doğrulanmadan çalıştırılmaz."""
     if E.WIN:
-        ps = ("$f=Join-Path $env:TEMP 'OllamaSetup.exe'; Invoke-WebRequest -UseBasicParsing https://ollama.com/download/OllamaSetup.exe "
-              "-OutFile $f; Start-Process -FilePath $f -ArgumentList '/SILENT' -Wait")
+        ps = ("$ErrorActionPreference='Stop'; "
+              "$d=Join-Path $env:TEMP ('sb-ollama-'+[guid]::NewGuid().ToString('N')); New-Item -ItemType Directory -Path $d | Out-Null; "
+              "$f=Join-Path $d 'OllamaSetup.exe'; "
+              "Invoke-WebRequest -UseBasicParsing https://ollama.com/download/OllamaSetup.exe -OutFile $f; "
+              "$sig=Get-AuthenticodeSignature -FilePath $f; "
+              "if ($sig.Status -ne 'Valid' -or -not $sig.SignerCertificate -or $sig.SignerCertificate.Subject -notmatch 'Ollama') "
+              "{ Remove-Item -Recurse -Force $d; throw 'Ollama kurucusunun imzasi dogrulanamadi: calistirilmadi' }; "
+              "Start-Process -FilePath $f -ArgumentList '/SILENT' -Wait; Remove-Item -Recurse -Force $d")
         return [["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps]]
     if E.MAC:
-        return [["sh", "-c", "curl -fsSL https://ollama.com/download/Ollama-darwin.zip -o /tmp/Ollama.zip && "
-                             "unzip -qo /tmp/Ollama.zip -d /Applications && open -a Ollama"]]
+        return [["sh", "-c", "set -e; d=$(mktemp -d); trap 'rm -rf \"$d\"' EXIT; "
+                             "curl -fsSL https://ollama.com/download/Ollama-darwin.zip -o \"$d/Ollama.zip\"; "
+                             "unzip -q \"$d/Ollama.zip\" -d \"$d/x\"; "
+                             "codesign --verify --deep --strict \"$d/x/Ollama.app\"; "
+                             "ditto \"$d/x/Ollama.app\" /Applications/Ollama.app; open -a Ollama"]]
     return [["sh", "-c", "curl -fsSL https://ollama.com/install.sh | sh"]]
 
 
@@ -346,7 +357,7 @@ def pull_model(eng, name: str, wait: bool = False) -> bool:
 
 def voice_setup(eng, gpu: bool, wait: bool = False) -> bool:
     def work(pct):
-        cmd = [_uv(), "sync", "--directory", str(eng.code_root()), "--extra", "voice"] + (["--extra", "voice-gpu"] if gpu else [])
+        cmd = [_uv(), "sync", "--inexact", "--directory", str(eng.code_root()), "--extra", "voice"] + (["--extra", "voice-gpu"] if gpu else [])
         if E._run_stream(cmd, eng.log):
             raise RuntimeError("ses kütüphaneleri kurulamadı")
         pct(70)

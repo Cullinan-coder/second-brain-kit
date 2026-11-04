@@ -9,11 +9,13 @@ modele "özetle" denir, içindeki talimatlar uygulanmaz; not kasaya git commit +
 from __future__ import annotations
 
 import html
+import http.client
 import ipaddress
 import json
 import re
 import socket
 import subprocess
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date
@@ -58,8 +60,9 @@ def _ip_blocked(ip: str) -> bool:
             or (a.version == 4 and a in _CGNAT))
 
 
-def check_public_url(url: str) -> str:
-    """Yalnız http(s) ve çözümlenen TÜM adresleri herkese açık olan adreslere izin verir (SSRF koruması)."""
+def resolve_public(url: str) -> tuple[urllib.parse.SplitResult, str]:
+    """(ayrıştırılmış adres, doğrulanmış IP). Yalnız http(s); çözümlenen TÜM adresler herkese açık olmalı.
+    Bağlantı bu IP'ye yapılır (yeniden çözümleme yok): DNS rebinding (D-18) kapalı."""
     u = urllib.parse.urlsplit((url or "").strip())
     if u.scheme not in ("http", "https") or not u.hostname:
         raise UnsafeUrl("yalnız http(s) adreslerine izin var")
@@ -72,23 +75,68 @@ def check_public_url(url: str) -> str:
     for info in infos:
         if _ip_blocked(info[4][0]):
             raise UnsafeUrl("özel/yerel ağ adreslerine erişim yok")
+    return u, infos[0][4][0]
+
+
+def check_public_url(url: str) -> str:
+    """Yalnız http(s) ve çözümlenen TÜM adresleri herkese açık olan adreslere izin verir (SSRF koruması)."""
+    resolve_public(url)
     return url
 
 
 class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """(Eski yol; `_get` artık kullanmaz.) Yönlendirme hedefini denetler."""
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         check_public_url(newurl)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    """Bağlantıyı doğrulanmış IP'ye açar; Host başlığı ve (HTTPS'te) SNI/sertifika denetimi alan adıyla kalır."""
+    def __init__(self, host, ip, **kw):
+        super().__init__(host, **kw)
+        self._pin_ip = ip
+
+    def connect(self):
+        self.sock = socket.create_connection((self._pin_ip, self.port), self.timeout)
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, host, ip, **kw):
+        super().__init__(host, **kw)
+        self._pin_ip = ip
+
+    def connect(self):
+        sock = socket.create_connection((self._pin_ip, self.port), self.timeout)
+        self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+
+
+MAX_REDIRECTS = 5
+
+
 def _get(url: str, limit: int = 3_000_000) -> str:
-    check_public_url(url)
-    req = urllib.request.Request(url, headers=UA)
-    opener = urllib.request.build_opener(_SafeRedirect)
-    with opener.open(req, timeout=30) as r:
-        raw = r.read(min(limit, MAX_DOWNLOAD))
-        enc = r.headers.get_content_charset() or "utf-8"
-    return raw.decode(enc, "replace")
+    """İçeriği indirir. Her adımda (ilk istek + her yönlendirme) adres çözülüp doğrulanır ve bağlantı O IP'ye yapılır;
+    ortam proxy'si kullanılmaz (denetimi atlatamaz)."""
+    for _ in range(MAX_REDIRECTS + 1):
+        u, ip = resolve_public(url)
+        cls = _PinnedHTTPSConnection if u.scheme == "https" else _PinnedHTTPConnection
+        conn = cls(u.hostname, ip, port=u.port, timeout=30)
+        try:
+            path = urllib.parse.urlunsplit(("", "", u.path or "/", u.query, ""))
+            host_hdr = u.hostname if u.port in (None, 80, 443) else f"{u.hostname}:{u.port}"
+            conn.request("GET", path, headers={**UA, "Host": host_hdr})
+            r = conn.getresponse()
+            if r.status in (301, 302, 303, 307, 308) and r.getheader("Location"):
+                url = urllib.parse.urljoin(url, r.getheader("Location"))
+                continue
+            if r.status >= 400:
+                raise urllib.error.HTTPError(url, r.status, r.reason, r.headers, None)
+            raw = r.read(min(limit, MAX_DOWNLOAD))
+            enc = r.headers.get_content_charset() or "utf-8"
+            return raw.decode(enc, "replace")
+        finally:
+            conn.close()
+    raise UnsafeUrl("çok fazla yönlendirme")
 
 
 def youtube(video_id: str) -> tuple[str, str, str]:

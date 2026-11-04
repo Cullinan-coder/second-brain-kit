@@ -26,8 +26,11 @@ def push_status(ctx: Ctx) -> dict:
 def push_subscribe(ctx: Ctx) -> dict:
     if not mobile.push_available():
         return {"available": False, "ok": False}
-    if not mobile.subscribe(ctx.arg("subscription")):
-        raise ApiError(400, "geçersiz abonelik")
+    if not ctx.device:                                           # D-27: abonelik eşlenmiş cihaza bağlı
+        raise ApiError(403, "abonelik için eşlenmiş cihaz gerekir")
+    ok, why = mobile.subscribe(ctx.arg("subscription"), ctx.device)
+    if not ok:
+        raise ApiError(400, why or "geçersiz abonelik")
     return {"available": True, "ok": True, "subscriptions": len(mobile.subscriptions())}
 
 

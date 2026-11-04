@@ -37,18 +37,27 @@ MAX_CHARS = 100_000               # dosya başına saklanan metin
 TEXT_HEAD = 300_000               # düz metin dosyalarında okunacak bayt
 
 
-MAX_UNZIPPED = 200 * 1024 * 1024  # docx/pptx/xlsx: toplam açılmış boyut sınırı (zip bombası)
+MAX_UNZIPPED = 200 * 1024 * 1024  # docx/pptx/xlsx/zip: toplam açılmış boyut sınırı (zip bombası)
 MAX_ZIP_FILES = 5000
+MAX_MEMBER = 100 * 1024 * 1024    # tek üye sınırı
+MAX_RATIO = 200                   # sıkıştırma oranı sınırı (büyük üyelerde); düz metin ~10x, sıfır dolgu ~1000x
+RATIO_MIN_SIZE = 20 * 1024 * 1024
 
 
 def guard_zip(p: Path) -> None:
-    """Açmadan önce zip üst bilgisini denetler: toplam açılmış boyut ya da dosya sayısı aşılırsa ValueError."""
+    """Açmadan önce zip üst bilgisini denetler: toplam açılmış boyut, tek üye boyutu, sıkıştırma oranı ya da dosya sayısı
+    aşılırsa ValueError (D-28)."""
     with zipfile.ZipFile(p) as zf:
         infos = zf.infolist()
         if len(infos) > MAX_ZIP_FILES:
             raise ValueError(f"zip çok fazla dosya içeriyor ({len(infos)}): çıkarma kesildi")
         if sum(i.file_size for i in infos) > MAX_UNZIPPED:
             raise ValueError("zip açılmış boyutu sınırı aşıyor: çıkarma kesildi")
+        for i in infos:
+            if i.file_size > MAX_MEMBER:
+                raise ValueError(f"zip üyesi çok büyük ({i.filename}): çıkarma kesildi")
+            if i.file_size > RATIO_MIN_SIZE and i.file_size > MAX_RATIO * max(i.compress_size, 1):
+                raise ValueError(f"zip sıkıştırma oranı şüpheli ({i.filename}): zip bombası olabilir, çıkarma kesildi")
 
 
 def _pdf(p: Path) -> str:

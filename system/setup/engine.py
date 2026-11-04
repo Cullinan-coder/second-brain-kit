@@ -235,6 +235,54 @@ def make_stub_app(dest: Path, system: Path) -> Path:
     return dest
 
 
+def cli_shim_text(code: Path, vault: Path | None, data: Path, plat: str) -> str:
+    """`sb` komutu için başlatıcı içeriği: hangi klasörde olursan ol `sb <komut>` çalışır (göreli yol argümanları korunur)."""
+    if plat == "win32":
+        py = Path(code) / ".venv" / "Scripts" / "python.exe"
+        lines = ["@echo off", "setlocal", f'set "PYTHONPATH={code};%PYTHONPATH%"']
+        if vault:
+            lines.append(f'set "SB_VAULT={vault}"')
+        lines += [f'set "SB_DATA={data}"', f'"{py}" -X utf8 -m sb %*']
+        return "\r\n".join(lines) + "\r\n"
+    q = lambda v: "'" + str(v).replace("'", "'\\''") + "'"
+    py = Path(code) / ".venv" / "bin" / "python"
+    env = [f"PYTHONPATH={q(code)}\"${{PYTHONPATH:+:$PYTHONPATH}}\"", f"SB_DATA={q(data)}"] + ([f"SB_VAULT={q(vault)}"] if vault else [])
+    return "#!/bin/sh\n" + "".join(f"export {e}\n" for e in env) + f"exec {q(py)} -X utf8 -m sb \"$@\"\n"
+
+
+def cli_shim_dir(data: Path, plat: str) -> Path:
+    return Path(data) / "bin" if plat == "win32" else Path.home() / ".local" / "bin"
+
+
+def install_cli_shim(code: Path, vault: Path | None, data: Path, plat: str, sandbox: bool = False) -> str:
+    """`sb` başlatıcısını yazar ve (Windows) klasörünü kullanıcı PATH'ine ekler. Hata kurulumu durdurmaz: mesaj döner."""
+    d = cli_shim_dir(data, plat)
+    name = "sb.cmd" if plat == "win32" else "sb"
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        f = d / name
+        f.write_text(cli_shim_text(code, vault, data, plat), encoding="utf-8", newline="")
+        if plat != "win32":
+            f.chmod(0o755)
+    except OSError as e:
+        return f"`sb` komutu yazılamadı: {e}"
+    if sandbox:
+        return f"[deneme] `sb` başlatıcısı yazıldı ({d / name}); PATH değiştirilmedi"
+    if plat == "win32":
+        # Kayıt defterinden açılmamış (%DEĞİŞKEN%'li) haliyle oku, ExpandString türünü koruyarak yaz; değişikliği duyur.
+        ps = ("$d='" + str(d).replace("'", "''") + "'; $k=[Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment',$true); "
+              "$p=[string]$k.GetValue('Path','',[Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames); "
+              "if(-not (($p -split ';') -contains $d)){ $k.SetValue('Path', (($p.TrimEnd(';')), $d -join ';').TrimStart(';'), "
+              "[Microsoft.Win32.RegistryValueKind]::ExpandString); "
+              "[Environment]::SetEnvironmentVariable('SB_PATH_REFRESH','1','User'); [Environment]::SetEnvironmentVariable('SB_PATH_REFRESH',$null,'User') }; $k.Close()")
+        rc, out = _run_capture(["powershell", "-NoProfile", "-NonInteractive", "-Command", ps], 30)
+        if rc != 0:
+            return f"`sb` başlatıcısı yazıldı ({d / name}) ama PATH'e eklenemedi: {out.strip()[:120]}"
+        return f"`sb` komutu hazır ({d / name}); yeni açılan terminallerde `sb <komut>` yaz"
+    on_path = str(d) in os.environ.get("PATH", "").split(os.pathsep)
+    return f"`sb` komutu hazır ({d / name})" + ("" if on_path else f"; {d} PATH'te değil: kabuk ayarına `export PATH=\"{d}:$PATH\"` ekle")
+
+
 def shortcut_script(prog: str, args: list[str], cwd: str) -> str:
     """PowerShell: masaüstü + Başlat menüsü (kullanıcı) klasörüne `Second Brain.lnk` yazar (OneDrive'a taşınmış masaüstünü de bulur)."""
     q = lambda s: "'" + str(s).replace("'", "''") + "'"       # noqa: E731
@@ -1300,7 +1348,7 @@ class Engine:
             self.log(line)
             if str(line).strip() and not str(line).startswith("$ "):
                 tail.append(str(line).strip())
-        if _run_stream([uv, "sync", "--directory", str(sysd)], lg, sysd):
+        if _run_stream([uv, "sync", "--inexact", "--directory", str(sysd)], lg, sysd):
             last = redact(" | ".join(tail[-3:]), self._secrets)[:300]
             raise RuntimeError("uv sync başarısız" + (f": {last}" if last else ""))
         if (sysd / "tools" / "install_cli.py").exists():
@@ -1374,12 +1422,14 @@ class Engine:
             else:
                 dest = make_stub_app(launcher_path(self.data, plat), self.code_root())
                 self.log(f"  başlatıcı uygulama yazıldı: {dest}")
+            self.log("  " + install_cli_shim(self._system(), self.vault, self.data, plat, sandbox=bool(self.sandbox)))
             return
         prog, args, cwd = autostart.launch_command(self, False, plat)
         rc, out = _run_capture(["powershell", "-NoProfile", "-Command", shortcut_script(prog, args, cwd)], 30)
         if rc != 0:
             raise RuntimeError("kısayol oluşturulamadı: " + out.strip()[:200])
         self.log(f"  masaüstü + Başlat menüsü kısayolu: {APP_NAME} → {prog}")
+        self.log("  " + install_cli_shim(self._system(), self.vault, self.data, plat, sandbox=bool(self.sandbox)))
 
     # -- özet ekranı için ayrıntılı durum (sırlar: yalnız ADLAR)
     def summary(self) -> dict:

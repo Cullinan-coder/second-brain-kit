@@ -33,7 +33,14 @@ dependencies = [
 [project.optional-dependencies]
 voice = ["faster-whisper>=1.1", "av>=15,<18"]   # yerel konuşma → yazı (sb voice --setup); av 19 faster-whisper ile uyumsuz
 media = ["yt-dlp>=2025.1"]               # video/podcast dökümü (altyazısı olmayanlar)
-voice-gpu = ["nvidia-cublas-cu12", "nvidia-cudnn-cu12>=9,<10"]   # NVIDIA ekran kartında Whisper (~8 kat hızlı); yoksa işlemci
+# NVIDIA ekran kartında Whisper (~8 kat hızlı); yoksa işlemci. cublas 12.9.3.13 yalnız Linux tekerleğiyle yayınlandı:
+# Windows'ta paket bulunamayıp `uv sync` duruyordu → <12.9.3. macOS'ta NVIDIA yok, kurulmaz.
+voice-gpu = ["nvidia-cublas-cu12>=12.4,<12.9.3; sys_platform == 'win32' or sys_platform == 'linux'",
+             "nvidia-cudnn-cu12>=9,<10; sys_platform == 'win32' or sys_platform == 'linux'"]
+
+[dependency-groups]
+# Yayın derlemesi (kit/release.yml) kilit dosyasından kurar: uv export --frozen --group build | pip install --require-hashes
+build = ["pyinstaller>=6", "pywebview>=5", "pillow>=10", "send2trash>=1.8"]
 
 [tool.uv]
 package = false

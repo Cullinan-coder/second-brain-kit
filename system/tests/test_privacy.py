@@ -1,4 +1,5 @@
 """Paket G: gizlilik paneli, bulut süzgeci, şifreleme (sahte şifre), denetim, izinler, yedek/geri yükleme, dışa aktarma, enjeksiyon kalkanı."""
+import io
 import json
 import zipfile
 from datetime import datetime
@@ -88,7 +89,8 @@ def test_encrypt_requires_confirm_and_backs_up(env, monkeypatch):
     assert r["encrypted"] == 2
     assert not (env / "40-Kaynaklar" / "a.md").exists() and (env / "40-Kaynaklar" / "a.md.enc").exists()
     assert (env / "50-Günlük" / "g.md").exists()
-    with zipfile.ZipFile(pv.BACKUPS / r["backup"]) as zf:
+    assert r["backup"].endswith(".zip.enc") and not list(pv.BACKUPS.glob("*.zip"))          # D-10: düz zip diske yazılmaz
+    with zipfile.ZipFile(io.BytesIO(fake_cipher()[1]((pv.BACKUPS / r["backup"]).read_bytes()))) as zf:
         assert zf.read("40-Kaynaklar/a.md").endswith("merhaba".encode())
     d = pv.decrypt_folder("40-Kaynaklar", confirm=True)
     assert d["decrypted"] == 2 and "merhaba" in (env / "40-Kaynaklar" / "a.md").read_text(encoding="utf-8")
@@ -134,7 +136,8 @@ def test_permissions(env):
 
 
 # ---- 244 yedek / geri yükleme
-def test_backups_and_restore(env):
+def test_backups_and_restore(env, monkeypatch):
+    monkeypatch.setattr(pv, "_cipher", fake_cipher)                  # gerçek anahtar zincirine dokunma
     code, d = call("POST", "/api/v2/backups/create", {})
     assert code == 200 and d["created"][0].startswith("vault-")
     lst = call("GET", "/api/v2/backups")[1]
@@ -145,7 +148,8 @@ def test_backups_and_restore(env):
     assert r["dry_run"] and a.read_text(encoding="utf-8") == "DEĞİŞTİ"
     r = pv.restore(name, confirm=True)
     assert r["restored"] >= 3 and "merhaba" in a.read_text(encoding="utf-8")
-    with zipfile.ZipFile(pv.BACKUPS / r["pre_backup"]) as zf:       # önce mevcut durum yedeklendi
+    assert r["pre_backup"].endswith(".zip.enc")
+    with zipfile.ZipFile(io.BytesIO(fake_cipher()[1]((pv.BACKUPS / r["pre_backup"]).read_bytes()))) as zf:       # önce mevcut durum yedeklendi
         assert zf.read("40-Kaynaklar/a.md").decode() == "DEĞİŞTİ"
     assert pv.restore("../yok.zip")["ok"] is False
     assert pv.restore_cli([name]) == 0

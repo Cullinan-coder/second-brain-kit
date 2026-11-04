@@ -19,7 +19,7 @@ from email.policy import default as _policy
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import capture, config
+from . import capture, config, filelock
 from .redact import redact
 
 _lock = threading.Lock()
@@ -149,14 +149,27 @@ def subscriptions() -> list[dict]:
 
 def _save_subs(rows: list[dict]) -> None:
     config.DATA.mkdir(parents=True, exist_ok=True)
-    _subs_path().write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+    filelock.atomic_write(_subs_path(), json.dumps(rows, ensure_ascii=False))
+
+
+PUSH_HOSTS = ("fcm.googleapis.com", "updates.push.services.mozilla.com", "push.services.mozilla.com",
+              "push.apple.com", "notify.windows.com")          # bilinen web-push hizmetleri (FCM, Mozilla, Apple, Windows) — D-27
+MAX_SUBS, MAX_SUBS_PER_DEVICE = 20, 3
+
+
+def push_host_ok(host: str) -> bool:
+    h = (host or "").lower().rstrip(".")
+    return any(h == d or h.endswith("." + d) for d in PUSH_HOSTS)
 
 
 def valid_subscription(sub) -> dict | None:
     if not isinstance(sub, dict):
         return None
     ep, keys = str(sub.get("endpoint") or ""), sub.get("keys") or {}
-    if urlparse(ep).scheme != "https" or len(ep) > 1000 or not isinstance(keys, dict):
+    u = urlparse(ep)
+    if u.scheme != "https" or len(ep) > 1000 or not isinstance(keys, dict) or u.username or u.password or u.port not in (None, 443):
+        return None
+    if not push_host_ok(u.hostname or ""):                         # keyfi uç noktaya bildirim yönlendirilemez (D-27)
         return None
     p256, auth = str(keys.get("p256dh") or ""), str(keys.get("auth") or "")
     if not re.fullmatch(r"[\w-]{20,200}={0,2}", p256) or not re.fullmatch(r"[\w-]{8,100}={0,2}", auth):
@@ -164,18 +177,29 @@ def valid_subscription(sub) -> dict | None:
     return {"endpoint": ep, "keys": {"p256dh": p256, "auth": auth}}
 
 
-def subscribe(sub) -> bool:
+def subscribe(sub, device: str = "") -> tuple[bool, str]:
+    """(başarılı, neden). Abonelik eşlemeli cihaza bağlanır; cihaz başına en çok MAX_SUBS_PER_DEVICE, toplam MAX_SUBS.
+    Tavan dolunca BAŞKA cihazların kayıtları atılmaz (eski davranış son 20'yi tutarak gerçek abonelikleri düşürüyordu)."""
     s = valid_subscription(sub)
     if not s:
-        return False
-    with _lock:
-        rows = [r for r in subscriptions() if r.get("endpoint") != s["endpoint"]] + [s]
-        _save_subs(rows[-20:])
-    return True
+        return False, "geçersiz abonelik (uç nokta bilinen bir push hizmetine ait olmalı)"
+    if not device:
+        return False, "eşlenmiş cihaz gerekir"
+    s["device"] = device
+    with _lock, filelock.locked(_subs_path()):
+        rows = [r for r in subscriptions() if r.get("endpoint") != s["endpoint"]]
+        mine = [r for r in rows if r.get("device") == device]
+        if len(mine) >= MAX_SUBS_PER_DEVICE:                       # kendi eskisini düşür
+            drop = mine[0]
+            rows.remove(drop)
+        if len(rows) >= MAX_SUBS:
+            return False, "abonelik sınırı doldu"
+        _save_subs(rows + [s])
+    return True, ""
 
 
 def unsubscribe(endpoint: str) -> int:
-    with _lock:
+    with _lock, filelock.locked(_subs_path()):
         rows = subscriptions()
         keep = [r for r in rows if r.get("endpoint") != endpoint]
         if len(keep) != len(rows):

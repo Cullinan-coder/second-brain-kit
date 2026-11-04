@@ -2,6 +2,33 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.12.0 — 2026-11-04
+
+### Güvenlik (denetim 2026-11, ikinci tur: D-10, D-13, D-18, D-20, D-22, D-23, D-25, D-27, D-28, D-29)
+- **Yedekler artık gerçekten şifreli (D-10):** kasa yedekleri kasa anahtarıyla (`vault-key`) `~/.secondbrain/backups/vault-*.zip.enc` olarak yazılır; düz metin zip diske hiç düşmez
+  (şifreleme öncesi yedeği, geri yükleme öncesi `onceki-*` yedeği dahil). `sb restore` hem `.zip.enc` hem eski `.zip` yedekleri okur. Şifreleme (cryptography/keyring) yoksa ya da anahtar okunamıyorsa
+  **düz yedek ALINMAZ**, nedeni söylenir. **Etkisi:** yedeği açmak anahtarı ister; `sb vault-key --export <dosya>` ile anahtarı ayrıca sakla (önceki sürümün «yedekler şifreli» notu o zaman eksikti, şimdi doğru).
+  Kod yedeği `system-*.zip` not içermez, düz kalır (`sb update --rollback` okur). **Eski düz zip'ler** (`vault-*.zip`, 0.11 ve öncesi) diskte durur: kontrol edip Geri Dönüşüm Kutusu'na at.
+- **Şifreleme git geçmişini uyarır (D-10):** `sb vault-encrypt` / `sb encrypt` sonunda klasörün düz metin notları git geçmişinde duruyorsa kaç not ve hangi commit aralığı olduğunu açıkça yazar.
+  Geçmişi temizlemek ayrı ve onaylı: `sb encrypt --purge-history <klasör>` (yalnız anlatır) / `... --confirm` (çalıştırır). Önce kasanın **tam şifreli yedeğini** (zip + git paketi) alır,
+  `git filter-repo` yoksa çalışmaz ve nasıl kurulacağını söyler; düz not kaldıysa ya da commit edilmemiş değişiklik varsa reddeder. Geçmişi yeniden yazar: sonrasında uzak depoya **zorla push** gerekir,
+  diğer cihazlarda kasa yeniden klonlanmalıdır. Hiçbir zaman otomatik çalışmaz.
+- **Haftalık şifreli yedek + `sb backup` + doktor:** haftalık görev (Pazar 15:00, `sb weekly`) şifreli tam kasa yedeği alır, son **8**'ini tutar (`config/gizlilik.yaml` → `backup_keep`);
+  yalnız `vault-tum-*.zip.enc` budanır. `sb backup` elle alır (budamaz). `sb doctor` «Kasa yedeği: N gün önce» gösterir; **14 günden eskiyse ya da hiç yoksa ✗**.
+- **Yayın zinciri (D-13):** `release.yml` kilit dosyasından kurar (`uv export --frozen --group build` + `pip --require-hashes`; `pyproject.toml`a `build` bağımlılık grubu, `uv.lock` yalnız eklemeyle güncellendi),
+  GitHub Actions adımları tam commit SHA'sına sabit (yorumda sürüm etiketi), yazma izni yalnız etiketle çalışan ayrı `publish` işinde; sürüme Setup.exe ve macOS zip için **`SHA256SUMS`** eklenir.
+  `ci.yml` `uv run --frozen`. **`install.ps1` / `install.sh` indirdiği Setup dosyasını `SHA256SUMS` ile doğrular; uyuşmazsa ya da özet dosyası yoksa dosyayı siler ve durur** (özetsiz eski sürümler artık otomatik kurulmaz).
+- **SSRF / DNS rebinding (D-18):** `sb capture` ve «beyne at» bağlantı indirirken adresi bir kez çözüp doğrular ve bağlantıyı doğrulanan IP'ye yapar (Host/SNI alan adı kalır); her yönlendirme adımı yeniden doğrulanır, ortam proxy'si kullanılmaz.
+- **Süreçler arası kilit + atomik yazma (D-20):** yeni `sb/filelock.py`. Onay kaydı (`pending_approvals.jsonl`), otomasyon kuralları/durumu, telefon eşleme jetonları, push abonelikleri, asistan kural/hafıza notları,
+  `note_update` eklemeleri ve bellek notu ekleme kilit altında okunup yazılır; dosyalar geçici dosya + fsync + `os.replace` ile yazılır (yarım yazma dosyayı bozmaz). `sb daily` ile arayüz aynı anda onay kaydına dokunsa kayıt kaybolmaz.
+- **Ollama kurulumu (D-22):** macOS'ta ortak `/tmp` yerine `mktemp -d`, `codesign --verify` geçmeden kurmaz; Windows'ta kurucu özel dizine iner ve Authenticode imzası geçerli + imzalayan «Ollama» değilse **çalıştırılmaz, silinir**.
+- **Telefon eşleme (D-23):** yanlış deneme kilidi **istemci IP'si başına** (tailnet'teki bir cihaz gerçek eşlemeyi kilitleyemez), kod **10 dakika** geçerli (süresi dolunca yenilenir; ekranda görünen kod da), sayaçlar kilitli; tüm istemcilerden toplam 30 yanlışta kod yenilenir.
+- **`schedule.ps1` (D-25):** Syncthing yalnız bilinen kurulum yollarından/PATH'ten alınır (ev klasöründe «ilk bulunan» artık çalıştırılmaz: **elle başka yere kurduysan** görev kaydedilmez, `syncthing`i PATH'e ekle); yoldaki tek tırnak (`O'Brien`) doğru kaçırılır.
+- **Push aboneliği (D-27):** uç nokta alan adı yalnız bilinen push hizmetleri (FCM, Mozilla, Apple, Windows); abonelik eşlenmiş cihaza bağlı, cihaz başına en çok 3, toplam 20; tavan dolunca başkasının kaydı atılmaz.
+- **Yükleme ve zip bombası (D-28):** aynı anda en çok 2 yükleme (fazlası 429); `guard_zip`: toplam açılmış boyut 200 MB, tek üye 100 MB, sıkıştırma oranı 200x (büyük üyelerde), 5000 dosya; ChatGPT/Takeout geçmiş zip'i ve LinkedIn zip'i de denetlenir.
+- **Atlatma testleri (D-29):** `sb security-test` artık modelden bağımsız kural katmanını da sınar: 48 komut sınıflandırıcı atlatması (D-01/D-09) + mail bağlamında modelin uyduğu 7 senaryo (komut, kural, hafıza, not, arşiv, kutu) — hepsi onay kartına düşmeli.
+  `tests/test_audit_2026_11_b.py` (75 test) bu turdaki bulguların saldırı yollarını yeniden üretir.
+
 ## 0.11.1 — 2026-11-04
 
 - Nashi kurulumu Başlat menüsüne kısayol ekliyor (taşınabilir zip'te kısayol yoktu, uygulama aramada bulunamıyordu).
@@ -120,7 +147,7 @@ Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; 
 - **Bulut süzgeci:** API anahtarı, şifre ataması, OTP içeren metin buluta gitmez; uzun belgelerde karar bütün metne göre; bulut sohbet modeli
   hassas içerikte yerele düşer.
 - **SSRF:** URL çekme ve video dökümü yerel/özel ağ adreslerine gitmez, 50 MB sınırı.
-- **Şifreleme:** anahtar okunamazsa yenisi üretilmez (eski notlar kilitlenmesin), `sb vault-key --export`, yedekler de şifreli.
+- **Şifreleme:** anahtar okunamazsa yenisi üretilmez (eski notlar kilitlenmesin), `sb vault-key --export`, yedekler de şifreli (düzeltme 0.12.0: o sürümde yalnız şifreleme öncesi yedeğin ek bir şifreli kopyası yazılıyor, düz zip de kalıyordu; `create_backup` düz zip üretiyordu — 0.12.0'da tüm kasa yedekleri `.zip.enc`).
 - **Diğer:** zip bombası sınırı, geri yüklemede yol denetimi, kaldırmada sırların listelenmesi, ajan kum havuzunda sembolik bağ, `brain_note` gizli notlar,
   derin analizde ek sır dosyası desenleri, güncellemede önce özet + onay (`sb update --yes`, `--tags-only`), negatif istek uzunluğu, oturum sınırı.
 - **Testler gerçek sisteme dokunamaz:** kurulum motoru komutları ve şifre kasası testte kilitli.

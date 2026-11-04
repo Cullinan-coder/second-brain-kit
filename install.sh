@@ -22,30 +22,54 @@ download_setup() {   # indirilen zip yolunu yazdırır; olmazsa 1 döner
   local tmp; tmp="$(mktemp -d)"
   if command -v gh >/dev/null 2>&1; then
     echo "gh CLI ile son sürüm indiriliyor ($REPO)..." >&2
-    if gh release download --repo "$REPO" --pattern "$ASSET" --dir "$tmp" --clobber >&2 && [ -f "$tmp/$ASSET" ]; then
+    if gh release download --repo "$REPO" --pattern "$ASSET" --pattern SHA256SUMS --dir "$tmp" --clobber >&2 && [ -f "$tmp/$ASSET" ]; then
       echo "$tmp/$ASSET"; return 0
     fi
   fi
   local token="${SB_GH_TOKEN:-${GITHUB_TOKEN:-}}"
   if [ -n "$token" ] && command -v python3 >/dev/null 2>&1; then
     echo "GitHub API ile son sürüm indiriliyor ($REPO)..." >&2
-    local json url
+    local json url sums_url
     json="$(curl -fsSL -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$REPO/releases/latest")" || json=""
-    url="$(printf '%s' "$json" | ASSET="$ASSET" python3 -c 'import json,os,sys
+    url="$(printf '%s' "$json" | NAME="$ASSET" python3 -c 'import json,os,sys
 try:
     d=json.load(sys.stdin)
-    print(next((a["url"] for a in d.get("assets",[]) if a["name"]==os.environ["ASSET"]),""))
+    print(next((a["url"] for a in d.get("assets",[]) if a["name"]==os.environ["NAME"]),""))
+except Exception:
+    print("")')"
+    sums_url="$(printf '%s' "$json" | NAME="SHA256SUMS" python3 -c 'import json,os,sys
+try:
+    d=json.load(sys.stdin)
+    print(next((a["url"] for a in d.get("assets",[]) if a["name"]==os.environ["NAME"]),""))
 except Exception:
     print("")')"
     if [ -n "$url" ] && curl -fsSL -H "Authorization: Bearer $token" -H "Accept: application/octet-stream" "$url" -o "$tmp/$ASSET"; then
+      [ -z "$sums_url" ] || curl -fsSL -H "Authorization: Bearer $token" -H "Accept: application/octet-stream" "$sums_url" -o "$tmp/SHA256SUMS" || true
       echo "$tmp/$ASSET"; return 0
     fi
   fi
   return 1
 }
 
+verify_setup() {   # $1 = indirilen dosya; yanındaki SHA256SUMS ile SHA-256 doğrular (D-13). Uyuşmazsa/özet yoksa dosyayı SİLER, 1 döner
+  local f="$1" dir name want="" got=""
+  dir="$(dirname "$f")"; name="$(basename "$f")"
+  if [ -f "$dir/SHA256SUMS" ]; then
+    want="$(tr -d '\r' < "$dir/SHA256SUMS" | awk -v n="$name" '{ f=$2; sub(/^\*/, "", f); if (f==n) print tolower($1) }' | head -n1)"
+  fi
+  if command -v sha256sum >/dev/null 2>&1; then got="$(sha256sum "$f" | awk '{print tolower($1)}')"
+  else got="$(shasum -a 256 "$f" | awk '{print tolower($1)}')"; fi
+  if [ -z "$want" ] || [ "$want" != "$got" ]; then rm -f "$f"; return 1; fi
+  return 0
+}
+
 if [ "$(uname -s)" = "Darwin" ] && [ "$WANT_CLI" = 0 ] && [ "$WANT_SOURCE" = 0 ] && [ "${#REST[@]}" = 0 ]; then
   if ZIP="$(download_setup)"; then
+    if ! verify_setup "$ZIP"; then
+      echo "HATA: Setup dosyasının SHA-256 özeti sürümdeki SHA256SUMS ile eşleşmedi (ya da SHA256SUMS yok). Dosya silindi, çalıştırılmadı." >&2
+      exit 1
+    fi
+    echo "SHA-256 doğrulandı."
     DEST="$HOME/Desktop/Second Brain Setup.app"
     rm -rf "$DEST"
     ditto -x -k "$ZIP" "$HOME/Desktop"

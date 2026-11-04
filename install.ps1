@@ -22,7 +22,7 @@ function Get-SetupFromRelease {
     if (Get-Command gh -ErrorAction SilentlyContinue) {
         Write-Host "gh CLI ile son surum indiriliyor ($repo)..."
         try {
-            gh release download --repo $repo --pattern $assetPattern --dir $tmp --clobber
+            gh release download --repo $repo --pattern $assetPattern --pattern "SHA256SUMS" --dir $tmp --clobber
             $f = Get-ChildItem $tmp -Filter "Second-Brain-Setup*.exe" | Select-Object -First 1
             if ($f) { return $f.FullName }
         } catch { Write-Host "gh ile indirilemedi: $($_.Exception.Message)" }
@@ -39,6 +39,8 @@ function Get-SetupFromRelease {
                 $out = Join-Path $tmp $asset.name
                 $h2 = @{ Authorization = "Bearer $token"; Accept = "application/octet-stream"; "User-Agent" = "second-brain-installer" }
                 Invoke-WebRequest -Uri $asset.url -Headers $h2 -OutFile $out -UseBasicParsing
+                $sums = $rel.assets | Where-Object { $_.name -eq "SHA256SUMS" } | Select-Object -First 1
+                if ($sums) { Invoke-WebRequest -Uri $sums.url -Headers $h2 -OutFile (Join-Path $tmp "SHA256SUMS") -UseBasicParsing }
                 return $out
             }
             Write-Host "Son surumde $assetPattern bulunamadi."
@@ -47,9 +49,32 @@ function Get-SetupFromRelease {
     return $null
 }
 
+function Test-SetupHash([string]$exe) {
+    # Indirilen Setup dosyasini ayni klasordeki SHA256SUMS ile dogrular (D-13). Eslesmezse / ozet yoksa dosyayi SILER ve $false doner.
+    $sumsFile = Join-Path (Split-Path $exe -Parent) "SHA256SUMS"
+    $name = Split-Path $exe -Leaf
+    $want = $null
+    if (Test-Path -LiteralPath $sumsFile) {
+        foreach ($ln in Get-Content -LiteralPath $sumsFile) {
+            if ($ln -match '^([0-9a-fA-F]{64})\s+\*?(.+?)\s*$' -and $Matches[2] -eq $name) { $want = $Matches[1].ToLower() }
+        }
+    }
+    $got = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.ToLower()
+    if (-not $want -or $got -ne $want) {
+        Remove-Item -Force -LiteralPath $exe -ErrorAction SilentlyContinue
+        return $false
+    }
+    return $true
+}
+
 if (-not $wantCli -and -not $wantSource -and $rest.Count -eq 0) {
     $exe = Get-SetupFromRelease
     if ($exe) {
+        if (-not (Test-SetupHash $exe)) {
+            Write-Host "HATA: Setup dosyasinin SHA-256 ozeti surumdeki SHA256SUMS ile eslesmedi (ya da SHA256SUMS yok). Dosya silindi, calistirilmadi."
+            exit 1
+        }
+        Write-Host "SHA-256 dogrulandi."
         $desktop = [Environment]::GetFolderPath("Desktop")
         $dest = Join-Path $desktop "Second Brain Setup.exe"
         Copy-Item -Force $exe $dest

@@ -44,6 +44,7 @@ class Ctx:
     session: Any = None                             # chat.Session
     respond: Callable[[str], dict] | None = None    # respond(text) → {reply, trace, proposals}; model kilidi çağırana ait
     calendar: Any = None
+    device: str = ""                                # eşlemeli cihaz kimliği (telefon: çerez özeti; bilgisayar: "local"); eşsiz/eşlenmemiş: ""
 
     def arg(self, name: str, default: Any = None) -> Any:
         return self.data.get(name, self.query.get(name, default))

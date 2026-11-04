@@ -1,3 +1,4 @@
+# Güvenlik (D-13): `uses:` tam commit SHA'sına sabit; `uv run --frozen` kilit dosyasındaki sürümlerle çalışır (kilit güncellenmez).
 # Her push'ta Windows ve macOS'ta sıfırdan kurulum + testler (kişisel hesap/anahtar gerektirmez).
 name: test
 on:
@@ -15,8 +16,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
       - name: git kimliği (kasa deposu için)
         run: |
           git config --global user.name "ci"
@@ -37,12 +38,12 @@ jobs:
         shell: bash
         run: |
           cd "$RUNNER_TEMP/vault/_system"
-          uv run python -X utf8 -m pytest -q
+          uv run --frozen python -X utf8 -m pytest -q
       - name: Komut satırı
         shell: bash
         run: |
           cd "$RUNNER_TEMP/vault/_system"
-          uv run python -X utf8 -m sb version
-          uv run python -X utf8 -m sb capture "deneme notu: CI'dan beyne at"
-          uv run python -X utf8 -m sb arsenal
+          uv run --frozen python -X utf8 -m sb version
+          uv run --frozen python -X utf8 -m sb capture "deneme notu: CI'dan beyne at"
+          uv run --frozen python -X utf8 -m sb arsenal
           ls "$RUNNER_TEMP/vault/00-Inbox/Dump"

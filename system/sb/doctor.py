@@ -31,6 +31,23 @@ def _http(url: str, timeout: int = 3) -> int:
         return 0
 
 
+BACKUP_MAX_DAYS = 14
+
+
+def backup_check() -> tuple[str, str, str]:
+    """Son tüm-kasa yedeğinin yaşı: 14 günden eskiyse (ya da hiç yoksa) ✗."""
+    try:
+        from . import privacy
+        lb = privacy.last_backup()
+    except Exception as e:                                       # noqa: BLE001
+        return WARN, "Kasa yedeği kontrol edilemedi", str(e)[:80]
+    if lb is None:
+        return FAIL, "Kasa yedeği: hiç yok", "sb backup (haftalık görev SecondBrain-Weekly de alır); anahtarı da yedekle: sb vault-key --export <dosya>"
+    days = lb["age_days"]
+    label = f"Kasa yedeği: {days:.0f} gün önce ({lb['name']}{'' if lb['encrypted'] else ', ŞİFRESİZ'})"
+    return (OK if days <= BACKUP_MAX_DAYS else FAIL), label, "haftalık görev çalışmıyor olabilir (SecondBrain-Weekly); elle: sb backup"
+
+
 def checks() -> list[tuple[str, str, str]]:
     out: list[tuple[str, str, str]] = []
 
@@ -118,6 +135,7 @@ def checks() -> list[tuple[str, str, str]]:
         add(FAIL, "Yarım kalan güncelleme", "sb update --recover (ya da sb update --rollback)")
     codex = shutil.which("codex")
     add(OK if codex else WARN, "Codex (isteğe bağlı alt ajan)", "npm i -g @openai/codex ve codex login")
+    out.append(backup_check())
     gitdir = VAULT / ".git"
     add(OK if gitdir.exists() else WARN, "Kasa git deposu (geri alma + yedek)", "cd kasa && git init (özel GitHub reposuna bağla)")
     return out

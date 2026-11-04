@@ -133,11 +133,12 @@ def _ctx_string(ctx_in: str) -> str:
 
 
 def _append_line(path: Path, line: str, header: str) -> None:
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(dump_note({"type": "dashboard", "tags": ["dashboard", "asistan"]}, f"# {header}\n\n"), encoding="utf-8")
-    body = path.read_text(encoding="utf-8")
-    path.write_text(body.rstrip() + "\n" + line + "\n", encoding="utf-8")
+    from . import filelock
+    with filelock.locked(path):                                # D-20
+        if not path.exists():
+            filelock.atomic_write(path, dump_note({"type": "dashboard", "tags": ["dashboard", "asistan"]}, f"# {header}\n\n"))
+        body = path.read_text(encoding="utf-8")
+        filelock.atomic_write(path, body.rstrip() + "\n" + line + "\n")
 
 
 @route("GET", "/api/v2/memory")

@@ -13,6 +13,7 @@ import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from . import filelock
 from .config import DATA, SYSTEM, VAULT
 from .notes import dump_note, split_note
 from .config import USER
@@ -136,7 +137,13 @@ def recent(hours: int = 26) -> list[dict]:
 # ---------------------------------------------------------------- işlemler
 def update(query: str, status: str | None = None, append: str | None = None, actor: str = "asistan",
            today: date | None = None) -> str:
+    """Not güncelle. Oku-değiştir-yaz not başına dosya kilidi altında (Obsidian/başka süreç eklemeleri kaybolmasın, D-20)."""
     p = resolve(query)
+    with filelock.locked(p):
+        return _update_locked(p, status, append, actor, today)
+
+
+def _update_locked(p: Path, status: str | None, append: str | None, actor: str, today: date | None) -> str:
     if not _writable(p):
         return f"Hata: {_rel(p)} düzenlenemez (izinli klasör değil)."
     today = today or date.today()
@@ -161,7 +168,7 @@ def update(query: str, status: str | None = None, append: str | None = None, act
     if not changes:
         return f"Değişiklik yok: {_rel(p)}"
     fm["updated"] = today
-    p.write_text(dump_note(fm, body), encoding="utf-8")
+    filelock.atomic_write(p, dump_note(fm, body))
     rel = _rel(p)
     sha = commit([rel], f"{p.stem}: {'; '.join(changes)}")
     log(actor, "güncelle", rel, "; ".join(changes), sha)
@@ -225,13 +232,14 @@ def add_rule(text: str, actor: str = "asistan") -> str:
     text = " ".join(text.split())
     if not text:
         return "Hata: boş kural."
-    if not RULES_NOTE.exists():
-        RULES_NOTE.write_text("---\ntype: dashboard\ntags: [dashboard, asistan]\n---\n# Asistan kuralları\n\n"
-                              f"kullanıcının ({USER}) asistana öğrettikleri. Asistan her konuşmada bunları okur; elle de düzenleyebilirsin.\n\n", encoding="utf-8")
-    body = RULES_NOTE.read_text(encoding="utf-8")
-    if _fold(text) in _fold(body):
-        return "Bu kural zaten kayıtlı."
-    RULES_NOTE.write_text(body.rstrip() + f"\n- {text} _(eklendi {date.today():%Y-%m-%d})_\n", encoding="utf-8")
+    with filelock.locked(RULES_NOTE):                          # süreçler arası oku-değiştir-yaz (D-20)
+        if not RULES_NOTE.exists():
+            filelock.atomic_write(RULES_NOTE, "---\ntype: dashboard\ntags: [dashboard, asistan]\n---\n# Asistan kuralları\n\n"
+                                  f"kullanıcının ({USER}) asistana öğrettikleri. Asistan her konuşmada bunları okur; elle de düzenleyebilirsin.\n\n")
+        body = RULES_NOTE.read_text(encoding="utf-8")
+        if _fold(text) in _fold(body):
+            return "Bu kural zaten kayıtlı."
+        filelock.atomic_write(RULES_NOTE, body.rstrip() + f"\n- {text} _(eklendi {date.today():%Y-%m-%d})_\n")
     sha = commit([_rel(RULES_NOTE)], f"kural eklendi: {text[:60]}")
     log(actor, "kural", _rel(RULES_NOTE), text, sha)
     return f"Kural kaydedildi: {text}"
@@ -254,13 +262,14 @@ def add_memory(fact: str, actor: str = "asistan") -> str:
         return "Hata: boş bilgi."
     if SENSITIVE_RE.search(fact):
         return "Hassas veri (şifre, kart, kimlik, IBAN) kasaya yazılmaz; bunu bir şifre yöneticisinde tut."
-    if not MEMORY_NOTE.exists():
-        MEMORY_NOTE.write_text("---\ntype: dashboard\ntags: [dashboard, asistan]\n---\n# Asistan hafızası\n\n"
-                               f"Asistanın {USER} hakkında hatırladıkları. Her konuşmada okunur; yanlışı buradan silebilirsin.\n\n", encoding="utf-8")
-    body = MEMORY_NOTE.read_text(encoding="utf-8")
-    if _fold(fact) in _fold(body):
-        return "Bunu zaten hatırlıyorum."
-    MEMORY_NOTE.write_text(body.rstrip() + f"\n- {fact} _({date.today():%Y-%m-%d})_\n", encoding="utf-8")
+    with filelock.locked(MEMORY_NOTE):
+        if not MEMORY_NOTE.exists():
+            filelock.atomic_write(MEMORY_NOTE, "---\ntype: dashboard\ntags: [dashboard, asistan]\n---\n# Asistan hafızası\n\n"
+                                  f"Asistanın {USER} hakkında hatırladıkları. Her konuşmada okunur; yanlışı buradan silebilirsin.\n\n")
+        body = MEMORY_NOTE.read_text(encoding="utf-8")
+        if _fold(fact) in _fold(body):
+            return "Bunu zaten hatırlıyorum."
+        filelock.atomic_write(MEMORY_NOTE, body.rstrip() + f"\n- {fact} _({date.today():%Y-%m-%d})_\n")
     sha = commit([_rel(MEMORY_NOTE)], f"hafıza: {fact[:60]}")
     log(actor, "hafıza", _rel(MEMORY_NOTE), fact, sha)
     return f"Hatırlayacağım: {fact}"

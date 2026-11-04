@@ -1143,6 +1143,7 @@ def main(argv: list[str] | None = None) -> int:
 
     PV = lambda: __import__("sb.privacy", fromlist=["x"])
     for name, fn, hlp in (("vault-encrypt", "encrypt_cli", "klasörü şifrele (önce yedek; --folder <klasör> --confirm)"),
+                          ("encrypt", "encrypt_cli", "vault-encrypt takma adı; geçmişteki düz metin: --purge-history <klasör> --confirm (onaylı, önce tam yedek, ZORLA push gerekir)"),
                           ("vault-decrypt", "decrypt_cli", "şifreli klasörü aç (--folder <klasör> --confirm)"),
                           ("restore", "restore_cli", "yedekten geri yükle (önce mevcut durumun yedeği; <yedek> --confirm)"),
                           ("security-test", "security_test_cli", "istem enjeksiyonu kalkanı: yerel modelle senaryolar")):
@@ -1150,8 +1151,17 @@ def main(argv: list[str] | None = None) -> int:
         g.add_argument("rest", nargs="*")
         g.add_argument("--folder", default="")
         g.add_argument("--confirm", action="store_true")
+        g.add_argument("--purge-history", default="", help="(encrypt) klasörün düz metin git geçmişini temizle; --confirm olmadan yalnız anlatır")
         g.set_defaults(func=lambda a, fn=fn: getattr(PV(), fn)(
-            a.rest + (["--folder", a.folder] if a.folder else []) + (["--confirm"] if a.confirm else [])))
+            a.rest + (["--folder", a.folder] if a.folder else []) + (["--purge-history", a.purge_history] if a.purge_history else [])
+            + (["--confirm"] if a.confirm else [])))
+
+    def _backup_cmd(a):
+        r = PV().create_backup()
+        print(r.get("message") or (", ".join(r["created"]) + chr(10) + r["note"]))
+        return 0 if r.get("ok") else 1
+    g = sub.add_parser("backup", help="şifreli kasa yedeği al (~/.secondbrain/backups/*.zip.enc); haftalık görev de alır, son 8 kalır")
+    g.set_defaults(func=_backup_cmd)
 
     g = sub.add_parser("vault-key", help="kasa şifreleme anahtarını yedekle: --export <dosya>")
     g.add_argument("--export", default="")

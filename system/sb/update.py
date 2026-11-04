@@ -77,7 +77,7 @@ def rollback(system: Path = SYSTEM, dest: Path = BACKUPS, sync: bool = True) -> 
     PENDING.unlink(missing_ok=True)
     print(f"Geri yüklendi: {z.name} (sürüm {version(system)}). Kişisel ayarlar ve notlar değişmedi.")
     if sync:
-        subprocess.run(["uv", "sync", "--quiet"], cwd=system)
+        subprocess.run(["uv", "sync", "--inexact", "--quiet"], cwd=system)
     return 0
 
 

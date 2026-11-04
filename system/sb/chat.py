@@ -959,6 +959,8 @@ body:JSON.stringify({pin:document.getElementById('pin').value})});const j=await 
 
 
 MODEL_LOCK = threading.Lock()      # bilgisayar ve telefon aynı anda tek model çağrısı
+MAX_CONCURRENT_UPLOADS = 2
+UPLOAD_SLOTS = threading.BoundedSemaphore(MAX_CONCURRENT_UPLOADS)     # D-28: 30 MB × sınırsız iş parçacığı bellek tüketimi
 MAX_SESSIONS = 200
 
 WEB = Path(__file__).parent / "web"     # Faz 2 arayüzü (derleme adımı yok: düz HTML/CSS/JS)
@@ -992,17 +994,37 @@ def static_file(name: str) -> tuple[bytes, str] | None:
 
 class RemoteAuth:
     """Telefon eşlemesi: bilgisayarda görünen 6 haneli kod → telefona 30 günlük HttpOnly çerez. Diskte yalnız çerezin SHA-256'sı durur.
-    5 yanlış kodda eşleme 15 dk kilitlenir ve kod değişir; her başarılı eşlemede kod yenilenir."""
+    Kod 10 dk geçerlidir (D-23). Yanlış deneme sayacı ve 15 dk kilit İSTEMCİ (IP) BAŞINADIR: tailnet'teki bir cihaz gerçek eşlemeyi
+    kilitleyemez; sayaçlar bir iş parçacığı kilidi altındadır. Tüm istemcilerden toplam çok yanlış deneme gelirse kod yenilenir.
+    Jeton dosyası süreçler arası kilit + atomik yazmayla güncellenir (D-20)."""
     MAX_FAILS, LOCK_SEC, COOKIE_DAYS = 5, 900, 180     # çerez her açılışta yenilenir: kullandıkça hiç düşmez
+    PIN_TTL, GLOBAL_FAILS, MAX_CLIENTS = 600, 30, 500
 
     def __init__(self, path) -> None:
         import secrets
+        import threading as _th
+        import time as _t
         self.path, self.ip, self._secrets = path, "", secrets
+        self._mu = _th.Lock()
         self.pin = self._new_pin()
-        self.fails, self.lock_until = 0, 0.0
+        self.pin_ts = _t.time()
+        self._clients: dict[str, list] = {}          # ip -> [yanlış sayısı, kilit bitişi]
+        self._global_fails = 0
 
     def _new_pin(self) -> str:
         return f"{self._secrets.randbelow(10 ** 6):06d}"
+
+    def _rotate(self, now: float) -> None:
+        self.pin, self.pin_ts, self._global_fails = self._new_pin(), now, 0
+
+    def current_pin(self, now: float | None = None) -> str:
+        """Ekranda gösterilecek kod; süresi dolduysa yenilenir."""
+        import time as _t
+        now = now if now is not None else _t.time()
+        with self._mu:
+            if now - self.pin_ts >= self.PIN_TTL:
+                self._rotate(now)
+            return self.pin
 
     @staticmethod
     def _hash(token: str) -> str:
@@ -1011,7 +1033,8 @@ class RemoteAuth:
 
     def _load(self) -> list[str]:
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
+            d = json.loads(self.path.read_text(encoding="utf-8"))
+            return d if isinstance(d, list) else []
         except (OSError, ValueError):
             return []
 
@@ -1023,25 +1046,50 @@ class RemoteAuth:
         m = re.search(r"(?:^|;\s*)sbs=([\w-]{20,100})", cookie_header or "")
         return bool(m) and self._hash(m.group(1)) in self._load()
 
-    def pair(self, pin: str, now: float | None = None) -> tuple[str | None, str]:
+    def device_id(self, cookie_header: str) -> str:
+        """Eşlemeli cihazın kalıcı kimliği (çerezin özeti); eşli değilse ''."""
+        import re
+        m = re.search(r"(?:^|;\s*)sbs=([\w-]{20,100})", cookie_header or "")
+        if not m:
+            return ""
+        h = self._hash(m.group(1))
+        return h[:16] if h in self._load() else ""
+
+    def pair(self, pin: str, now: float | None = None, ip: str = "") -> tuple[str | None, str]:
         import hmac
         import time as _t
+        from . import filelock
         now = now if now is not None else _t.time()
-        if now < self.lock_until:
-            return None, "Çok fazla yanlış deneme; 15 dakika sonra tekrar dene."
-        if hmac.compare_digest(str(pin).strip().encode(), self.pin.encode()):
-            token = self._secrets.token_urlsafe(32)
-            self.path.write_text(json.dumps(self._load()[-9:] + [self._hash(token)]), encoding="utf-8")
-            self.pin, self.fails = self._new_pin(), 0
-            return token, ""
-        self.fails += 1
-        if self.fails >= self.MAX_FAILS:
-            self.lock_until, self.fails, self.pin = now + self.LOCK_SEC, 0, self._new_pin()
-        return None, "Kod yanlış."
+        with self._mu:
+            if now - self.pin_ts >= self.PIN_TTL:
+                self._rotate(now)
+            rec = self._clients.setdefault(ip, [0, 0.0])
+            if len(self._clients) > self.MAX_CLIENTS:        # bellek sınırı: süresi dolmuş kayıtları at
+                for k in [k for k, v in self._clients.items() if v[1] < now and k != ip]:
+                    self._clients.pop(k, None)
+            if now < rec[1]:
+                return None, "Çok fazla yanlış deneme; 15 dakika sonra tekrar dene."
+            if hmac.compare_digest(str(pin).strip().encode(), self.pin.encode()):
+                token = self._secrets.token_urlsafe(32)
+                with filelock.locked(self.path):
+                    filelock.atomic_write(self.path, json.dumps(self._load()[-9:] + [self._hash(token)]))
+                self._rotate(now)
+                self._clients.pop(ip, None)
+                return token, ""
+            rec[0] += 1
+            self._global_fails += 1
+            if rec[0] >= self.MAX_FAILS:
+                rec[0], rec[1] = 0, now + self.LOCK_SEC
+            if self._global_fails >= self.GLOBAL_FAILS:        # dağıtık deneme: kodu değiştir
+                self._rotate(now)
+            return None, "Kod yanlış."
 
     def revoke(self) -> None:
-        self.path.write_text("[]", encoding="utf-8")
-        self.pin = self._new_pin()
+        import time
+        from . import filelock
+        with self._mu, filelock.locked(self.path):
+            filelock.atomic_write(self.path, "[]")
+            self._rotate(time.time())
 
 
 def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | None = None, is_remote: bool = False):
@@ -1201,6 +1249,19 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             self._send(404, b'{"error":"yok"}')
 
         def _v2(self, method: str):
+            """Yükleme uçları aynı anda en çok MAX_CONCURRENT_UPLOADS kadar çalışır (D-28): her biri ≤30 MB'ı belleğe alır."""
+            from . import webroutes
+            r = webroutes.find(method, self.path)
+            if r is not None and r.upload:
+                if not UPLOAD_SLOTS.acquire(blocking=False):
+                    return self._send(429, b'{"error":"cok fazla eszamanli yukleme; biraz sonra tekrar dene"}')
+                try:
+                    return self._v2_inner(method)
+                finally:
+                    UPLOAD_SLOTS.release()
+            return self._v2_inner(method)
+
+        def _v2_inner(self, method: str):
             """Faz 2 API: webroutes kayıt defterine dağıtır (kimlik, yerel-yalnız, model kilidi, yükleme sınırı burada)."""
             from urllib.parse import parse_qs, urlparse
             from . import webroutes
@@ -1250,7 +1311,8 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 except (Exception, SystemExit) as e:                                # noqa: BLE001
                     return {"reply": f"Hata: {type(e).__name__}: {str(e)[:200]}", "trace": [], "proposals": pending(s)}
 
-            ctx = webroutes.Ctx(method, self.path.split("?")[0], data, query, raw, ctype, sid, is_remote, s, _respond, calendar)
+            device = auth.device_id(self.headers.get("Cookie", "")) if (is_remote and auth) else ("" if is_remote else "local")
+            ctx = webroutes.Ctx(method, self.path.split("?")[0], data, query, raw, ctype, sid, is_remote, s, _respond, calendar, device)
             if r.model:
                 with lock:
                     code, body, ct, fname = webroutes.call(r, ctx)
@@ -1285,7 +1347,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             except (ValueError, json.JSONDecodeError):
                 return self._send(400, b'{"error":"gecersiz"}')
             if is_remote and self.path == "/api/pair":
-                token, err = auth.pair(str(data.get("pin", ""))[:12])
+                token, err = auth.pair(str(data.get("pin", ""))[:12], ip=self.client_address[0])
                 if not token:
                     return self._send(200, json.dumps({"ok": False, "error": err}, ensure_ascii=False).encode("utf-8"))
                 vault_ops.log("kullanici", "telefon eşlendi", "", self.client_address[0], "")
@@ -1296,7 +1358,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
             if not is_remote and self.path in ("/api/remote", "/api/remote-revoke"):
                 if self.path == "/api/remote-revoke" and auth:
                     auth.revoke()
-                info = {"ip": auth.ip if auth else "", "pin": auth.pin if auth else "", "devices": auth.devices() if auth else 0}
+                info = {"ip": auth.ip if auth else "", "pin": auth.current_pin() if auth else "", "devices": auth.devices() if auth else 0}
                 return self._send(200, json.dumps(info).encode("utf-8"))
             s = _session(str(data.get("sid", "x"))[:40])
             with lock:                                               # aynı anda tek model çağrısı

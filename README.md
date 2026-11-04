@@ -8,7 +8,7 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.11.1** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.12.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
@@ -167,8 +167,9 @@ Komut masaüstüne **Second Brain Setup** (Windows `.exe`, Mac `.app`) indirir v
 `Second-Brain-Setup.exe` / `Second-Brain-Setup-macOS.zip` indir.
 
 - **Kurulum dosyası imzasız.** Windows SmartScreen "Windows bilgisayarınızı korudu" der: **Ek bilgi → Yine de çalıştır**. macOS "açılamıyor" der: sağ tık → Aç.
-- Doğrulamak için indirilen dosyanın SHA-256'sını sürüm sayfasıyla karşılaştır. Kurulu kopyayı doğrulamak için: `python setup/engine.py --verify`.
+- Tek komutlu kurucu indirdiği Setup dosyasının SHA-256'sını sürümdeki `SHA256SUMS` ile **kendisi doğrular**; uyuşmazsa ya da özet yoksa dosyayı siler ve durur. Elle indirdiysen aynı karşılaştırmayı sürüm sayfasındaki `SHA256SUMS` ile yap. Kurulu kopyayı doğrulamak için: `python setup/engine.py --verify`.
 - **Komut satırı yolu** (sihirbazsız, repo klasöründe): `powershell -ExecutionPolicy Bypass -File install.ps1` ya da `bash install.sh`. Sessiz kurulum için `SB_SECRET_<ALAN>` ortam değişkenleri kullanılır.
+- **`sb` komutu:** kurulum terminale `sb` komutunu ekler (Windows `%USERPROFILE%\.secondbrain\bin\sb.cmd`, kullanıcı PATH'ine; macOS `~/.local/bin/sb`). Kurulumdan sonra **yeni açılan** bir terminalde hangi klasörde olursan ol `sb doctor`, `sb apps status` yazman yeter. Bu README'deki tüm `sb …` komutları bu kısayolu varsayar.
 - **Denemek için:** sihirbazı gerçek sisteme dokunmadan açmak istersen `SB_SETUP_SANDBOX=<klasör>` ile ya da `--sandbox` bayrağıyla başlat. Sağ üstte "DENEME KİPİ" yazar; anahtarlar dosyaya, komutlar "[deneme] atlandı" olur.
 
 Ekran görüntülü tam anlatım: [01-kurulum](system/docs/rehber/01-kurulum.md).
@@ -268,7 +269,7 @@ Ayrıntı: [docs/KURULUM-TELEFON.md](docs/KURULUM-TELEFON.md).
 - **Gömülü uygulamalar:** yalnız yayıncının resmî GitHub sürümünden indirilir, SHA-256 doğrulanır. Kütüphaneleri salt okunur okunur, sır içeren pano kaydı beyne girmez.
 - **Bilinen açık noktalar (dürüst):**
   - Kurulum dosyaları ve güncellemeler **kod imzalı değil**.
-  - Kasa şifrelemesi git geçmişindeki eski düz metni silmez.
+  - Kasa şifrelemesi git geçmişindeki eski düz metni kendiliğinden silmez. `sb encrypt` bunu kaç not ve hangi commit aralığı olarak söyler; temizlemek için ayrı ve onaylı komut var: `sb encrypt --purge-history <klasör> --confirm`. Bu komut önce şifreli tam yedek alır, uzak depoya zorla push gerektirir ve geri alınamaz.
   - KVKK paketi (aydınlatma metni, saklama/silme politikası) yok.
   - Çok kullanıcılı/rol bazlı yetki yok.
 
@@ -285,7 +286,7 @@ sb version
 ```
 - Güncelleme notlarına, `config/*.yaml` ayarlarına ve şifrelere dokunmaz. Değişiklikler [CHANGELOG.md](CHANGELOG.md)'de.
 - **Kasa:** git deposu. Uzak depo ayarlıysa günlük çalışma push eder; bu deponun **gizli** olduğundan emin ol.
-- **Yedek:** arayüzden kasa zip'i + kod zip'i (`~/.secondbrain/backups`). Kasa yedeği şimdilik zamanlanmıyor ve zip parolasız.
+- **Yedek:** her Pazar haftalık işte **şifreli** kasa yedeği alınır (`~/.secondbrain/backups/*.zip.enc`, kasa anahtarıyla; son 8 tutulur, `config/gizlilik.yaml` → `backup_keep`). Elle almak için `sb backup`. Düz zip diske yazılmaz. `sb doctor` son yedeğin yaşını gösterir, 14 günden eskiyse ✗. **Kasa anahtarını ayrıca sakla** (`sb vault-key --export <dosya>`); anahtarsız yedek açılamaz.
 - Klasör şifreleme: `sb encrypt <klasör> --confirm`. Anahtarı yedekle: `sb vault-key --export <dosya>`; anahtarsız şifreli not açılamaz.
 
 ## 13. Sorun çıkınca
@@ -344,7 +345,7 @@ uv run python tools/guide_shots.py      # rehber ekran görüntülerini uydurma 
 |---|---|
 | Kod imzalama (Windows/Apple) | Yok, SmartScreen/Gatekeeper uyarısı çıkar |
 | Kasa şema sürümü / göç | Yok; not biçimi değişirse elle uyarlama gerekir |
-| Zamanlanmış şifreli yedek | Yok |
+| Zamanlanmış şifreli yedek | Var (0.12.0, haftalık). Eski sürümlerden kalan düz `vault-*.zip` dosyaları diskte durur, elle silinmeli |
 | Kalite ölçümü | Tarih çıkarma, kişi birleştirme ve arama doğruluğu için değerlendirme seti yok |
 | Kaynak tazeliği | Klasör izleme, "bayat kaynak" uyarısı ve `sb today` yok |
 | Linux | Denenmedi; zamanlayıcı, paket ve CI yok |
