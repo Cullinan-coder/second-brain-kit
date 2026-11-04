@@ -19,11 +19,11 @@ import re
 import time
 from pathlib import Path
 
+from . import sensitive as _sensitive
 from .config import DATA
 
 LOCAL = {"ollama", "lmstudio", "llamacpp", "vllm"}
-SENSITIVE_RE = re.compile(r"şifre|sifre|parola|password|cvv|iban|kart numara|tc kimlik|(?<!\d)[1-9]\d{10}(?!\d)|"
-                          r"\bTR\d{2}(?:\s?\d{4}){5}\s?\d{2}\b|(?<![\w/])(?:\d[ -]?){15,19}(?![\w/])", re.I)
+SENSITIVE_RE = _sensitive.TOPIC_RE           # tek kaynak sb/sensitive.py (D-30): sır konusu da buluta gitmez
 CACHE_DIR = DATA / "llm_cache"
 
 
@@ -36,16 +36,9 @@ def is_local(target: str) -> bool:
 
 
 def sensitive(text: str) -> bool:
-    """Hassas içerik: anahtar sözcük/biçim eşleşmesi YA DA redact.redact() metni değiştiriyorsa (API anahtarı,
-    `*_PASSWORD=`, OTP, geçerli kart/TCKN/IBAN)."""
-    text = text or ""
-    if SENSITIVE_RE.search(text):
-        return True
-    from . import redact
-    try:
-        return redact.redact(text) != text
-    except Exception:
-        return False
+    """Hassas içerik (bulut için sıkı): sır değeri ya da sır konusu sözcüğü YA DA redact.redact() metni değiştiriyorsa
+    (API anahtarı, `*_PASSWORD=`, OTP, geçerli kart/TCKN/IBAN). "şifreli/şifreleme" hassas sayılmaz."""
+    return _sensitive.is_sensitive(text, strict=True)
 
 
 def cloud_safe_messages(messages: list[dict]) -> tuple[list[dict], bool]:

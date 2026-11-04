@@ -3,17 +3,9 @@ from __future__ import annotations
 
 import re
 
-TCKN_RE = re.compile(r"(?<!\d)[1-9]\d{10}(?!\d)")
-# Harf/rakam/"/" ile bitişik sayılar kimliktir (ör. people/c123..., takvim id), kart sayılmaz.
-CARD_RE = re.compile(r"(?<![\w/])(?:\d[ -]?){13,19}(?![\w/])")
-IBAN_RE = re.compile(r"\bTR\d{2}(?:\s?\d{4}){5}\s?\d{2}\b", re.I)
-OTP_CONTEXT_RE = re.compile(
-    r"(kod|code|şifre|sifre|password|otp|pin|doğrulama|verification)[^\d\n]{0,40}(\d{4,8})(?!\d)", re.I)
-# Bilinen API anahtarı biçimleri ve ortam değişkeni atamaları (SMTP_PASSWORD=..., API_KEY: ...).
-KEY_RE = re.compile(r"\b(?:AIza[0-9A-Za-z_-]{30,}|sk-(?:ant-|proj-)?[0-9A-Za-z_-]{20,}|gh[pousr]_[0-9A-Za-z]{30,}"
-                    r"|xox[abp]-[0-9A-Za-z-]{20,}|AKIA[0-9A-Z]{16})")
-ASSIGN_RE = re.compile(r"\b([A-Z][A-Z0-9_]*(?:PASSWORD|PASSWD|SECRET|TOKEN|API_KEY|APIKEY)[A-Z0-9_]*\s*[=:]\s*)"
-                       r"(?![\s'\"`$\[{(<]|\.\.\.)(\S{4,})")
+# Kalıpların TEK kaynağı sb/sensitive.py (D-30); buradaki adlar geriye uyumluluk için.
+from .sensitive import (ASSIGN_RE, CARD_RE, IBAN_RE, KEY_RE, OTP_CONTEXT_RE, PEM_RE, PLAIN_PASS_RE,  # noqa: F401
+                        SECRET_RE, TCKN_RE)
 
 
 def _luhn(digits: str) -> bool:
@@ -43,12 +35,8 @@ def redact(text: str) -> str:
     return OTP_CONTEXT_RE.sub(lambda m: m.group(0)[: -len(m.group(2))] + "••••", text)
 
 
-PEM_RE = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
-PLAIN_PASS_RE = re.compile(r"\b(?:password|passwd|pwd|parola|şifre|sifre|api[_ -]?key|secret|token)\s*[:=]\s*(?![\s'\"`$\[{(<]|\.\.\.)\S{4,}", re.I)
-
-
 def contains_secret(text: str | None) -> bool:
     """Metin bir sır içeriyor mu? (parola/anahtar, kart, IBAN, TCKN, tek kullanımlık kod.) Bağlayıcılar böyle kaydı maskelemek yerine ATLAR."""
     if not text:
         return False
-    return bool(PEM_RE.search(text) or PLAIN_PASS_RE.search(text) or redact(text) != text)
+    return bool(SECRET_RE.search(text) or redact(text) != text)

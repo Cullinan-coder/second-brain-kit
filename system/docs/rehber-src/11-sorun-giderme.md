@@ -15,7 +15,7 @@ Bu bölümdeki her kayıt **gerçek bir hata mesajına ya da durumuna** dayanır
 - **Sihirbaz/uygulama:** 18 Oturum jetonu · 19 Sunucuya ulaşılamadı · 20 Başka iş sürüyor · 21 Pencere yerine tarayıcı · [22 Asistan açılmıyor](#asistan-acilmiyor) · 23 Port 8765 dolu
 - **Hesaplar:** [24 Google giriş reddi](#google-giris-reddi) · 25 İstemci dosyası yok · 26 Yanlış hesap · 27 Giriş yok · [28 IMAP hataları](#imap-hata-mesajlari) · 29 Okul sistemi
 - **Modeller/ses:** 30 Ollama · [31 Whisper GPU](#whisper-gpu) · 32 Bütçe doldu
-- **Güncelleme:** 33 Yarım güncelleme · 34 git pull · 35 kit.json yok
+- **Güncelleme:** 33 Yarım güncelleme · 34 git pull · 35 kit.json yok · 35a Kasa şeması geride · 35b Kasa koddan yeni
 - **Diğer:** 36 Telefon · 37 Sabah özeti · 38 Obsidian · 39 Beyne at kısayolu · 40 SMS yedeği eski · 41 Türkçe karakter · 42 İçe aktarma · 43 MCP · 44 Mac'te zamanlayıcı
 
 ---
@@ -254,6 +254,16 @@ Gmail için ek: IMAP erişimi hesap ayarlarında kapalı olabilir; 2 adımlı do
 - **Neden:** Kaynak kasadan çalışıyorsun; güncelleme yalnız kit kurulumlarında geçerli.
 - **Çözüm:** Normal kullanıcıysan setup ile yeniden kur; geliştiriciysen kiti `tools/build_kit.py` ile üret.
 
+### 35a. `sb doctor`: «Kasa şeması N, kod M bekliyor» ✗
+
+- **Neden:** Güncelleme kasa biçimini değiştirdi; kasanın şema sürümü kodun gerisinde.
+- **Çözüm:** `sb migrate --check` ile ne değişeceğine bak, sonra `sb migrate --yes` (önce şifreli yedek alır, tek commit atar). Kasada commit edilmemiş değişiklik varsa durur: önce commit'le. Yedek alınamıyorsa göç yapılmaz (`sb backup` hatasını düzelt).
+
+### 35b. `sb doctor`: «Kasa şeması N, bu kod yalnız M'i biliyor» ✗
+
+- **Neden:** Kasa yeni kodla göç edilmiş ama bu bilgisayardaki kod eski (ör. başka cihazdan senkronlandı).
+- **Çözüm:** `sb update` ile kodu güncelle. Güncelleyene kadar kasaya yazan komut çalıştırma (notlar bozulabilir).
+
 ---
 
 ## Diğer sorunlar
@@ -325,6 +335,7 @@ Gmail için ek: IMAP erişimi hesap ayarlarında kapalı olabilir; 2 adımlı do
 | Asistan sunucusu (127.0.0.1:8765) | ! | Bkz. 22 |
 | Spotify doğrudan çalma / Telefon erişimi / Codex / Kasa git deposu | ! | İsteğe bağlı |
 | Yarım kalan güncelleme | ✗ | Bkz. 33 |
+| Kasa şeması … (geride / koddan yeni) | ✗ | Bkz. 35a, 35b |
 
 ## Hâlâ çözülmediyse
 

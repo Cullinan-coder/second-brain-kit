@@ -278,8 +278,8 @@ def test_d04_index_embeds_token_and_ui_sends_it(local_server):
     page = urllib.request.urlopen(base + "/").read().decode()
     assert f'name="sb-token" content="{localauth.token()}"' in page and "/static/sbtoken.js" in page
     assert b"X-SB-Token" in urllib.request.urlopen(base + "/static/sbtoken.js").read()
-    classic = urllib.request.urlopen(base + "/classic").read().decode()
-    assert f"'X-SB-Token':'{localauth.token()}'" in classic
+    classic = urllib.request.urlopen(base + "/classic").read().decode()           # D-30: klasik sayfa yok, tek arayüze yönlenir
+    assert f'name="sb-token" content="{localauth.token()}"' in classic and not hasattr(chat, "PAGE")
     bubble = urllib.request.urlopen(base + "/bubble").read().decode()
     assert localauth.token() in bubble
     assert (Path(chat.__file__).parent / "web" / "sbtoken.js").exists()

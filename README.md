@@ -8,11 +8,11 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.12.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.13.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
-| Test | 840+ otomatik test, her push'ta Windows ve macOS'ta sıfırdan kurulum + test |
+| Test | 1.000+ otomatik test; her push'ta Windows'ta, her sürümde Windows ve macOS'ta sıfırdan kurulum + test |
 | Erişim | Depo gizlidir; yalnız davet edilen kişiler kurabilir |
 
 > **Bu README'yi okuyan biri** projenin ne yaptığını, nasıl kurulduğunu, verinin nereye gittiğini, neyin çalışıp neyin
@@ -210,6 +210,7 @@ güncelleme denetimi → sağlık testi (`sb doctor`) → bugünün günlük iş
 | Dosya dönüştürmek | Nashi; çıktı otomatik beyne girer |
 | Video, makale, aklına gelen şey | Kopyala → `Ctrl+Alt+B` (Beyne at) ya da telefonda Paylaş → İkinci Beyin |
 | "Son günlerde ne yaptık?" | `sb recap` / asistan |
+| Bekleyen onaylar (komut, takvim, WhatsApp, tarih adayları, otomasyon) | Asistanın üst çubuğunda ✓ ve sayı → **Görünümler → Onaylar**. Tek liste; Obsidian'daki `00-Inbox/onay-bekleyenler.md` aynı listenin görünümü (`[x]` = onay, satırı silmek = iptal). Kartlar yeniden başlatmada kaybolmaz, süresi dolunca düşer |
 | Uzun gece işi | `geceye ekle: iş @klasör` → `gece koşusunu başlat` (yalnız bilgisayardan, onaylı) |
 
 Asistan kullanımı: [09-asistan-kullanimi](system/docs/rehber/09-asistan-kullanimi.md) · uygulama turu: [08-uygulama-turu](system/docs/rehber/08-uygulama-turu.md).
@@ -283,8 +284,10 @@ sb update --check    # yalnız bak
 sb update --rollback # son kod yedeğine dön
 sb update --recover  # yarım kalan güncellemeyi tamamla/geri al
 sb version
+sb migrate --check  # güncelleme kasa biçimini değiştirdiyse bekleyen göçleri gösterir (salt okunur)
+sb migrate --yes    # göçü uygula: önce şifreli yedek, sonra tek git commit'i
 ```
-- Güncelleme notlarına, `config/*.yaml` ayarlarına ve şifrelere dokunmaz. Değişiklikler [CHANGELOG.md](CHANGELOG.md)'de.
+- Güncelleme notlarına, `config/*.yaml` ayarlarına ve şifrelere dokunmaz. Yeni sürüm kasa biçimini değiştiriyorsa (şema sürümü `config/kasa.yaml`) `sb update` bekleyen göçü listeler ve onay ister; `sb doctor` kasa şeması koddan gerideyse ✗ gösterir. Değişiklikler [CHANGELOG.md](CHANGELOG.md)'de.
 - **Kasa:** git deposu. Uzak depo ayarlıysa günlük çalışma push eder; bu deponun **gizli** olduğundan emin ol.
 - **Yedek:** her Pazar haftalık işte **şifreli** kasa yedeği alınır (`~/.secondbrain/backups/*.zip.enc`, kasa anahtarıyla; son 8 tutulur, `config/gizlilik.yaml` → `backup_keep`). Elle almak için `sb backup`. Düz zip diske yazılmaz. `sb doctor` son yedeğin yaşını gösterir, 14 günden eskiyse ✗. **Kasa anahtarını ayrıca sakla** (`sb vault-key --export <dosya>`); anahtarsız yedek açılamaz.
 - Klasör şifreleme: `sb encrypt <klasör> --confirm`. Anahtarı yedekle: `sb vault-key --export <dosya>`; anahtarsız şifreli not açılamaz.
@@ -317,7 +320,7 @@ second-brain-kit/
     plugins/                                modül / kaynak / MCP / uygulama manifestleri, hazır seçimler
     integrations/ · skills/                 Claude Code kancaları, skill'ler, tarayıcı eklentisi
     tools/                                  rehber üretici, kit üretici, demo kasası, ekran görüntüsü aracı
-    tests/                                  840+ test
+    tests/                                  1.000+ test
     docs/rehber/                            136 sayfalık kullanıcı rehberi (üretilir; kaynağı docs/rehber-src/)
   vault/                                    boş kasa şablonu (00-Inbox … 90-Arşiv, şablonlar)
   apps/clipboardline/ · apps/nashi/         gömülü uygulamaların kaynak kodu (UPSTREAM.md: kaynak commit)
@@ -335,7 +338,7 @@ uv run pytest -q                        # gerçek hesap/ağ/kayıt defteri gerek
 uv run python tools/build_guide.py      # rehberi manifestlerden üret (--check: bayat mı)
 uv run python tools/guide_shots.py      # rehber ekran görüntülerini uydurma demo kasasıyla yeniden çek
 ```
-- CI (`.github/workflows/test.yml`): her push'ta Windows ve macOS'ta sıfırdan sorusuz kurulum, `pytest` ve duman testleri.
+- CI (`.github/workflows/test.yml`): sıfırdan sorusuz kurulum, `pytest` ve duman testleri. Her push'ta Windows; sürüm etiketinde (`v*`) ve elle çalıştırmada Windows + macOS (gizli depoda macOS dakikası 10 kat sayılır).
 - `release.yml`: `v*` etiketinde Windows ve macOS kurulum paketlerini derler.
 - Yeni veri kaynağı, MCP, modül ya da uygulama eklemek için `system/plugins/` altına manifest yaz. Gerekirse `sb/connectors/` altına `parse()` + `run()` yaz; rehber sayfası kendiliğinden üretilir.
 

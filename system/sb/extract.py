@@ -179,14 +179,26 @@ def pending_line(ev: NewEvent, source_id: str, conf: float, reason: str) -> str:
     return f"- [ ] [{ev.tag}] {ev.title} | {when} | kaynak: {source_id} | güven: {conf:.2f} | {reason}"
 
 
+# ---------------------------------------------------------------- onay-bekleyenler: TEK onay deposunun görünümü (D-30)
+# Kayıtlar sb/approvals.py deposundadır (origin="tarih"). `00-Inbox/onay-bekleyenler.md` depodan ÜRETİLİR; Obsidian'da kutuyu [x]
+# yapmak onaydır, satırı silmek iptaldir (`sync_view` bunları depoya okur). Asistanın "Onaylar" görünümünden de onaylanabilir.
+VIEW_HEADER = ("---\ntype: inbox\ntags: [inbox, onay]\n---\n# Onay bekleyen takvim adayları\n\n"
+               "Mail/SMS'ten çıkarılan ama emin olunamayan tarihler. Eklenmesini istediğinin kutusunu `[x]` yap; günlük çalışma takvime ekler. "
+               "Asistandaki **Onaylar** görünümünden de onaylayabilirsin. Bu liste otomatik üretilir.\n\n")
+DONE_RE = re.compile(r"\s*→ takvimde \(([^)]*)\)\s*$")
+
+
 def _pending_lines() -> tuple[str, list[str]]:
-    text = PENDING.read_text(encoding="utf-8")
+    try:
+        text = PENDING.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return "", []
     m = re.search(r"<!-- sb:auto:onay:start -->\n?(.*?)<!-- sb:auto:onay:end -->", text, re.S)
     return text, [l for l in (m.group(1).splitlines() if m else []) if l.strip()]
 
 
-def _write_pending(text: str, lines: list[str]) -> None:
-    PENDING.write_text(replace_auto(text, "onay", NL.join(lines)), encoding="utf-8", newline=NL)
+def _has_block(text: str) -> bool:
+    return "<!-- sb:auto:onay:start -->" in text and "<!-- sb:auto:onay:end -->" in text
 
 
 def _key(line: str) -> tuple[str, str, str] | None:
@@ -194,30 +206,157 @@ def _key(line: str) -> tuple[str, str, str] | None:
     return (m["src"], m["tag"], m["title"].casefold()) if m else None
 
 
+def _rid(key: tuple[str, str, str]) -> str:
+    import hashlib
+    return "t" + hashlib.sha1("|".join(key).encode("utf-8")).hexdigest()[:11]
+
+
+def _base(line: str) -> str:
+    """Satırın kutusuz, '→ takvimde' işaretsiz gövdesi."""
+    return DONE_RE.sub("", re.sub(r"^- \[[ xX]\] ", "", line))
+
+
+def _applied(r: dict) -> str:
+    res = str(r.get("result") or "")
+    return res[len("takvimde ("):-1] if r.get("status") == "onaylandi" and res.startswith("takvimde (") else ""
+
+
+def _render_line(r: dict) -> str:
+    done = _applied(r)
+    box = " " if r.get("status") == "bekliyor" else "x"
+    return f"- [{box}] {r['payload']['text']}" + (f" → takvimde ({done})" if done else "")
+
+
+def _record(line: str, status: str = "bekliyor", result: str = "") -> dict | None:
+    from . import approvals
+    m = LINE_RE.match(line)
+    if not m:
+        return None
+    key = _key(line)
+    rec = {"id": _rid(key), "kind": "tarih", "title": f"[{m['tag']}] {m['title']}", "detail": f"{m['when']} · kaynak: {m['src']}",
+           "source": approvals.LOCAL, "origin": "tarih", "sid": "", "session": "", "created": datetime.now().isoformat(timespec="seconds"),
+           "expires": (datetime.now() + timedelta(hours=approvals.TTL_HOURS["tarih"])).isoformat(timespec="seconds"),
+           "status": status, "result": result, "decided": "" if status == "bekliyor" else datetime.now().isoformat(timespec="seconds"),
+           "action": "tarih", "payload": {"text": _base(line), "tag": m["tag"], "title": m["title"], "when": m["when"], "src": m["src"]},
+           "extra": {"when": m["when"]}}
+    return rec
+
+
+def sync_view(write: bool = True) -> int:
+    """onay-bekleyenler.md'deki el değişikliklerini depoya okur: [x] → onaylandı, [ ] → bekliyor, satır silindi → iptal; depoda olmayan
+    satırlar (eski kurulum, elle yazılmış) depoya alınır. Sonra görünümü yeniden üretir (write=True). Değişen kayıt sayısı döner."""
+    from . import approvals
+    text, lines = _pending_lines()
+    if not text:
+        if write:
+            render_view()
+        return 0
+    seen: dict[str, str] = {}
+    for line in lines:
+        key = _key(line)
+        if key:
+            seen[_rid(key)] = line
+    block = _has_block(text)
+    changed = 0
+    now = datetime.now().isoformat(timespec="seconds")
+
+    def fn(rows):
+        nonlocal changed
+        have = {r["id"]: r for r in rows if r.get("origin") == "tarih"}
+        for rid, line in seen.items():
+            ticked = LINE_RE.match(line)["done"] in "xX"
+            done = DONE_RE.search(line)
+            r = have.get(rid)
+            if r is None:
+                rec = _record(line, "onaylandi" if ticked else "bekliyor",
+                              f"takvimde ({done.group(1)})" if done else ("Obsidian'da işaretlendi" if ticked else ""))
+                rows.append(rec)
+                changed += 1
+            elif r.get("status") == "bekliyor" and ticked:
+                r.update(status="onaylandi", decided=now, result=f"takvimde ({done.group(1)})" if done else "Obsidian'da işaretlendi")
+                changed += 1
+            elif r.get("status") == "onaylandi" and not ticked and not _applied(r):
+                r.update(status="bekliyor", decided="", result="")
+                changed += 1
+        if block:
+            for rid, r in have.items():
+                if rid not in seen and r.get("status") == "bekliyor":
+                    r.update(status="reddedildi", decided=now, result="onay-bekleyenler.md'den silindi")
+                    changed += 1
+        return rows
+    approvals.update_many(fn)
+    if write:
+        render_view()
+    return changed
+
+
+def render_view() -> None:
+    """Depodaki tarih adaylarından onay-bekleyenler.md'yi üretir (bekleyen [ ], onaylanan [x], eklenen '→ takvimde')."""
+    from . import approvals, filelock
+    rows = [r for r in approvals.records(origin="tarih", status=None) if r.get("status") in ("bekliyor", "onaylandi")]
+    body = NL.join(_render_line(r) for r in rows)
+    with filelock.locked(PENDING):
+        try:
+            text = PENDING.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            text = VIEW_HEADER
+        new = replace_auto(text, "onay", body)
+        if new != text:
+            filelock.atomic_write(PENDING, new)
+
+
 def append_pending(lines: list[str]) -> int:
-    text, existing = _pending_lines()
-    keys = {_key(l) for l in existing}
-    new = [l for l in lines if _key(l) not in keys]
-    if new:
-        _write_pending(text, existing + new)
-    return len(new)
+    """Yeni takvim adaylarını depoya ekler (aynı kaynak+etiket+başlık bir kez) ve görünümü üretir."""
+    from . import approvals
+    sync_view(write=False)
+    have = {r["id"] for r in approvals.records(origin="tarih", status=None)}
+    added = 0
+    for line in lines:
+        rec = _record(line)
+        if rec and rec["id"] not in have:
+            approvals.upsert(rec)
+            have.add(rec["id"])
+            added += 1
+    render_view()
+    return added
 
 
 def approved() -> list[tuple[str, NewEvent]]:
-    """İşaretlenmiş ([x]) ve henüz takvime eklenmemiş satırlar."""
+    """Onaylanmış ([x] ya da Onaylar görünümünde onay bekleyip henüz eklenmemiş) ve takvime eklenmemiş adaylar."""
+    from . import approvals
+    sync_view()
     out = []
-    for line in _pending_lines()[1]:
-        m = LINE_RE.match(line)
-        if not m or m["done"] == " " or "→ takvimde" in line or m["tag"] not in RULES:
+    for r in approvals.records(origin="tarih", status="onaylandi"):
+        pl = r["payload"]
+        if _applied(r) or pl.get("tag") not in RULES:
             continue
-        day, _, hhmm = m["when"].partition(" ")
-        ev = NewEvent(tag=m["tag"], title=m["title"], day=date.fromisoformat(day),
-                      at=time.fromisoformat(hhmm) if hhmm else None, source_id=m["src"])
-        out.append((line, ev))
+        day, _, hhmm = pl["when"].partition(" ")
+        ev = NewEvent(tag=pl["tag"], title=pl["title"], day=date.fromisoformat(day),
+                      at=time.fromisoformat(hhmm) if hhmm else None, source_id=pl["src"])
+        out.append((_render_line(r), ev))
     return out
 
 
 def mark_added(lines: list[str], stamp: str) -> None:
-    text, existing = _pending_lines()
-    done = set(lines)
-    _write_pending(text, [f"{l} → takvimde ({stamp})" if l in done else l for l in existing])
+    from . import approvals
+    ids = {_rid(k) for k in (_key(l) for l in lines) if k}
+
+    def fn(rows):
+        for r in rows:
+            if r.get("id") in ids and r.get("origin") == "tarih":
+                r.update(status="onaylandi", result=f"takvimde ({stamp})")
+        return rows
+    approvals.update_many(fn)
+    render_view()
+
+
+def _exec_tarih(pl: dict, calendar=None) -> str:
+    """approvals EXECUTORS["tarih"]: Onaylar görünümünden onaylanan aday hemen takvime eklenir."""
+    from .gcal_api import Calendar
+    day, _, hhmm = pl["when"].partition(" ")
+    ev = NewEvent(tag=pl["tag"], title=pl["title"], day=date.fromisoformat(day), at=time.fromisoformat(hhmm) if hhmm else None,
+                  source_id=pl["src"])
+    status, _ = (calendar or Calendar("main")).add(ev, dry_run=False)
+    if status not in ("created", "exists"):
+        raise RuntimeError(f"takvim: {status}")
+    return f"takvimde ({date.today().isoformat()})"

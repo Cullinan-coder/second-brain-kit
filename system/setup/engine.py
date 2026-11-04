@@ -629,6 +629,24 @@ def recommend(hw: dict) -> dict:
 
 
 # ------------------------------------------------------------------ dosya işleri (kit/install.py'nin kopyası)
+def vault_is_new(v: Path) -> bool:
+    """Kasa klasörü yok ya da boş (gizli girdiler sayılmaz) → yeni kasa; var olan kasaya şema sürümü DAMGALANMAZ (göç gerekebilir)."""
+    return not v.exists() or not any(not e.name.startswith(".") for e in v.iterdir())
+
+
+def stamp_schema(vault: Path, system: Path, log=lambda *_: None) -> bool:
+    """Yeni kasaya kodun `sb/schema.py` `CURRENT` değerini `config/kasa.yaml`a `schema_version: N` olarak yazar (var olan dosyaya dokunmaz)."""
+    src = system / "sb" / "schema.py"
+    m = re.search(r"^CURRENT\s*=\s*(\d+)", src.read_text(encoding="utf-8"), re.M) if src.exists() else None
+    target = system / "config" / "kasa.yaml"
+    if not m or target.exists():
+        return False
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("# Kasa şeması — `sb migrate` yönetir, elle değiştirme.\n" f"schema_version: {m.group(1)}\n", encoding="utf-8")
+    log(f"  kasa şema sürümü {m.group(1)} yazıldı")
+    return True
+
+
 def copy_missing(src: Path, dst: Path) -> int:
     n = 0
     for p in src.rglob("*"):
@@ -1247,8 +1265,11 @@ class Engine:
             v = self.ensure_vault()
             if v == ROOT or ROOT in v.parents:
                 raise RuntimeError(f"Deneme kasası kodun içinde olamaz: {v}")
+            new_vault = vault_is_new(v)
             v.mkdir(parents=True, exist_ok=True)
             sync_code(ROOT, self._system())
+            if new_vault:
+                stamp_schema(v, self._system(), self.log)
             self.data.mkdir(parents=True, exist_ok=True)
             self.log(f"  [deneme] kod kasaya kopyalandı: {self._system()}")
             return None
@@ -1258,9 +1279,12 @@ class Engine:
         v = self.vault
         if v == kit or kit in v.parents:
             raise RuntimeError(f"Kasa kurulum paketinin içine kurulamaz: {v}")
+        new_vault = vault_is_new(v)
         v.mkdir(parents=True, exist_ok=True)
         self.log(f"  şablondan {copy_missing(kit / 'vault', v)} dosya eklendi (var olanlar korundu)")
         sync_code(kit / "system", self._system())
+        if new_vault:
+            stamp_schema(v, self._system(), self.log)
         if (kit / "setup").is_dir():
             shutil.copytree(kit / "setup", self._system() / "setup", dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         self.data.mkdir(parents=True, exist_ok=True)

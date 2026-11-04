@@ -29,10 +29,22 @@ def _need_respond(ctx: Ctx) -> None:
         raise ApiError(503, "model kullanılamıyor")
 
 
-def _prime(ctx: Ctx, history: list[dict]) -> None:
-    """Sunucu oturumunun model geçmişini sohbet kaydındaki geçmişle eşitler."""
-    if ctx.session is not None:
-        ctx.session.messages[:] = [dict(m) for m in history]
+def _prime(ctx: Ctx, history: list[dict], conv: dict | None = None) -> None:
+    """Sunucu oturumunun model geçmişini sohbet kaydındaki geçmişle eşitler. Sohbetin TEK giriş noktası burası (D-30): model geçmişi
+    her turda sohbet kaydından kurulur (araç çıktıları turdan tura taşınmaz) ve kirlilik bayrakları sohbet kaydında kalıcıdır —
+    sunucu yeniden başlasa ya da eski sohbet açılsa da dış içerik görmüş sohbet "kirli" kalır (yalnız yeni sohbette sıfırlanır)."""
+    s = ctx.session
+    if s is not None:
+        s.messages[:] = [dict(m) for m in history]
+        if conv is not None:
+            s.tainted = bool(getattr(s, "tainted", False) or conv.get("tainted"))
+            s.external = bool(getattr(s, "external", False) or conv.get("external"))
+
+
+def _keep_flags(ctx: Ctx, conv: dict) -> None:
+    s = ctx.session
+    if s is not None:
+        conv["tainted"], conv["external"] = bool(getattr(s, "tainted", False)), bool(getattr(s, "external", False))
 
 
 # ---------------------------------------------------------------- ekler
@@ -70,12 +82,13 @@ def _turn(ctx: Ctx, conv: dict, user_msg: dict, reuse: dict | None = None) -> di
     """Kullanıcı mesajını cevaplatır. `reuse`: yeniden üretimde yerinde güncellenecek asistan mesajı."""
     _need_respond(ctx)
     idx = convstore.find_msg(conv, user_msg["id"])[0]
-    _prime(ctx, convstore.model_history(conv, upto=idx))
+    _prime(ctx, convstore.model_history(conv, upto=idx), conv)
     blocks = _att_blocks(user_msg)
     if blocks and ctx.session is not None:                   # ek metni kullanıcının sözü değil dış içeriktir (D-06b)
         ctx.session.external = True
         ctx.session.attachment_text = "\n\n".join(blocks)
     out = ctx.respond(_full_text(user_msg)) or {}
+    _keep_flags(ctx, conv)
     reply_text = str(out.get("reply", ""))
     sources = convstore.search_sources(user_msg["text"], 5)
     trace = [str(t) for t in out.get("trace") or []]
@@ -158,7 +171,7 @@ def conv_get(ctx: Ctx) -> dict:
     c = convstore.load(sid)
     if c is None:
         raise ApiError(404, "sohbet yok")
-    _prime(ctx, convstore.model_history(c))                 # açılan eski sohbet modelin bağlamı olur
+    _prime(ctx, convstore.model_history(c), c)              # açılan eski sohbet modelin bağlamı olur (kirlilik bayrağıyla)
     return c
 
 
@@ -201,7 +214,20 @@ def _reset_session(ctx: Ctx) -> None:
 @route("POST", "/api/v2/conv/new")
 def conv_new(ctx: Ctx) -> dict:
     _reset_session(ctx)
-    return {"sid": convstore.new_sid()}
+    return {"ok": True, "sid": convstore.new_sid()}
+
+
+@route("POST", "/api/v2/conv/reset")
+def conv_reset(ctx: Ctx) -> dict:
+    """Aynı kimlikle baştan başla (eski /api/reset ucunun karşılığı): eski içerik arşivlenmiş ayrı bir sohbete taşınır (kirlilik
+    bayrağıyla birlikte), bu kimlik boş ve temiz başlar; bekleyen kartları iptal edilir."""
+    sid = _sid(ctx)
+    _reset_session(ctx)
+    c = convstore.load(sid)
+    if c is not None and c.get("messages"):
+        convstore.save(dict(c, sid=convstore.new_sid(), archived=True))
+        convstore.save(dict(c, messages=[], title="", tainted=False, external=False))
+    return {"ok": True, "sid": sid}
 
 
 # ---------------------------------------------------------------- mesajdan not / tepki

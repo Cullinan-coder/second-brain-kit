@@ -9,6 +9,39 @@ Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; 
   Bağımsız değişkensiz `git diff`, `git diff --stat` gibi çağrılar serbest kalır. `sb security-test` listesine 4 yeni atlatma eklendi.
 - README: `engine.py --verify` kullanımı düzeltildi (`<dosya> <sha256>` alır, kurulu kopyayı doğrulamaz).
 
+## 0.13.0 — 2026-11-05
+
+### Kasa şeması
+- **Kasa şema sürümü + göç sistemi:** kasa biçimi (ön bilgi alanı, klasör/dosya adı, config anahtarı) artık sürümlü: `_system/config/kasa.yaml` → `schema_version: N` (dosya/anahtar yoksa 1 = mevcut kasalar; yeni kurulan kasaya güncel sürüm yazılır).
+  Göçler `sb/migrations/m000N_*.py` sıralı modülleridir. Her adım: kasa git'i temiz mi (kirliyse durur) → **şifreli yedek** (alınamazsa durur) → göç → tek commit «şema göçü N→M»;
+  hata olursa yalnız göçün kendi değişiklikleri geri alınır, başka hiçbir şeye dokunulmaz.
+- **`sb migrate --check`** (salt okunur: kaç göç bekliyor, hangi notlar değişecek; bekleyen varsa çıkış 3) · **`--dry-run`** · **`--yes`** (uygular). `sb update` güncelleme sonrası bekleyen göçü listeler ve onay ister (`--yes` ile otomatik).
+  `sb doctor` kasa şeması koddan gerideyse ✗ (`sb migrate`), kasa koddan yeniyse ✗ (eski kod + yeni kasa; yazma komutları önce uyarır).
+- **İlk göç (m0002):** `type` taşıyan ama `source` / `source_id` alanı olmayan notlara (Asistan.md, Açık konular.md, Makbuzlar, Inbox önerileri ... 17 not) `source: manual`, `source_id: ""` eklenir. Başka hiçbir değer değişmez; okuyan kod eksik alanı zaten «manual» sayar.
+  **Etkisi:** `sb update` sonrası ilk seferde `sb doctor` bir kez ✗ gösterir; `sb migrate --yes` ile kapanır.
+
+### Mimari (denetim D-30, D-06a)
+- **Tek sohbet yığını:** klasik arayüz (`/classic`, `PAGE`) ve onun ayrı sohbet yolu kaldırıldı; `/classic` ana sayfaya yönlenir. Eski uçlar (`POST /api/chat`, `/api/decide`, `/api/reset`)
+  v2'nin tek giriş noktasına giden ince uyumluluk katmanıdır (yanıt biçimi aynı). Model geçmişi her turda sohbet kaydından kurulur (araç çıktıları turdan tura taşınmaz) ve **kirlilik bayrağı**
+  (bağlamda mail/belge/ekran içeriği var) artık sohbet kaydında kalıcıdır: sunucu yeniden başlasa ya da eski sohbet açılsa da dış içerik görmüş sohbette komut/kalıcı yazma onaya düşer; yeni sohbette sıfırlanır.
+- **Tek onay deposu** (`sb/approvals.py`, `~/.secondbrain/approvals.jsonl`; süreçler arası kilit + atomik yazım): sohbet kartları, otomasyon onayları ve mail/SMS tarih adayları aynı yerde; her kayıtta
+  tür, kaynak (bilgisayar/telefon), sohbet ve **süre aşımı** (komut/WhatsApp 12 saat, takvim 7 gün, tarih adayı 60 gün). Kartlar **yeniden başlatmada kaybolmaz**; komut, WhatsApp, takvim,
+  takvim silme, kasa eylemi, gece işi ve otomasyon kartları yeniden açılıştan sonra da onaylanır (bellek içi kartlar «süresi doldu» olur). Çift yürütme yok (önce işaretle, sonra yürüt).
+  Eski `pending_approvals.jsonl` ilk okumada taşınır (`.tasindi` olarak kalır). `00-Inbox/onay-bekleyenler.md` artık depodan **üretilen görünüm**: Obsidian'da `[x]` = onay, satırı silmek = iptal; eski satırlar depoya alınır.
+- **Onaylar görünümü:** asistanın üst çubuğunda ✓ düğmesi + bekleyen sayısı; **Görünümler → Onaylar** hepsini tek listede gösterir (Onayla/İptal). Tek karar ucu `POST /api/v2/approvals/decide`.
+  Telefon kuralları korunur ve sıkılaşır: telefon yalnız **kendi** takvim/eylem kartını onaylar; komut, WhatsApp, gece koşusu, silme, otomasyon ve tarih kartları yalnız bilgisayardan; bilgisayardaki kartların metni telefona gösterilmez.
+- **Hassasiyet kalıpları tek kaynakta** (`sb/sensitive.py`): kasa süzgeci (`vault_ops.SENSITIVE_RE`), bulut süzgeci (`router`), `redact`, makbuz/hafıza/kural/öğrenim filtreleri ve gizli not (`visibility: private`) denetimi aynı kalıpları kullanır.
+  Kalıplar **kelime anlamına** göre: «şifreli / şifreleme / şifrelenmiş» parola sayılmaz; değer taşıyan biçimler («şifre: X», «şifrem 1234», «parola=…», «pin kodu 1234», kart, IBAN, TCKN, API anahtarı) hassastır.
+  **Etkisi:** `sb receipt --summary "… şifreli yedek …"` artık reddedilmez; «pin kodu değişti», «şifremi değiştirdim» gibi değersiz cümleler ve 0 ile başlayan telefon numaraları kasaya yazılabilir.
+  Bulut süzgeci daha sıkı kalır: sır konusu («şifrem şu», «IBAN'ım») buluta gitmez.
+- **WhatsApp ürün dili:** araç `whatsapp_draft` → **`whatsapp_send`** (onaylı gönderim; eski ad bu sürümde takma ad). Arayüz, rehber ve modül açıklaması artık açıkça söylüyor: kartı onaylayınca mesaj **gönderilir**.
+- **Belge:** rehberde «Ayarlar nerede durur» tablosu (`config/*.yaml`, `~/.secondbrain`, keyring, `~/.claude.json`: ne var, git'e/yedeğe girer mi) ve «Kasaya hangi metin yazılmaz» tablosu (10 · Güvenlik ve gizlilik).
+
+### Yedek ve CI
+- **Yedek kapsamı düzeltildi:** kasa yedeği eskiden yalnız `.md/.enc/.yaml/.png/.jpg/.pdf` alıyordu; **Word, PowerPoint, Excel ekleri, `.jpeg/.webp`, Obsidian ayarları ve canvas'lar yedeğe girmiyordu.**
+  Artık `_system` ve `.git` dışındaki her dosya alınır (Office kilit dosyaları `~$…`, yarım indirmeler ve 500 MB üstü dosyalar hariç). 0.12.0 ile alınmış yedekleri yenile: `sb backup`.
+- **CI:** her push'ta yalnız Windows testi; macOS testi yalnız sürüm etiketinde (`v*`) ve elle çalıştırmada (gizli depoda macOS dakikası 10 kat sayılıyordu, işler kuyrukta iptal oluyordu).
+
 ## 0.12.0 — 2026-11-04
 
 ### Güvenlik (denetim 2026-11, ikinci tur: D-10, D-13, D-18, D-20, D-22, D-23, D-25, D-27, D-28, D-29)

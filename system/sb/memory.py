@@ -17,7 +17,7 @@ import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import vault_ops
+from . import sensitive, vault_ops
 from .notes import dump_note, replace_auto, safe_filename, split_note
 
 RECEIPTS = "50-Günlük/Makbuzlar"
@@ -65,7 +65,7 @@ def receipt(summary: str, refs: list[str] | None = None, links: list[str] | None
     summary, learned = _clean(summary), _clean(learned)
     if not summary:
         return "Hata: özet boş."
-    if vault_ops.SENSITIVE_RE.search(summary + " " + learned):
+    if sensitive.has_secret(summary + " " + learned):
         return "Hassas veri (şifre, kart, kimlik, IBAN) makbuza yazılmaz."
     refs = [r.strip() for r in refs or [] if r.strip()]
     if bad := _check_refs(refs):
@@ -152,7 +152,7 @@ def learn(candidate: str, source: str = "", scope: str = "", actor: str = "claud
     candidate = _clean(candidate)
     if not candidate:
         return "Hata: öğrenim boş."
-    if vault_ops.SENSITIVE_RE.search(candidate):
+    if sensitive.has_secret(candidate):
         return "Hassas veri öğrenim defterine yazılmaz."
     p = _vault() / CONCEPTS / "_Adaylar.md"
     _ensure(p, "Öğrenim adayları", "Henüz kavram notuna dönüşmemiş öğrenimler. Olgunlaşınca kavram notuna taşı ve satırı [x] yap.")
@@ -177,7 +177,7 @@ def concept(title: str, text: str, points: list[str] | None = None, limits: str 
     title = _clean(title)
     if not title or not text.strip():
         return "Hata: başlık ve açıklama gerekli."
-    if vault_ops.SENSITIVE_RE.search(text):
+    if sensitive.has_secret(text):
         return "Hassas veri kavram notuna yazılmaz."
     sources = [s for s in sources or [] if s.strip()]
     if bad := _check_refs(sources):
@@ -252,7 +252,7 @@ def trace(text: str, session: str = "", project: str = "", actor: str = "claude"
         return "Hata: iz boş."
     if len(text) > TRACE_MAX:
         return f"Hata: iz en fazla {TRACE_MAX} karakter ({len(text)} verildi); kısalt."
-    if vault_ops.SENSITIVE_RE.search(text):
+    if sensitive.has_secret(text):
         return "Hassas veri sohbet izine yazılmaz."
     p = _vault() / TRACES / f"{date.today():%Y-%m}.md"
     _ensure(p, f"Sohbet izleri {date.today():%Y-%m}", "Dosya değişmeyen ama anlamlı sohbetlerin kısa özetleri (ajan beyanı).")

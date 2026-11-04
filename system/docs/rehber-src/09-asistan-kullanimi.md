@@ -25,7 +25,7 @@ Asistan yalnız **açık olan modüllerin** işlerini yapar. Örnekler (kendi ve
 | Bilgisayar | `hesap makinesini aç` · `sistem bilgisi` · `sesi kıs` | [Bilgisayar kontrolü](moduller/computer.md) |
 | Müzik/video | `Spotify'da X çal` · `YouTube'da Y aç` | [Spotify ve YouTube](moduller/media.md) |
 | Ekran/kamera | `ekranımda ne var?` | [Ekran ve kamera](moduller/vision.md) |
-| WhatsApp | `Ayşe'ye "geç kalacağım" taslağı hazırla` | [WhatsApp](moduller/whatsapp.md) (taslak + onay) |
+| WhatsApp | `Ayşe'ye "geç kalacağım" yaz` | [WhatsApp](moduller/whatsapp.md) (onay kartı; **Onayla**'ya basınca **gönderilir**) |
 | Plan | `bugünü planla` · `haftamı planla` | [Görev ve planlama](moduller/tasks_plan.md) |
 | Web | `... için web'de ara` | [Bilgisayar kontrolü](moduller/computer.md) |
 
@@ -68,10 +68,22 @@ Bazı işler **kendiliğinden yapılmaz**; asistan önce bir kart çıkarır:
 - **Takvime ekle/sil** — Takvim · onay gerekli
 - **Komut çalıştır** — Komut · onay gerekli (sınıflama aşağıda)
 - **Bir konuyu unut / sil** — Unutma / Silme
-- **WhatsApp mesajı**, **SMS**, **Mail taslağı** — taslak hazırlanır, **gönderilmez**
+- **WhatsApp mesajı** — kart mesajın tam metnini ve alıcıyı gösterir; **Onayla**'ya basınca mesaj **gönderilir** (taslak olarak kalmaz). WhatsApp penceresi öne gelmezse güvenlik için Enter'a basılmaz, mesaj WhatsApp'ta hazır bekler
+- **SMS**, **Mail taslağı** — taslak hazırlanır, **gönderilmez**
 - **Not güncelleme/arşivleme, kural ekleme, hafızaya yazma** — izin profiline göre (aşağıda)
 
-Kartın yapısı: üstte tür etiketi («Takvim · onay gerekli»), altında ne yapılacağı, altta **Onayla** ve **İptal**. Onaylayınca satır «Onaylandı — mesaj», iptalde «İptal edildi» olur. Birden çok bekleyen varsa çip «Onayla (N bekliyor)» yazar. Pano'daki **Onay bekleyen** bölümü ve **Otomasyonlar → Bekleyen onaylar** aynı kartları toplar.
+Kartın yapısı: üstte tür etiketi («Takvim · onay gerekli»), altında ne yapılacağı, altta **Onayla** ve **İptal**. Onaylayınca satır «Onaylandı — mesaj», iptalde «İptal edildi» olur. Birden çok bekleyen varsa çip «Onayla (N bekliyor)» yazar.
+
+<a id="onaylar"></a>
+
+### Onaylar görünümü: hepsi tek yerde
+
+Onay bekleyen her şey **tek bir listede** toplanır: sohbet kartları (komut, takvim, WhatsApp, gece koşusu…), **otomasyonların** dış etkili eylemleri ve mail/SMS'ten çıkarılan ama emin olunamayan **tarih adayları**. Üst çubuktaki **✓ Onaylar** düğmesi (yanındaki sayı bekleyen onay sayısıdır) ya da **Görünümler → Onaylar** bu listeyi açar; her kartta türü, nereden geldiği (sohbet / otomasyon / mail-SMS tarihi), kaynağı (bilgisayar / telefon) ve **Onayla** / **İptal** vardır.
+
+- Onaylar **kalıcıdır**: asistan kapanıp açılsa da kart kaybolmaz; komut, WhatsApp, takvim, gece koşusu ve otomasyon kartları yeniden açılıştan sonra da onaylanabilir. Bellekte hazırlanan birkaç kart türü (ör. unutma, zaman bloğu) yeniden açılışta «süresi doldu» olur; isteği yeniden yaparsın.
+- Kartların **süresi** vardır: komut ve WhatsApp 12 saat, diğer sohbet eylemleri 1 gün, takvim önerileri 7 gün, tarih adayları 60 gün. Süresi dolan kart onaylanamaz.
+- **Tarih adayları** Obsidian'da `00-Inbox/onay-bekleyenler.md` dosyasında da görünür. Bu dosya listeden üretilir: orada kutuyu `[x]` yapmak onay, satırı silmek iptal demektir; günlük çalışma onaylananları takvime ekler. Onaylar görünümünden onaylarsan hemen takvime eklenir ve satır «→ takvimde» olur.
+- **Yeni sohbet** açınca o sohbetin bekleyen kartları iptal olur (eskisi gibi).
 
 ![Takvim onay kartı: Onayla / İptal](img/asistan-onay-karti.png)
 
@@ -79,7 +91,7 @@ Kartın yapısı: üstte tür etiketi («Takvim · onay gerekli»), altında ne 
 
 1. Takvim ve WhatsApp **her izin profilinde** onaylıdır.
 2. Riskli/yazan komutlar (paket kurma, sistem yükseltme, dal silme, ortam değişkeni okuma, dosyaya yazdırma, ağ paylaşımı, kasa dışı dosya okuma…) her zaman onaylıdır.
-3. **Komut** ve **WhatsApp** kartları yalnız **bilgisayardan** onaylanır, telefondan değil.
+3. **Komut**, **WhatsApp**, **gece koşusu**, **silme** ve **otomasyon/tarih** kartları yalnız **bilgisayardan** onaylanır, telefondan değil. Telefon yalnız **kendi** açtığı takvim/eylem kartlarını onaylayabilir; bilgisayarda bekleyen kartları (komut metni, WhatsApp mesajı) telefonda görmez.
 4. Bir mail/SMS/belge içinde yazan «şunu yap» yönergeleri komut sayılmaz; «kural ekle», «hafızaya yaz», «URL çek» gibi işler yalnız **senin yazdığın** mesajda o istek varsa onaysız ilerler ([Güvenlik ve gizlilik](10-guvenlik-gizlilik.md)).
 5. Kalıcı silme yoktur; silinen her şey arşive taşınır.
 

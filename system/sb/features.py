@@ -39,7 +39,7 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
     "phone": ("Telefon erişimi", "Asistana telefondan Tailscale ile erişim", "Tailscale", True),
     "computer": ("Bilgisayar kontrolü", "Uygulama açma, ses, sistem bilgisi, komut (onaylı)", "—", True),
     "media": ("Spotify ve YouTube", "Şarkı/video açma", "Spotify Premium (isteğe bağlı)", True),
-    "whatsapp": ("WhatsApp", "Onaylı mesaj taslağı ve gönderme", "WhatsApp masaüstü", True),
+    "whatsapp": ("WhatsApp", "Onaylı mesaj gönderme (onaylanınca gönderilir)", "WhatsApp masaüstü", True),
     "vision": ("Ekran ve kamera", "Ekranı/kamerayı okuyup anlatma", "görsel model", True),
     "capture": ("Beyne at", "Ctrl+Alt+B, Gönder › Beyne At, ekran görüntüsü, web/video özeti", "model", True),
     "claude_hooks": ("Claude Code hafızası", "Kancalar, son oturum kartları, makbuz, skill'ler", "Claude Code", True),
@@ -62,7 +62,7 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
 TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her zaman açık)
     "calendar_add": "calendar", "calendar_delete": "calendar", "calendar_list": "calendar",
     "open_app": "computer", "media": "computer", "sys_info": "computer", "run_command": "computer", "web_search": "computer",
-    "play_spotify": "media", "play_youtube": "media", "whatsapp_draft": "whatsapp",
+    "play_spotify": "media", "play_youtube": "media", "whatsapp_send": "whatsapp", "whatsapp_draft": "whatsapp",
     "screen_read": "vision", "camera_read": "vision", "brain_capture": "capture", "inbox_add": "inbox",
 }
 STEP_MODULE = {          # günlük çalışma komutu → modül

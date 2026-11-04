@@ -36,11 +36,12 @@ Profil, asistanın hangi işleri **sormadan** yapabileceğini belirler. Gizlilik
 
 ## Onay kuralları (özet)
 
-1. Dış etkili her iş (takvim, WhatsApp, mail/SMS taslağı, komut, silme/unutma) **onay kartı** ister; kart yalnız sen onaylayınca çalışır.
-2. **Komut** ve **WhatsApp** kartları yalnız **bilgisayardan** onaylanır; telefondan onaylanamaz.
-3. Riskli komutlar her profilde onaylıdır: paket kurma, sistem yükseltme, dal silme/uzak depo değiştirme, ortam değişkeni okuma, dosyaya yazdırma (`--output`), ağ paylaşımı, DNS sorgusu, kasa/çalışma alanı dışı dosya okuma.
-4. **Kalıcı silme yoktur.** «Silinen» her şey `90-Arşiv`e taşınır; kasa git ile sürümlenir.
-5. Otomasyon kuralları dış etkili eylemleri her zaman **onay kuyruğuna** düşürür (Otomasyonlar → **Bekleyen onaylar**).
+1. Dış etkili her iş (takvim, WhatsApp, mail/SMS taslağı, komut, silme/unutma) **onay kartı** ister; kart yalnız sen onaylayınca çalışır. WhatsApp kartı onaylanınca mesaj **gönderilir**.
+2. **Komut**, **WhatsApp**, **gece koşusu**, **silme** ve otomasyon/tarih kartları yalnız **bilgisayardan** onaylanır; telefondan onaylanamaz. Telefon bilgisayarda bekleyen kartları görmez.
+3. Bütün onaylar tek, kalıcı bir listede durur (**Onaylar** görünümü; [Asistan kullanımı](09-asistan-kullanimi.md#onaylar)): asistan yeniden başlasa da kaybolmaz, her kartın süresi vardır, aynı kart iki kez yürütülemez.
+4. Riskli komutlar her profilde onaylıdır: paket kurma, sistem yükseltme, dal silme/uzak depo değiştirme, ortam değişkeni okuma, dosyaya yazdırma (`--output`), ağ paylaşımı, DNS sorgusu, kasa/çalışma alanı dışı dosya okuma.
+5. **Kalıcı silme yoktur.** «Silinen» her şey `90-Arşiv`e taşınır; kasa git ile sürümlenir.
+6. Otomasyon kuralları dış etkili eylemleri her zaman **onay kuyruğuna** düşürür (**Onaylar** görünümü; Otomasyonlar ekranında da listelenir). Kuraldaki `whatsapp_taslak` eylemi de onaylanınca mesajı **gönderir**.
 
 ### İstem enjeksiyonu kalkanı
 
@@ -56,6 +57,7 @@ Bir mailin, SMS'in, belgenin ya da web sayfasının içinde «önceki talimatlar
 Bulut bir modele giden metin önce süzülür:
 
 - **Her zaman maskelenir:** API anahtarı biçimleri, `ŞİFRE=...` benzeri atamalar, doğrulama kodları (OTP: «kod», «şifre», «doğrulama» gibi sözcüklerden sonra gelen 4–8 haneli sayı), kredi/banka kartı numarası, IBAN (`TR…`), geçerli TCKN.
+- **Buluta hiç gitmez (yerel modele düşer):** bir sırrın değeri («şifre: …», «şifrem 1234», «parola=…», «pin kodu 1234») ya da sır konusu («şifrem şu», «IBAN'ım», «tc kimlik»). «Şifreli», «şifreleme», «şifrelenmiş» (encrypted) sözcükleri parola sayılmaz.
 - **Kişi bilgisi maskeleme açıksa** e-posta, telefon ve adres de «[e-posta gizlendi]», «[telefon gizlendi]», «[adres gizlendi]» olur (karma ve bulut seçimlerinde açıktır; Gizlilik ekranında durumu görürsün).
 - `visibility: private` işaretli notlar **hiçbir zaman** buluta gitmez; bulut sohbet modeli hassas içerikte yerel modele düşer. Uzun belgelerde karar bütün metne göre verilir.
 - «Tam yerel»de hiçbir istek buluta gitmez.
@@ -69,6 +71,20 @@ visibility: private
 ```
 
 Gizli notlar Claude MCP'sinde, asistan getirmesinde ve hafıza kancalarında görünmez.
+
+<a id="hassas-veri"></a>
+
+### Kasaya hangi metin yazılmaz?
+
+Makbuz (`sb receipt`), hafıza, kural, öğrenim, görev, kişi bilgisi, bilgi kartı ve ajan girdisi yazılmadan önce **sır değeri** aranır; varsa «Hassas veri (şifre, kart, kimlik, IBAN) … yazılmaz» der. Değer taşımayan cümle hassas değildir:
+
+| Yazılmaz (değer var) | Yazılır (değer yok) |
+|---|---|
+| `şifre: X`, `şifrem 1234`, `parola=…`, `password: hunter2` | `şifreli yedek aldık`, `şifreleme anahtarını yedekle` |
+| `pin kodu 1234`, `cvv 123` | `pin kodu değişti`, `şifremi değiştirdim` |
+| kart numarası, IBAN (`TR…`), 11 haneli TCKN, API anahtarı | telefon numarası (`05…`), iki tarih yan yana |
+
+Bütün bu kalıplar ve gizli not (`visibility: private`) denetimi tek bir yerde tanımlıdır (`sb/sensitive.py`); bulut süzgeci, kasa yazımı ve gizli not denetimi aynı kaynağı kullanır.
 
 ## Yedek ve geri yükleme
 
@@ -126,6 +142,21 @@ sb vault-key --export <dosya>                    # anahtarı yedekle
 - Kurulum paneli yalnız `127.0.0.1`'de çalışır ve oturuma özel jetonla korunur; başka cihazdan ya da başka sitelerden erişilemez.
 - Spotify geri dönüş sayfası ve telefon paylaşımı için güvenlik açıkları 0.9.2 sürümünde kapatıldı (kaçışlama, sıkı CSP, paylaşımın önizleme sayfasına gitmesi).
 - Hata raporu paylaşmak istersen `sb logs --bundle` sırlar maskelenmiş paylaşılabilir paket üretir.
+
+<a id="ayarlar-nerede-durur"></a>
+
+## Ayarlar nerede durur?
+
+Ayarlar ve durum birkaç ayrı yerde tutulur. Neyin nerede olduğunu, git'e ve yedeğe girip girmediğini bil; bir dosyayı paylaşırken ya da bilgisayar değiştirirken neyi taşıman gerektiğini buradan görürsün.
+
+| Nerede | Ne var | Git'e girer mi? | Yedeğe girer mi? |
+|---|---|---|---|
+| `_system/config/*.yaml` | Senin ayarların: hesaplar (`accounts.yaml`, şifresiz), modül seçimi (`features.yaml`), model yönlendirme (`llm.yaml`), izin profili (`izinler.yaml`), yedek sayısı (`gizlilik.yaml`), otomasyon kuralları (`otomasyon.yaml`), izinli tarayıcı eklentileri (`eklentiler.yaml`), mail kuralları, profil. `*.example.yaml` örnektir. | **Evet** (`_system` deposunda izlenir). Buraya sır yazma: sırlar keyring'de durur. | **Hayır.** Kasa yedeği `_system`'i atlar; güncelleme yedeği (`system-*.zip`) yalnız kodu alır. Git geçmişi tek kopyadır. |
+| `_system/features.yaml` (kökte) | Özellik **kataloğu** (yol haritası, `sb roadmap`). Ayar değildir; modülü açıp kapatmak `config/features.yaml`'dadır. | Evet | Güncelleme yedeğinde (`system-*.zip`) |
+| `~/.secondbrain/` (`*.json`, `*.jsonl`, `*.db`) | Çalışma durumu: onaylar (`approvals.jsonl`), telefon eşleme jetonlarının özeti (`remote_tokens.json`), bildirim abonelikleri (`push_subs.json`), otomasyon durumu, gece işi, bildirilen hatırlatmalar, sohbet geçmişi, mail/arama veritabanları, günlükler; `secrets/` (OAuth belirteç dosyaları). | **Hayır** (kasa dışında) | **Hayır.** Yedekler bu klasörün `backups/` alt klasörüne yazılır ama klasörün kendisini içermez; yeni bilgisayarda yeniden kurulur ve eşitlenir. |
+| İşletim sistemi şifre kasası (`keyring`, hizmet `second-brain`) | Sırlar: API anahtarları (`api-…`), IMAP/okul şifreleri, Telegram, MCP sırları (`mcp-<id>-<alan>`), webhook belirteçleri (`hook-<ad>`), **kasa şifreleme anahtarı**. | **Hayır** | **Hayır.** Şifreleme anahtarını `sb vault-key --export <dosya>` ile ayrıca sakla; diğer sırları yeni bilgisayarda yeniden gir. |
+| `~/.claude.json` | Claude Code'un kendi ayarları: kayıtlı MCP sunucuları (Second Brain MCP'si dahil). Sırlar buraya düz metin yazılmaz; MCP sarmalayıcısı onları keyring'den okur. | **Hayır** | **Hayır** (Claude Code'a aittir; MCP kaydı yeniden yapılır) |
+| Kasadaki notlar (`Asistan kuralları.md`, `Asistan hafızası.md`, `00-Inbox/onay-bekleyenler.md`) | Asistanın öğrendiği kurallar ve hafıza; tarih adaylarının Obsidian görünümü | Evet (kasa deposu) | **Evet** (kasa yedeği) |
 
 ## Ne zaman dikkat etmelisin?
 

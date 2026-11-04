@@ -869,6 +869,12 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("arsenal", help="kasada 'Araçlar ve erişimler' notunu güncelle")
     g.set_defaults(func=lambda a: print(__import__("sb.arsenal", fromlist=["x"]).build()) or 0)
 
+    g = sub.add_parser("migrate", help="kasa şema göçleri: --check (salt okunur), --dry-run, --yes (yedek alır, tek commit atar)")
+    g.add_argument("--check", action="store_true", help="kaç göç bekliyor, ne değişecek (salt okunur; bekleyen varsa çıkış 3)")
+    g.add_argument("--dry-run", action="store_true", help="göçleri deneme kipinde çalıştır: hiçbir şey yazılmaz")
+    g.add_argument("--yes", action="store_true", help="bekleyen göçleri uygula (önce şifreli yedek, sonra tek git commit'i)")
+    g.set_defaults(func=lambda a: __import__("sb.schema", fromlist=["x"]).cli(check_only=a.check, dry_run=a.dry_run, yes=a.yes))
+
     g = sub.add_parser("update", help="kit kurulumunu son sürüme getir (notlara ve ayarlara dokunmaz)")
     g.add_argument("--check", action="store_true", help="yalnız yeni sürüm var mı bak")
     g.add_argument("--rollback", action="store_true", help="son güncellemeden önceki yedeğe dön")
@@ -1280,6 +1286,9 @@ def main(argv: list[str] | None = None) -> int:
     g.set_defaults(func=cmd_set_secret)
 
     args = p.parse_args(argv)
+    if args.cmd not in ("doctor", "version", "migrate", "update", "logs"):    # kasa koddan yeniyse yazmadan önce uyar
+        from . import schema
+        schema.warn_if_ahead()
     try:
         return args.func(args)
     except KeyboardInterrupt:

@@ -167,10 +167,45 @@ def run(check_only: bool = False, yes: bool = False, tags_only: bool = False) ->
         print("\nYenilikler:\n" + notes + "\n")
     rc = _install(kit, vault)
     if rc == 0:
+        mrc = migrate_after_update(vault, yes)
         print("\nGüncellendi. Asistan açıksa yeniden başlat (bilgisayarı yeniden başlatmak da olur).")
+        return mrc
     else:
         print("\nGüncelleme yarım kaldı: `sb update --recover` ile tamamla ya da `sb update --rollback` ile geri dön.")
     return rc
+
+
+def _run_migrate(vault: Path, *args: str) -> subprocess.CompletedProcess:
+    """Göçü YENİ kodla çalıştır (bu süreç eski kodu yüklü): kasadaki _system'den ayrı süreç."""
+    import os
+    return subprocess.run(["uv", "run", "--directory", str(Path(vault) / "_system"), "python", "-X", "utf8", "-m", "sb", "migrate", *args],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace", env={**os.environ, "SB_VAULT": str(vault)})
+
+
+def migrate_after_update(vault: Path, yes: bool = False) -> int:
+    """Güncelleme sonrası bekleyen kasa şeması göçlerini listele, onayla (ya da --yes ile) uygula. 0 = göç yok/uygulandı/ertelendi."""
+    r = _run_migrate(vault, "--check")
+    if r.returncode == 0:
+        return 0
+    if r.stdout:
+        print("\n" + r.stdout.strip())
+    if r.returncode != 3:                                       # bekleyen göç değil: sorun (kasa koddan yeni, bozuk sürüm...)
+        print(r.stderr.strip()[:300] or "Kasa şeması denetlenemedi; `sb doctor` ile bak.")
+        return 0
+    if not yes:
+        try:
+            ok = sys.stdin.isatty() and input("Kasa şeması göçü uygulansın mı? (önce şifreli yedek alınır, tek commit atılır) [e/H] ").strip().lower() in ("e", "evet", "y", "yes")
+        except EOFError:
+            ok = False
+        if not ok:
+            print("Göç ertelendi; hazır olunca `sb migrate --yes` (önce `sb migrate --dry-run`).")
+            return 0
+    m = _run_migrate(vault, "--yes")
+    print((m.stdout or "").strip())
+    if m.returncode:
+        print("Göç uygulanamadı (kasa olduğu gibi bırakıldı); `sb migrate --check` ve `sb doctor` ile bak.")
+        return 1
+    return 0
 
 
 def set_mode(profile: str | None, cfg: Path = SYSTEM / "config" / "hafiza.yaml") -> str:

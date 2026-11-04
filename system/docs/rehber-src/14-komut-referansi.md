@@ -43,6 +43,22 @@ sb update [--check] [--rollback] [--recover] [--yes] [--tags-only]
 
 **Örnek:** `sb update --check`
 
+### sb migrate
+
+**Ne yapar:** kasa şema göçlerini yönetir (kasa biçimi sürümlüdür: `_system/config/kasa.yaml` → `schema_version`). Her adımdan önce git'in temiz olduğunu denetler, **şifreli yedek** alır (alınamazsa durur), göçü uygular ve tek commit atar («şema göçü N→M»); hata olursa yalnız göçün kendi değişikliklerini geri alır.
+
+```
+sb migrate [--check] [--dry-run] [--yes]
+```
+
+| Seçenek | Anlamı |
+|---|---|
+| `--check` | kaç göç bekliyor, hangi notlar değişecek (salt okunur; bekleyen varsa çıkış kodu 3) |
+| `--dry-run` | göçleri deneme kipinde çalıştır; hiçbir şey yazılmaz, yedek alınmaz |
+| `--yes` | bekleyen göçleri uygula (seçeneksiz çalıştırırsan yalnız listeler ve onay ister) |
+
+**Örnek:** `sb migrate --check`
+
 ### sb version
 
 **Ne yapar:** kurulu sürüm.

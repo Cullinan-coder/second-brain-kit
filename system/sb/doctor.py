@@ -48,6 +48,22 @@ def backup_check() -> tuple[str, str, str]:
     return (OK if days <= BACKUP_MAX_DAYS else FAIL), label, "haftalık görev çalışmıyor olabilir (SecondBrain-Weekly); elle: sb backup"
 
 
+def schema_check() -> tuple[str, str, str]:
+    """Kasa şema sürümü kodla uyumlu mu: gerideyse ✗ (sb migrate), kodun ilerisindeyse ✗ (eski kod + yeni kasa)."""
+    from . import schema
+    try:
+        st = schema.status()
+    except Exception as e:                                       # noqa: BLE001
+        return WARN, "Kasa şema sürümü kontrol edilemedi", str(e)[:80]
+    if st["state"] == "ok":
+        return OK, st["message"], ""
+    if st["state"] == "behind":
+        return FAIL, st["message"], "sb migrate --check (ne değişecek), sonra sb migrate --yes"
+    if st["state"] == "ahead":
+        return FAIL, st["message"], "sb update (kodu güncelle); kasaya yazma işlemleri yapma"
+    return FAIL, st["message"], "_system/config/kasa.yaml içindeki schema_version değerini düzelt (sayı olmalı)"
+
+
 def checks() -> list[tuple[str, str, str]]:
     out: list[tuple[str, str, str]] = []
 
@@ -136,6 +152,7 @@ def checks() -> list[tuple[str, str, str]]:
     codex = shutil.which("codex")
     add(OK if codex else WARN, "Codex (isteğe bağlı alt ajan)", "npm i -g @openai/codex ve codex login")
     out.append(backup_check())
+    out.append(schema_check())
     gitdir = VAULT / ".git"
     add(OK if gitdir.exists() else WARN, "Kasa git deposu (geri alma + yedek)", "cd kasa && git init (özel GitHub reposuna bağla)")
     return out

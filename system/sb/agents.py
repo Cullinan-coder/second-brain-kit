@@ -8,25 +8,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from . import config, vault_ops
+from . import config, sensitive, vault_ops
 
 OUT_DIR = "00-Inbox/Ajan çıktıları"
 READ_TOOLS = ("brain_find", "read_note", "list_notes", "research")
-PRIVATE_RE = re.compile(r"^visibility:\s*['\"]?private['\"]?\s*$", re.M | re.I)
-
-
-def _frontmatter(txt: str) -> str:
-    """Notun TÜM frontmatter bloğu (ilk `---` … sonraki `---`); yoksa boş."""
-    t = txt.lstrip("﻿")
-    if not t.startswith("---"):
-        return ""
-    end = re.search(r"^---\s*$", t[3:], re.M)
-    return t[3:3 + end.start()] if end else t[3:]
-
-
-def is_private_text(txt: str) -> bool:
-    from .notes import is_private_text as _impl          # tek işlev (D-11): notes.is_private ile aynı sonuç
-    return _impl(txt)
+from .sensitive import PRIVATE_RE, is_private_text  # noqa: E402,F401 — tek kaynak (D-11, D-30)
 
 AGENTS: list[dict] = [
     {"id": "ders", "ad": "Ders asistanı", "aciklama": "Ders notlarından soruya cevap ve çalışma önerisi verir.",
@@ -185,7 +171,7 @@ def run(agent_id: str, text: str, web: bool = False) -> dict:
     text = (text or "").strip()
     if not text:
         raise ValueError("girdi boş")
-    if vault_ops.SENSITIVE_RE.search(text):
+    if sensitive.has_secret(text):
         raise ValueError("hassas veri ajana verilmez")
     run_id = f"{agent_id}-{int(time.time() * 1000)}"
     start = datetime.now().isoformat(timespec="seconds")

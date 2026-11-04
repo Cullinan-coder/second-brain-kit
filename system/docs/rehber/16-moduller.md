@@ -22,7 +22,7 @@ Second Brain **52 modül**den oluşur; her modül özellik kataloğundaki maddel
 | [Telefon erişimi](moduller/phone.md) | Asistana telefondan Tailscale ile erişim | 8 | açık |
 | [SMS ve aramalar](moduller/sms.md) | Telefon yedeğinden SMS/arama | 1 | açık |
 | [Telegram botu](moduller/telegram.md) | Telegram'dan not alma ve özet | 0 | açık |
-| [WhatsApp](moduller/whatsapp.md) | Onaylı mesaj taslağı ve gönderme | 2 | açık |
+| [WhatsApp](moduller/whatsapp.md) | Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir) | 2 | açık |
 
 ## Okul ve proje
 

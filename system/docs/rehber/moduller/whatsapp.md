@@ -1,6 +1,6 @@
 # WhatsApp
 
-> Onaylı mesaj taslağı ve gönderme
+> Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir)
 
 | | |
 |---|---|
@@ -12,7 +12,7 @@
 
 ## Ne işe yarar
 
-Onaylı mesaj taslağı ve gönderme.
+Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir).
 
 Bu modül özellik kataloğundan **2 maddeyi** kapsar (aşağıda tek tek). Her madde için ayrı bir sihirbaz kutusu vardır.
 
@@ -63,7 +63,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 87. WhatsApp mesaj arşivi
 
-- **Ne işe yarar:** «WhatsApp mesaj arşivi» (Yeni veri kaynakları kategorisi), «WhatsApp» modülünün parçasıdır. Modülün amacı: Onaylı mesaj taslağı ve gönderme.
+- **Ne işe yarar:** «WhatsApp mesaj arşivi» (Yeni veri kaynakları kategorisi), «WhatsApp» modülünün parçasıdır. Modülün amacı: Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir).
 - **Durum:** hazır (sürüm 0.5.0).
 - **Nasıl açılır:** «WhatsApp» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [WhatsApp](../03-hesaplar.md#hesap-whatsapp); program: WhatsApp Desktop.
@@ -74,7 +74,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 184. WhatsApp taslak → onaylı gönderme (gelişmiş)
 
-- **Ne işe yarar:** «WhatsApp taslak → onaylı gönderme (gelişmiş)» (İletişim kategorisi), «WhatsApp» modülünün parçasıdır. Modülün amacı: Onaylı mesaj taslağı ve gönderme.
+- **Ne işe yarar:** «WhatsApp taslak → onaylı gönderme (gelişmiş)» (İletişim kategorisi), «WhatsApp» modülünün parçasıdır. Modülün amacı: Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir).
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «WhatsApp» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [WhatsApp](../03-hesaplar.md#hesap-whatsapp); program: WhatsApp Desktop.
