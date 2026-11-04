@@ -18,7 +18,7 @@ Yerel model **internete çıkmadan, ücretsiz** çalışır; verin bilgisayarın
 4. Windows'ta bir kurulum penceresi/UAC onayı çıkabilir; onayla. macOS'ta uygulamayı **Uygulamalar** klasörüne sürüklemen gerekebilir.
 5. Elle kurmak istersen https://ollama.com/download adresinden kur, sonra **Yeniden tara**.
 
-
+![Ollama kartı: kurulu / kurulu değil](img/modeller-ollama.png)
 
 Ollama kurulu ama çalışmıyorsa: Windows'ta görev çubuğundaki gizli simgelerde Ollama simgesini kontrol et; yoksa Başlat menüsünden **Ollama**'yı aç. Doğrulama: `sb doctor` → «Ollama (yerel model)» ✓.
 

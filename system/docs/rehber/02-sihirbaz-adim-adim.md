@@ -11,7 +11,7 @@ Sihirbaz (**Second Brain Kurulum**) 12 adımdan oluşur. Her ekranı, alanı ve 
 - **Sırlar** (şifre, anahtar, belirteç) asla sihirbazın kaydına yazılmaz; yalnız işletim sistemi şifre kasasına gider. Yarım kalan kurulumda sırları yeniden girmen gerekebilir.
 - Hata olursa kırmızı **Kurulum durdu** kartı: **Ne oldu / Nasıl düzeltilir** ve **Yeniden dene** ([Sorun giderme](11-sorun-giderme.md)).
 
-
+![Sihirbazın genel görünümü: sol adım listesi, üstte ilerleme şeridi](img/sihirbaz-genel.png)
 
 ---
 
@@ -32,7 +32,7 @@ Ekranda:
 
 **Yapacağın:** dili seç → **İleri**.
 
-
+![Adım 1: Hoş geldin](img/sihirbaz-1-hos-geldin.png)
 
 ---
 
@@ -59,7 +59,7 @@ Dört kart grubu vardır (her kartın altında açıklaması yazar):
 
 **Yapacağın:** her eksenden bir kart seç → **İleri**. Emin değilsen: Meslek = sana en yakın olan, Donanım = önerilen, Gizlilik = Karma, Yoğunluk = Günlük hayat.
 
-
+![Adım 2: Hazır seçim kartları](img/sihirbaz-2-hazir-secim.png)
 
 ---
 
@@ -92,7 +92,7 @@ Bazı modüller başkasına bağlıdır: ses kapanırsa uyandırma sözcüğü, 
 
 **Yapacağın:** ilgilenmediğin modülleri kapat; emin değilsen varsayılan listeyle devam et (sonradan **Ayarlar → Özellikler**'den değiştirirsin). Her modülün ne yaptığı: [Modüller](16-moduller.md).
 
-
+![Adım 3: Modül ağacı ve arama](img/sihirbaz-3-ozellikler.png)
 
 ---
 
@@ -116,7 +116,7 @@ Bazı modüller başkasına bağlıdır: ses kapanırsa uyandırma sözcüğü, 
 
 Uyarılar engellemez ama kurulumu bozabilir; dinlemen önerilir.
 
-
+![Adım 4: Kişisel bilgiler ve kasa yolu uyarısı](img/sihirbaz-4-profil.png)
 
 ---
 
@@ -175,7 +175,7 @@ Hata mesajları Türkçe ve ne yapacağını söyler (ör. «Kimlik reddedildi: 
 
 Başlık **Diğer hizmetler**: **Spotify Client ID** ve **Spotify Client Secret**, **Telegram bot belirteci**, **GitHub kişisel erişim belirteci**. Altlarında Spotify, Telegram, Tailscale ve GitHub için kısa adım adım rehberler vardır ([Spotify](03-hesaplar.md#hesap-spotify), [Telegram](03-hesaplar.md#hesap-telegram), [Tailscale](03-hesaplar.md#hesap-tailscale), [GitHub](03-hesaplar.md#hesap-github)). Gizli alanların yanındaki **Kaydet ve test et** düğmesi değeri şifre kasasına yazar ve («Deneniyor…») sonucu gösterir.
 
-
+![Adım 5: Hesaplar ekranı](img/sihirbaz-5-hesaplar.png)
 
 ---
 
@@ -191,7 +191,7 @@ Sağlayıcılar: **OpenAI, Anthropic, Gemini, OpenRouter, Groq, DeepSeek, Mistra
 
 Anahtarı nereden alacağın, maliyet ve limit uyarıları: [API anahtarları](04-api-anahtarlari.md).
 
-
+![Adım 6: API anahtarları](img/sihirbaz-6-anahtarlar.png)
 
 ---
 
@@ -206,7 +206,7 @@ Anahtarı nereden alacağın, maliyet ve limit uyarıları: [API anahtarları](0
 
 Hangi profilin ne zaman seçileceği, indirme boyutları, GPU kütüphaneleri: [Modeller ve ses](05-modeller-ses.md).
 
-
+![Adım 7: Yerel modeller](img/sihirbaz-7-modeller.png)
 
 ---
 
@@ -220,7 +220,7 @@ Hangi profilin ne zaman seçileceği, indirme boyutları, GPU kütüphaneleri: [
 
 Ayrıntı: [MCP](06-mcp.md).
 
-
+![Adım 8: MCP kartları](img/sihirbaz-8-mcp.png)
 
 ---
 
@@ -240,7 +240,7 @@ Her kaynak kartında:
 
 Ayrıntı: [Veri yükleme](07-veri-yukleme.md).
 
-
+![Adım 9: Veri yükleme kartı](img/sihirbaz-9-veri.png)
 
 ---
 
@@ -250,7 +250,7 @@ Ayrıntı: [Veri yükleme](07-veri-yukleme.md).
 
 Ekranda göstergeler: **Tailscale kurulu**, **Tailscale bağlı**, **Asistan adresi**, **Eşleme kodu**. Asistan sunucusu çalışmıyorsa «Asistan sunucusu çalışmıyor; adres ve kod uygulama açıkken görünür.» yazar. **Yenile** durumu tazeler. Adım adım Tailscale kurulumu: [Hesaplar → Tailscale](03-hesaplar.md#hesap-tailscale); telefonu eşleme ve PWA: [Uygulama turu → Telefon](08-uygulama-turu.md#telefon).
 
-
+![Adım 10: Telefon](img/sihirbaz-10-telefon.png)
 
 ---
 
@@ -267,7 +267,7 @@ Ekranda göstergeler: **Tailscale kurulu**, **Tailscale bağlı**, **Asistan adr
 
 Günlük işlerin (güncelleme, mail çekme vb.) saati zamanlayıcı kurulurken belirlenir: Windows'ta günlük görev oturum açılışında ve **13:00**'te, haftalık denetim **pazar 15:00**'te çalışır (`SecondBrain-Daily`, `SecondBrain-Weekly`, `SecondBrain-Chat`). Zamanlanmış görevler kurulum adımında yalnız sen izin verirsen eklenir.
 
-
+![Adım 11: Başlangıç](img/sihirbaz-11-baslangic.png)
 
 ---
 
@@ -282,7 +282,7 @@ Günlük işlerin (güncelleme, mail çekme vb.) saati zamanlayıcı kurulurken 
 - **Hazırsın** — «Second Brain kuruldu. Uygulamayı açıp ilk turu izleyebilirsin.» Düğmeler: **Uygulamayı aç**, **Turu göster**.
 - Hata olursa «Kurulum bir hatayla durdu; günlüğe bak, sonra tekrar dene.» ve **Kurulum durdu** kartı (**Yeniden dene**, **Kişisel bilgilere dön**).
 
-
+![Adım 12: Özet ve kurulum](img/sihirbaz-12-ozet.png)
 
 ---
 

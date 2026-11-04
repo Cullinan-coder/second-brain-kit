@@ -1630,9 +1630,9 @@ def test_feature_switches_and_roadmap(tmp_path, monkeypatch):
     assert features.enabled("sms")
     features.reload()
     items = features.catalog()
-    assert len(items) == 250 and {i["faz"] for i in items} == {0, 1, 2, 3, 4, 5}
+    assert len(items) == 258 and {i["faz"] for i in items} == {0, 1, 2, 3, 4, 5, 6}
     assert all(i["denetleyen"] == "opus" for i in items)
-    assert "Toplam 250" in features.roadmap()
+    assert "Toplam 258" in features.roadmap()
 
 
 def test_contact_rename_follows_source_and_relinks(tmp_path):

@@ -232,6 +232,14 @@ Durumlar: **hazır**, **planlandı (henüz yok)**, **yapım aşamasında (kısme
 | 177 | [Takvim çakışma tespiti](moduller/calendar.md#madde-177) | Google Takvim | hazır |
 | 178 | [Sınav takvimi ve çalışma planı](moduller/courses.md#madde-178) | Okul (ÖBS/LMS) | hazır |
 | 179 | [Bugün en önemli 3 iş](moduller/tasks_plan.md#madde-179) | Görev ve planlama | hazır |
+| 251 | [Kopya geçmişi — metin, bağlantı ve görsel toplama (yerel izleyici, varsayılan kapalı)](moduller/pano.md#madde-251) | Kopya geçmişi (Pano) | hazır |
+| 252 | [Kopya geçmişi — görsel, metin ve bağlantı için üç raf](moduller/pano.md#madde-252) | Kopya geçmişi (Pano) | hazır |
+| 253 | [Kopya geçmişi — sabitleme, klasör ve etiket](moduller/pano.md#madde-253) | Kopya geçmişi (Pano) | hazır |
+| 254 | [Kopya geçmişi — arama ve görsellerde OCR](moduller/pano.md#madde-254) | Kopya geçmişi (Pano) | hazır |
+| 255 | [Kopya geçmişi — tutma süresi seçimi ve çöp kutusu](moduller/pano.md#madde-255) | Kopya geçmişi (Pano) | hazır |
+| 256 | [Kopya geçmişi — sır süzgeci (parola, anahtar, IBAN, kart numarası kaydedilmez)](moduller/pano.md#madde-256) | Kopya geçmişi (Pano) | hazır |
+| 257 | [Kopya geçmişi — uygulama kara listesi (parola yöneticileri) ve boyut sınırları](moduller/pano.md#madde-257) | Kopya geçmişi (Pano) | hazır |
+| 258 | [Kopya geçmişi — klavyeyle gezinme, tek tuşla geri kopyalama ve sb pano komutu](moduller/pano.md#madde-258) | Kopya geçmişi (Pano) | hazır |
 
 ## İletişim
 

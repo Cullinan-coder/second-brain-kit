@@ -22,7 +22,7 @@ Bu bölüm sihirbazın **9. adımını** (Ayarlar → **Veri yükleme** sekmesi)
 7. **İçe aktar.** «İçe aktarma başlatılıyor…» → «İçe aktarılıyor; ilerleme aşağıda.» → «**İçe aktarma bitti.**» ve «**N kayıt içe aktarıldı**».
 8. Alttaki **Yapılan içe aktarmalar** listesinde işlem **başarılı** / **başarısız** olarak görünür. Henüz yoksa «Henüz içe aktarma yok.»
 
-
+![Veri yükleme: kaynak kartı, yükleme, önizleme](img/veri-yukleme-kart.png)
 
 ## Ne kadar büyük dosya?
 

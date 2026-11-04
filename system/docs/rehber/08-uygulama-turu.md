@@ -10,7 +10,7 @@ Bu bölüm kurulumdan sonra günlük kullandığın **Second Brain uygulamasın�
 - **Tek örnek:** uygulamayı ikinci kez açarsan yeni pencere açılmaz; açık olan öne gelir.
 - Bilgisayar açılınca otomatik başlasın istiyorsan: **Ayarlar → Başlangıç** ([Sihirbaz Adım 11](02-sihirbaz-adim-adim.md)). Simge durumunda başlatma `--minimized` ile yapılır.
 
-
+![Ana pencere: kenar çubuğu, sohbet alanı, üst çubuk](img/uygulama-ana-pencere.png)
 
 ## Tepsi simgesi
 
@@ -41,7 +41,7 @@ Her gün (ya da bilgisayarı açınca) bir kez bas. Üst çubukta **Çalışmaya
 
 Durum işaretleri: **○** bekliyor · **…** çalışıyor · **✓** tamam · **!** uyarı · **✗** hata · **–** atlandı. Alt satır: «Çalışıyor…», «Bitti.» ya da «Bitti; sorunlar var.»
 
-
+![Çalışmaya başla ekranı: beş adım ve durumları](img/uygulama-calismaya-basla.png)
 
 ## Ana ekran: sol kenar çubuğu
 
@@ -137,7 +137,7 @@ Açılış: **Uygulama ayarları → Ayarları aç** (ya da tepsi → **Ayarlar*
 | **Kaldır** | Önce plan, sonra onay, sonra **Temiz kaldır** (kasa notlarına dokunmaz) |
 | **Günlük** | Kurulum/işlem günlüğü; **Yenile** |
 
-
+![Ayarlar penceresi sekmeleri](img/uygulama-ayarlar.png)
 
 ## Onay kartları
 

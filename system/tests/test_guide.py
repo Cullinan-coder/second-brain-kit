@@ -1,4 +1,4 @@
-"""Kullanıcı rehberi üreticisi (tools/build_guide.py): üretim, 250 madde, kaynak/MCP sayfaları, bağlantılar, sır taraması, --check."""
+"""Kullanıcı rehberi üreticisi (tools/build_guide.py): üretim, 258 madde, kaynak/MCP sayfaları, bağlantılar, sır taraması, --check."""
 import importlib.util
 import re
 from pathlib import Path
@@ -35,10 +35,10 @@ def built(bg, tmp_path_factory):
 
 def test_build_runs_and_counts(built):
     out, stats = built
-    assert stats["modules"] == len(plugins.all("module")) == 50
+    assert stats["modules"] == len(plugins.all("module")) == 51
     assert stats["sources"] == len(plugins.all("source")) == 39
     assert stats["mcps"] == len(plugins.all("mcp")) == 18
-    assert stats["items"] == 250
+    assert stats["items"] == 258
     assert (out / "README.md").exists()
     assert len(list(out.rglob("*.md"))) == len(stats["files"])
 
@@ -54,7 +54,7 @@ def test_hand_written_pages_copied_and_detailed(bg, built):
     assert src.name  # son sayfa
 
 
-def test_all_250_items_present_in_module_pages(built):
+def test_all_258_items_present_in_module_pages(built):
     out, _ = built
     text = {p.stem: p.read_text(encoding="utf-8") for p in (out / "moduller").glob("*.md")}
     owner = {}

@@ -252,7 +252,7 @@ CATEGORIES = {
     "Telefon ve mesaj": ["sms", "phone", "telegram", "whatsapp"],
     "Okul ve proje": ["courses", "projects", "github", "sessions", "cards", "local_files", "linkedin", "browser"],
     "Asistan ve hafıza": ["assistant", "memory_ui", "capture", "inbox", "brain", "claude_hooks", "flush", "night", "automation"],
-    "Bilgisayar ve ses": ["computer", "media", "vision", "voice", "wake_word", "screen_watch", "image_gen"],
+    "Bilgisayar ve ses": ["computer", "media", "vision", "voice", "wake_word", "screen_watch", "image_gen", "pano"],
 }
 
 
@@ -277,7 +277,7 @@ def modules_meta() -> dict[str, dict]:
 
 
 _ALL = [k for ks in CATEGORIES.values() for k in ks]
-_OFF_BY_DEFAULT = {"wake_word", "screen_watch", "image_gen"}
+_OFF_BY_DEFAULT = {"wake_word", "screen_watch", "image_gen", "pano"}
 
 
 def _preset(on: set[str] | None, label: str, desc: str, local_model: bool = True) -> dict:

@@ -61,7 +61,7 @@ claude mcp add --scope user second-brain -- uv run --directory <kasa>/_system py
 
 8. adımda katalog kartları görünür. Seçimin için gerekenler önce ve **önerilen** rozetiyle gelir; diğerleri aşağıdadır.
 
-
+![MCP katalog kartları](img/mcp-katalog.png)
 
 | MCP | Ne yapar | Tür |
 |---|---|---|

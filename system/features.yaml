@@ -2019,3 +2019,67 @@ ozellikler:
   uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
+- id: 251
+  ad: Kopya geçmişi — metin, bağlantı ve görsel toplama (yerel izleyici, varsayılan kapalı)
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 252
+  ad: Kopya geçmişi — görsel, metin ve bağlantı için üç raf
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 253
+  ad: Kopya geçmişi — sabitleme, klasör ve etiket
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 254
+  ad: Kopya geçmişi — arama ve görsellerde OCR
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 255
+  ad: Kopya geçmişi — tutma süresi seçimi ve çöp kutusu
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 256
+  ad: Kopya geçmişi — sır süzgeci (parola, anahtar, IBAN, kart numarası kaydedilmez)
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 257
+  ad: Kopya geçmişi — uygulama kara listesi (parola yöneticileri) ve boyut sınırları
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi
+- id: 258
+  ad: Kopya geçmişi — klavyeyle gezinme, tek tuşla geri kopyalama ve sb pano komutu
+  kategori: verim
+  faz: 6
+  surum: 0.10.1
+  uygulayan: opus
+  denetleyen: opus
+  durum: tamamlandi

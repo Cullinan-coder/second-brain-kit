@@ -747,8 +747,8 @@ R.data = (box) => {
   };
   const needed = S.reqs && S.reqs.imports.length;
   const toggle = h('input', { type: 'checkbox', id: 'data-all', onchange: (e) => { all = e.target.checked; draw(); } });
-  box.append(h('p', { class: 'muted', text: t('data.intro') }),
-    needed ? h('label', { class: 'check inline' }, toggle, h('span', { text: t('data.showall', { n: S.catalog.sources.length }) })) : null, wrap, hist);
+  box.append(...[h('p', { class: 'muted', text: t('data.intro') }),
+    needed ? h('label', { class: 'check inline' }, toggle, h('span', { text: t('data.showall', { n: S.catalog.sources.length }) })) : null, wrap, hist].filter(Boolean));
   draw(); loadHist();
 };
 

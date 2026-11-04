@@ -1,6 +1,6 @@
 # Modüller (özellik grupları)
 
-Second Brain **50 modül**den oluşur; her modül özellik kataloğundaki maddeleri gruplar. Her modülün sayfasında: ne işe yarar, nasıl açılır, ne ister, nasıl kullanılır, hangi hazır seçimlerde açıktır ve maddeleri tek tek bulunur.
+Second Brain **51 modül**den oluşur; her modül özellik kataloğundaki maddeleri gruplar. Her modülün sayfasında: ne işe yarar, nasıl açılır, ne ister, nasıl kullanılır, hangi hazır seçimlerde açıktır ve maddeleri tek tek bulunur.
 
 ## Mail ve takvim
 
@@ -87,6 +87,7 @@ Second Brain **50 modül**den oluşur; her modül özellik kataloğundaki maddel
 | Modül | Ne yapar | Madde | Varsayılan |
 |---|---|---|---|
 | [İletişim yardımcıları](moduller/comms.md) | Mail taslağı, zincir özeti, takip, kişiye özel ton, ilişki sağlığı. | 10 | açık |
+| [Kopya geçmişi (Pano)](moduller/pano.md) | Kopyaladığın metin, bağlantı ve görselleri yerelde geçmiş olarak saklar; ara, sabitle, klasörle. Parola, anahtar, IBAN ve kart numarası gibi görünenler hiç kaydedilmez. | 8 | kapalı |
 | [Görev ve planlama](moduller/tasks_plan.md) | Kanban, günlük plan, alışkanlık, OKR, haftalık gözden geçirme, toplantı hazırlığı. | 14 | açık |
 
 ## Kariyer ve yaşam

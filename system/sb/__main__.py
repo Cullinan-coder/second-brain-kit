@@ -1046,6 +1046,15 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--yes", action="store_true")
     g.set_defaults(func=lambda a: __import__("sb.models", fromlist=["x"]).cli(a))
 
+    g = sub.add_parser("pano", help="kopya geçmişi / pano (yerel, varsayılan kapalı; önce `sb features --on pano`): status | on | off | list | search | pin | forget | clear | watch")
+    g.add_argument("action", choices=["status", "on", "off", "list", "search", "pin", "forget", "clear", "watch"])
+    g.add_argument("arg", nargs="?", default="", help="search için sorgu; pin/forget için kayıt numarası")
+    g.add_argument("--kind", choices=["image", "text", "link"], default="")
+    g.add_argument("--images", action="store_true", help="on ile: görselleri de topla")
+    g.add_argument("--hard", action="store_true", help="forget/clear: çöpe değil kalıcı sil (--yes gerekir)")
+    g.add_argument("--yes", action="store_true")
+    g.set_defaults(func=lambda a: __import__("sb.pano", fromlist=["x"]).cli(a))
+
     g = sub.add_parser("usage", help="model kullanımı ve maliyet özeti (bütçeyle birlikte)")
     g.add_argument("--days", type=int, default=30)
     g.set_defaults(func=lambda a: print(__import__("sb.usage", fromlist=["x"]).summary(a.days)) or 0)

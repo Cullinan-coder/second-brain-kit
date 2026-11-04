@@ -78,6 +78,7 @@ MODULE_VIEWS = {
     "assistant": ["Sohbet ekranı (ana pencere)"], "voice": ["Sohbet kutusundaki mikrofon düğmesi", "Ayarlar (Cevapları sesli oku, Ses)"],
     "wake_word": ["Ayarlar (Uyandırma sözcüğü kutusu)"], "models": ["Uygulama ayarları → Modeller sekmesi"],
     "capture": ["Gönder menüsü → Beyne At; Ctrl+Alt+B"], "vision": ["Sohbet: «ekranımda ne var?» gibi istekler"],
+    "pano": ["Kopya geçmişi (Görünümler menüsü; kısayol: /)"],
     "gmail": ["İletişim", "Pano"], "calendar": ["Pano (Bugün)", "Bugün planı"], "dates": ["Pano (Onay bekleyen)"],
 }
 # Modül → ek komutlar (sb --help çıktısından; STEP_MODULE'den gelenlere eklenir)
@@ -97,7 +98,7 @@ MODULE_CMDS = {
     "github": ["github-deep"], "projects": ["projects-sync", "project-deep"], "local_files": ["local-files", "content-sync"],
     "sessions": ["sessions-sync"], "imports_comm": ["import"], "imports_life": ["import", "history-import", "takeout"],
     "imports_media": ["import"], "imports_notes": ["import"], "whatsapp": ["import"], "browser": ["import"],
-    "media": [], "computer": [], "vision": [], "phone": [], "career": [], "life": [], "comms": [], "cards": [],
+    "pano": ["pano"], "media": [], "computer": [], "vision": [], "phone": [], "career": [], "life": [], "comms": [], "cards": [],
 }
 
 

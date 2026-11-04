@@ -38,7 +38,7 @@ Bu rehber Second Brain'i kurmaktan günlük kullanıma, hesap bağlamaktan sorun
 ## Sayfa sayıları
 
 - Elle yazılan bölüm: 15
-- Modül sayfası: 50
+- Modül sayfası: 51
 - Veri kaynağı sayfası: 39
 - MCP sayfası: 18
-- Özellik maddesi: 250
+- Özellik maddesi: 258

@@ -2,6 +2,14 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.10.1 — 2026-11-04 (Kopya geçmişi / Pano + sihirbaz düzeltmesi)
+- **Kopya geçmişi (Pano)**, varsayılan KAPALI yeni modül (`pano`; ClipBoardLine'dan esinli): kopyaladığın metin, bağlantı ve görseller üç rafta yerelde saklanır;
+  sabitleme, klasör, etiket, arama ve görsellerde OCR, tutma süresi (1-30 gün) ve geri alınabilir çöp kutusu. Parola, anahtar, IBAN, kart numarası gibi görünen
+  metin ve parola yöneticisi uygulamaları hiç kaydedilmez; veri buluta/modele gitmez. Görünüm: **Kopya geçmişi**; komut: `sb pano`.
+  Açmak için: `sb features --on pano` ya da sihirbaz/Özellikler ekranı; modül kapalıyken izleyici ve `/api/v2/pano/*` uçları çalışmaz. Katalog 250 → 258 madde (251-258), modül sayısı 51.
+- **Sihirbaz Adım 9 (Veri):** ekranda görünen "null" yazısı düzeldi.
+- **Rehber:** ekran görüntüleri yenilendi; Kopya geçmişi modül sayfası eklendi (131 sayfa).
+
 ## 0.10.0 — 2026-11-04 (tasarım cilası + ayrıntılı kullanıcı rehberi)
 - **Rehber** (`docs/rehber/`, 130 sayfa): kurulum, sihirbazın her adımı ve alanı, hesap bağlama (Google Cloud, Gmail/Outlook/iCloud/Yandex uygulama şifresi,
   okul, Tailscale, Spotify, Telegram, GitHub), API anahtarları, modeller ve ses, MCP, veri yükleme, uygulama turu, asistan kullanımı, güvenlik ve gizlilik,

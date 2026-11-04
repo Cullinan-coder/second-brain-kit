@@ -73,7 +73,7 @@ Bazı işler **kendiliğinden yapılmaz**; asistan önce bir kart çıkarır:
 
 Kartın yapısı: üstte tür etiketi («Takvim · onay gerekli»), altında ne yapılacağı, altta **Onayla** ve **İptal**. Onaylayınca satır «Onaylandı — mesaj», iptalde «İptal edildi» olur. Birden çok bekleyen varsa çip «Onayla (N bekliyor)» yazar. Pano'daki **Onay bekleyen** bölümü ve **Otomasyonlar → Bekleyen onaylar** aynı kartları toplar.
 
-
+![Takvim onay kartı: Onayla / İptal](img/asistan-onay-karti.png)
 
 **Kurallar:**
 

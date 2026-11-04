@@ -38,6 +38,7 @@ Kurulumdan önce hangi hesap/anahtarın gerekeceğini görmek için tek tablo. A
 | [Hafıza ve kişilik](moduller/memory_ui.md) | — | — | — | — |
 | [Model katmanı](moduller/models.md) | [OpenAI](04-api-anahtarlari.md#anahtar-openai), [Anthropic](04-api-anahtarlari.md#anahtar-anthropic), [Gemini](04-api-anahtarlari.md#anahtar-gemini), [OpenRouter](04-api-anahtarlari.md#anahtar-openrouter), [Groq](04-api-anahtarlari.md#anahtar-groq), [DeepSeek](04-api-anahtarlari.md#anahtar-deepseek), [Mistral](04-api-anahtarlari.md#anahtar-mistral) | `openai_key`, `anthropic_key`, `gemini_key`, `openrouter_key`, `groq_key`, `deepseek_key`, `mistral_key` | — | — |
 | [Gece koşusu](moduller/night.md) | — | — | Claude Code | — |
+| [Kopya geçmişi (Pano)](moduller/pano.md) | — | — | — | — |
 | [Telefon erişimi](moduller/phone.md) | [Tailscale](03-hesaplar.md#hesap-tailscale) | — | Tailscale | — |
 | [Gizlilik ve güvenlik](moduller/privacy.md) | — | `vault_key` | — | — |
 | [Projeler ve GitHub](moduller/projects.md) | [GitHub](03-hesaplar.md#hesap-github) | — | — | — |

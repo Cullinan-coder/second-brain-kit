@@ -103,7 +103,7 @@ def test_catalog_contract(srv):
     call, _ = srv
     st, c = call("GET", "/api/catalog")
     assert st == 200 and set(c) >= {"categories", "modules", "sources", "mcps", "sectors"}
-    assert sum(len(m["items"]) for m in c["modules"]) == 250
+    assert sum(len(m["items"]) for m in c["modules"]) == 258
     m = c["modules"][0]
     assert set(m) >= {"id", "name", "desc", "category", "default_on", "requires", "items"}
     assert all({"id", "name", "cat"} <= set(i) for i in m["items"])
@@ -123,7 +123,7 @@ def test_presets_combine_requirements(srv, monkeypatch):
     assert "presets" in p                                      # eski sözleşme bozulmadı
     st, r = call("POST", "/api/combine", {"meslek": "ogrenci", "donanim": "zayif_bulut", "gizlilik": "karma", "yogunluk": "gunluk"})
     assert st == 200 and r["modules"]["courses"] is True and r["modules"]["voice"] is False
-    assert set(r) >= {"modules", "items", "models", "privacy_profile", "warnings"} and len(r["items"]) == 250
+    assert set(r) >= {"modules", "items", "models", "privacy_profile", "warnings"} and len(r["items"]) == 258
     st, bad = call("POST", "/api/combine", {"meslek": "yok"})
     assert st == 400
     st, q = call("POST", "/api/requirements", {"modules": {"gmail": True, "imap": True}, "items": {}})

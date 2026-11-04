@@ -33,7 +33,7 @@ Bir bulut yapay zekâ hizmetini (ör. ChatGPT'nin modelleri) kendi programından
 3. **Kaydet ve test et**'e bas. Anahtar şifre kasasına yazılır ve sağlayıcıya küçük bir «modelleri listele» isteği gönderilir. Sonuç satırında **Kaydedildi.** ya da hata mesajı çıkar.
 4. Durum rozeti **kayıtlı** olur. Önceden kayıtlı olan alanda yer tutucu «kayıtlı (değiştirmek için yaz)» der; yeni değer yazarsan üzerine yazılır.
 
-
+![Anahtarlar ekranı: kayıtlı rozeti ve Kaydet ve test et](img/anahtarlar-ekran.png)
 
 ### Komutla
 

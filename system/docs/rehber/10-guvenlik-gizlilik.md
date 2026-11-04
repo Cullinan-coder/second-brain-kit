@@ -14,7 +14,7 @@ Beş kart vardır:
 | **Denetim günlüğü** | Kim ne yaptı: arama kutusu ve **Ara** düğmesi; yedek, dışa aktarma, şifreleme, geri yükleme kayıtları |
 | **Yedekler** | Mevcut yedekler, son 5 git kaydı, **Şimdi yedekle**, **Kasayı dışa aktar**, **Hepsini dışa aktar** |
 
-
+![Gizlilik ekranı: beş kart](img/gizlilik-ekran.png)
 
 ## İzin profilleri
 

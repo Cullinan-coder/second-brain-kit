@@ -188,7 +188,7 @@
   };
 
   /* ---------- ayar uygulama (tema, vurgu, yazı boyutu) ---------- */
-  const ACCENTS = [['blue', 'Mavi', '#2563eb'], ['green', 'Yeşil', '#15803d'], ['orange', 'Turuncu', '#b45309'], ['purple', 'Mor', '#7e22ce'], ['red', 'Kırmızı', '#be123c']];
+  const ACCENTS = [['blue', 'Mavi', '#1556e4'], ['green', 'Yeşil', '#137337'], ['orange', 'Turuncu', '#a14a08'], ['purple', 'Mor', '#7e22ce'], ['red', 'Kırmızı', '#be123c']];
   const FSCALE = { small: 0.9, medium: 1, large: 1.15, xlarge: 1.3 };
   const FONTS = [['small', 'Küçük'], ['medium', 'Normal'], ['large', 'Büyük'], ['xlarge', 'Çok büyük']];
   function applySetting(k) {

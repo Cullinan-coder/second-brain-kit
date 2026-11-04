@@ -15,9 +15,9 @@ def test_counts():
     assert {m["id"] for m in plugins.all("sector")} >= {"tekstil", "kisisel"}
 
 
-def test_all_250_catalog_items_linked_to_a_module():
+def test_all_258_catalog_items_linked_to_a_module():
     cat = {i["id"] for i in features.catalog()}
-    assert len(cat) == 250
+    assert len(cat) == 258
     linked: dict[int, list[str]] = {}
     for m in plugins.all("module"):
         for i in m["catalog_ids"]:
@@ -25,7 +25,7 @@ def test_all_250_catalog_items_linked_to_a_module():
     assert cat - set(linked) == set(), "boşta madde var"
     assert set(linked) - cat == set(), "katalogda olmayan madde bağlanmış"
     assert not {i: v for i, v in linked.items() if len(v) > 1}, "madde birden çok modüle bağlı"
-    assert plugins.tree_item_count() == 250
+    assert plugins.tree_item_count() == 258
 
 
 def test_every_modules_key_has_manifest():

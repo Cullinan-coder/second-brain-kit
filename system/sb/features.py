@@ -3,7 +3,7 @@
 - Modüller (`MODULES`): bugün çalışan her parça bir anahtar. Seçim `config/features.yaml` (kurulum paneli yazacak; elle de olur).
   Dosyada olmayan anahtar varsayılan değerini alır (geriye uyumlu: mevcut kurulumlarda her şey açık kalır).
 - Günlük çalışma kapalı modülün adımını atlar, asistan kapalı modülün araçlarını modele hiç göstermez, doctor kontrol etmez.
-- Katalog (`features.yaml`): 250 maddelik yol haritası; `sb roadmap` ilerlemeyi gösterir.
+- Katalog (`features.yaml`): 258 maddelik yol haritası; `sb roadmap` ilerlemeyi gösterir.
 """
 from __future__ import annotations
 
@@ -55,6 +55,7 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
     "image_gen": ("Görsel üretme", "Metinden görsel (bulut sağlayıcı anahtarı gerekir)", "OpenAI/Gemini anahtarı", False),
     "memory_ui": ("Hafıza ve kişilik", "Asistan kimliği, ortak günlük, tercih öğrenme, hafıza düzenleyici, yansıma", "model", True),
     "cards": ("Bilgi kartları", "Notlardan kart üretme ve aralıklı tekrar", "model", True),
+    "pano": ("Kopya geçmişi (Pano)", "Kopyaladığın metin, bağlantı ve görselleri yerelde geçmiş olarak saklar; ara, sabitle, klasörle", "—", False),
     "automation": ("Otomasyonlar ve ajanlar", "Kurallar (her X olduğunda Y), hazır ajanlar, onay kuyruğu", "model", True),
 }
 TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her zaman açık)

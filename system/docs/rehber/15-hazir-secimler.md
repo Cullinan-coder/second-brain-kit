@@ -170,6 +170,7 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Hafıza ve kişilik](moduller/memory_ui.md) |  | ● | ● |
 | [Model katmanı](moduller/models.md) | ● | ● | ● |
 | [Gece koşusu](moduller/night.md) |  |  | ● |
+| [Kopya geçmişi (Pano)](moduller/pano.md) |  |  |  |
 | [Telefon erişimi](moduller/phone.md) |  | ● | ● |
 | [Gizlilik ve güvenlik](moduller/privacy.md) | ● | ● | ● |
 | [Projeler ve GitHub](moduller/projects.md) |  | ● | ● |
@@ -227,6 +228,7 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Hafıza ve kişilik](moduller/memory_ui.md) | ● |  |  |  |  |  |  |  |
 | [Model katmanı](moduller/models.md) |  |  |  |  |  |  |  |  |
 | [Gece koşusu](moduller/night.md) |  |  | ● |  |  |  |  |  |
+| [Kopya geçmişi (Pano)](moduller/pano.md) |  |  |  |  |  |  |  |  |
 | [Telefon erişimi](moduller/phone.md) |  |  |  |  |  |  |  |  |
 | [Gizlilik ve güvenlik](moduller/privacy.md) |  |  |  |  |  |  |  |  |
 | [Projeler ve GitHub](moduller/projects.md) |  | ● | ● |  |  |  |  |  |

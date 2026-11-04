@@ -1,0 +1,86 @@
+/* Second Brain tasarım belirteçleri — TEK KAYNAK (sb/web/tokens.css).
+   setup/ui/tokens.css bunun birebir aynasıdır (kurulum sunucusu yalnız setup/ui'yi sunar); tests/test_ui_tokens.py eşitliği denetler.
+   Değiştirince: Copy-Item sb/web/tokens.css setup/ui/tokens.css. Dış kaynak/yazı tipi yok; sistem yığını. */
+:root{
+  /* aralık: 4/8 px ızgara */
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;
+  /* yarıçap */
+  --r1:6px;--r2:10px;--r3:14px;--r4:20px;--rfull:999px;
+  /* tipografi */
+  --fs:1;
+  --t-xs:.75rem;--t-sm:.8125rem;--t-md:1rem;--t-lg:1.125rem;--t-xl:1.375rem;--t-2xl:1.75rem;
+  --lh-tight:1.25;--lh-snug:1.4;--lh-body:1.55;
+  --w-regular:400;--w-medium:500;--w-semi:600;--w-bold:700;
+  --font:system-ui,-apple-system,"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
+  --font-display:system-ui,-apple-system,"Segoe UI Variable Display","Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;
+  --mono:ui-monospace,"Cascadia Code","SF Mono",SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;
+  /* hareket */
+  --d1:120ms;--d2:200ms;--d3:320ms;
+  --ease:cubic-bezier(.2,.7,.2,1);--ease-in:cubic-bezier(.4,0,1,1);--ease-spring:cubic-bezier(.34,1.4,.64,1);
+  /* katman sırası */
+  --z-side:50;--z-pop:65;--z-overlay:70;--z-menu:75;--z-drop:80;--z-toast:90;
+  /* vurgu (açık/koyu) */
+  --a-l:#1556e4;--a-d:#7aa7ff;
+  --a2-l:#7c3aed;--a2-d:#a78bfa;
+  --side-w:272px;
+  color-scheme:light dark;
+}
+:root[data-accent=green]{--a-l:#137337;--a-d:#4ade80;--a2-l:#0f766e;--a2-d:#5eead4}
+:root[data-accent=orange]{--a-l:#a14a08;--a-d:#fb923c;--a2-l:#be123c;--a2-d:#fda4af}
+:root[data-accent=purple]{--a-l:#7e22ce;--a-d:#c084fc;--a2-l:#2563eb;--a2-d:#93c5fd}
+:root[data-accent=red]{--a-l:#be123c;--a-d:#fb7185;--a2-l:#b45309;--a2-d:#fdba74}
+
+/* açık tema (varsayılan) */
+:root,:root[data-theme=light]{
+  --bg:#ffffff;--surface:#f6f7f9;--surface-2:#eceef2;--raised:#ffffff;--border:#dfe2e8;--border-strong:#bcc2cd;
+  --fg:#1a1b22;--muted:#565a69;--accent:var(--a-l);--accent-2:var(--a2-l);--on-accent:#ffffff;--on-danger:#ffffff;--on-warn:#ffffff;
+  --k-kisi:#c2410c;--k-proje:#1d4ed8;--k-ders:#137337;--k-kavram:#a16207;--k-other:#6b7280;
+  --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent);
+  --accent-ring:color-mix(in srgb,var(--accent) 28%,transparent);
+  --ok:#137337;--warn:#a14a08;--danger:#b91c1c;--user-bg:color-mix(in srgb,var(--accent) 10%,var(--bg));
+  --shadow-xs:0 1px 1px rgba(20,22,30,.05);
+  --shadow-sm:0 1px 2px rgba(20,22,30,.07),0 1px 1px rgba(20,22,30,.04);
+  --shadow-md:0 2px 4px rgba(20,22,30,.06),0 6px 16px rgba(20,22,30,.08);
+  --shadow:0 1px 2px rgba(20,22,30,.06),0 10px 28px rgba(20,22,30,.12);
+  --scrim:rgba(15,17,24,.45);--code-bg:#eef0f4;--sel:#bfd4ff;--sel-fg:#0b1530;--sb-thumb:#c4c9d3;--sb-thumb-h:#9aa1b0;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --bg:#121317;--surface:#1a1c22;--surface-2:#23262e;--raised:#1f2128;--border:#2b2e38;--border-strong:#41454f;
+    --fg:#e8e9ee;--muted:#a0a4b6;--accent:var(--a-d);--accent-2:var(--a2-d);--on-accent:#0b0d1a;--on-danger:#0b0d1a;--on-warn:#0b0d1a;
+    --k-kisi:#fb923c;--k-proje:#7aa7ff;--k-ders:#4ade80;--k-kavram:#fbbf24;--k-other:#9ca3af;
+    --accent-soft:color-mix(in srgb,var(--accent) 13%,transparent);
+    --accent-ring:color-mix(in srgb,var(--accent) 34%,transparent);
+    --ok:#4ade80;--warn:#fbbf24;--danger:#f87171;--user-bg:color-mix(in srgb,var(--accent) 16%,var(--bg));
+    --shadow-xs:0 1px 1px rgba(0,0,0,.35);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.45),0 1px 1px rgba(0,0,0,.3);
+    --shadow-md:0 2px 4px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.4);
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px rgba(0,0,0,.55);
+    --scrim:rgba(0,0,0,.6);--code-bg:#262932;--sel:#2f4a85;--sel-fg:#ffffff;--sb-thumb:#3c404c;--sb-thumb-h:#565b6a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme=dark]{
+  --bg:#121317;--surface:#1a1c22;--surface-2:#23262e;--raised:#1f2128;--border:#2b2e38;--border-strong:#41454f;
+  --fg:#e8e9ee;--muted:#a0a4b6;--accent:var(--a-d);--accent-2:var(--a2-d);--on-accent:#0b0d1a;--on-danger:#0b0d1a;--on-warn:#0b0d1a;
+  --k-kisi:#fb923c;--k-proje:#7aa7ff;--k-ders:#4ade80;--k-kavram:#fbbf24;--k-other:#9ca3af;
+  --accent-soft:color-mix(in srgb,var(--accent) 13%,transparent);
+  --accent-ring:color-mix(in srgb,var(--accent) 34%,transparent);
+  --ok:#4ade80;--warn:#fbbf24;--danger:#f87171;--user-bg:color-mix(in srgb,var(--accent) 16%,var(--bg));
+  --shadow-xs:0 1px 1px rgba(0,0,0,.35);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.45),0 1px 1px rgba(0,0,0,.3);
+  --shadow-md:0 2px 4px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.4);
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px rgba(0,0,0,.55);
+  --scrim:rgba(0,0,0,.6);--code-bg:#262932;--sel:#2f4a85;--sel-fg:#ffffff;--sb-thumb:#3c404c;--sb-thumb-h:#565b6a;
+  color-scheme:dark;
+}
+
+/* yüksek karşıtlık: sınırlar ve ikincil metin belirginleşir (WCAG AAA'ya yakın) */
+@media (prefers-contrast:more){
+  :root:not([data-theme=dark]){--border:#6b7180;--border-strong:#3d4250;--muted:#2f3340}
+  :root[data-theme=dark]{--border:#8b90a0;--border-strong:#b3b7c4;--muted:#d0d3de}
+}
+@media (prefers-contrast:more) and (prefers-color-scheme:dark){
+  :root:not([data-theme=light]):not([data-theme=dark]){--border:#8b90a0;--border-strong:#b3b7c4;--muted:#d0d3de}
+}
