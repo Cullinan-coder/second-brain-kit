@@ -24,7 +24,7 @@ def data(tmp_path):
     # silinmis.docx bilerek yok
     d = tmp_path / "Nashi"
     d.mkdir()
-    (d / "library.json").write_text(FIX.read_text(encoding="utf-8").replace("{TMP}", str(files).replace("\\", "\\\\")), encoding="utf-8")
+    (d / "library.json").write_text(FIX.read_text(encoding="utf-8").replace("{TMP}\\\\", json.dumps(str(files) + os.sep)[1:-1]), encoding="utf-8")
     return d
 
 

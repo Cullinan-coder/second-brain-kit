@@ -68,6 +68,8 @@ def expand(s: str) -> Path:
     def sub(m):
         k = m.group(1)
         return os.environ.get(k) or str(dflt.get(k.upper(), home))
+    if os.sep != "\\":
+        s = s.replace("\\", "/")                 # katalogdaki Windows ayırıcıları POSIX'te yol parçası sayılmasın
     return Path(os.path.expanduser(re.sub(r"%([A-Za-z_]+)%", sub, s)))
 
 
