@@ -27,6 +27,10 @@ POST /api/update     {} -> 202 {started:true} | 409   (`sb update` çalışır; 
 GET  /api/uninstall  -> {applied:false, plan: [{id,desc,auto}]}
 POST /api/uninstall  {confirm: true} -> {applied, plan, done}   (confirm yoksa yalnız plan; kasa notlarına dokunulmaz)
 POST /api/modules/disable {keys: [anahtar]} -> {disabled, note}   (bir özelliği geri al; dosya silinmez)
+GET  /api/apps       -> {apps: [{id,title,desc,about,size_mb,supported,installed,version,running,autostart,exe,data_dir,...}], sandbox, modes}   (ClipBoardLine, Nashi)
+POST /api/apps/install   {id} -> 202 {started:true} | 409   (indir + SHA-256 + kur; /api/progress ile izle, job:"apps_install:<id>"; deneme kipinde atlanır)
+POST /api/apps/autostart {id, mode: login|startup|off} -> {ok, mode, message}
+POST /api/apps/start     {id} -> {ok, started, message}
 POST /api/shutdown   {} -> {ok:true}   (sunucu kapanır; app.py pencere kapanınca çağırır)
 """
 from __future__ import annotations
@@ -42,6 +46,7 @@ from urllib.parse import parse_qs, urlparse
 
 try:
     from . import accounts as A
+    from . import appsetup as AP
     from . import autostart as AS
     from . import engine as E
     from . import imports as IM
@@ -49,6 +54,7 @@ try:
     from . import timez as TZ
 except ImportError:                                           # python setup/server.py gibi doğrudan çalıştırma
     import accounts as A  # type: ignore
+    import appsetup as AP  # type: ignore
     import autostart as AS  # type: ignore
     import engine as E  # type: ignore
     import imports as IM  # type: ignore
@@ -365,6 +371,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._started(IM.run(e, self._body()))
         if route == ("GET", "/api/imports"):
             return self._json(200, IM.history(e))
+        if route == ("GET", "/api/apps"):
+            return self._json(200, AP.listing(lang))
+        if route == ("POST", "/api/apps/install"):
+            return self._started(AP.install(e, str(self._body().get("id") or "")))
+        if route == ("POST", "/api/apps/autostart"):
+            b = self._body()
+            return self._json(200, AP.set_autostart(str(b.get("id") or ""), str(b.get("mode") or "")))
+        if route == ("POST", "/api/apps/start"):
+            return self._json(200, AP.start(str(self._body().get("id") or "")))
         if route == ("GET", "/api/phone"):
             return self._json(200, A.phone_info())
         if route == ("GET", "/api/autostart"):

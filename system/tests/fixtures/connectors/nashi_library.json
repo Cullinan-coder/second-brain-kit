@@ -1,0 +1,6 @@
+{"Appearance":"system","WindowManagementEnabled":true,"Entries":[
+{"Id":"b0000000-0000-4000-8000-000000000001","Created":"2026-11-03T14:05:00.1234567+03:00","Action":"Convert to PDF","Paths":["{TMP}\\rapor.pdf"]},
+{"Id":"b0000000-0000-4000-8000-000000000002","Created":"2026-11-02T09:30:00+03:00","Action":"Compress","Paths":["{TMP}\\notlar.txt","{TMP}\\foto.png"]},
+{"Id":"b0000000-0000-4000-8000-000000000003","Created":"2026-11-01T18:00:00+03:00","Action":"Convert","Paths":["{TMP}\\sifreler.txt"]},
+{"Id":"b0000000-0000-4000-8000-000000000004","Created":"2026-10-30T10:00:00+03:00","Action":"Clipboard import","Paths":["{TMP}\\silinmis.docx"]}
+]}

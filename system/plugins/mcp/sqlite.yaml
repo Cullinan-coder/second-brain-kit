@@ -29,7 +29,7 @@ requires:
 mcp:
   command: uvx
   args:
-  - mcp-server-sqlite
+  - mcp-server-sqlite==2025.4.25
   - --db-path
   - '{sqlite_path}'
   env: {}

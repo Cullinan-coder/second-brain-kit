@@ -37,7 +37,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add gdrive --scope user -e GDRIVE_CREDENTIALS_PATH=<gdrive_credentials> -- npx -y @modelcontextprotocol/server-gdrive
+claude mcp add gdrive --scope user -e GDRIVE_CREDENTIALS_PATH=<gdrive_credentials> -- npx -y @modelcontextprotocol/server-gdrive@2025.1.14
 ```
 
 

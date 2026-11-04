@@ -302,6 +302,42 @@ def _ollama_msg(m: dict) -> dict:
     return out
 
 
+# ---------------------------------------------------------------- bulut çıkış süzgeci (D-12)
+
+def _cloud_text(text: str) -> str:
+    """Buluta giden her metin: `redact` + (ayar açıksa) e-posta/telefon/adres maskeleme (privacy.cloud_filter)."""
+    try:
+        from . import privacy
+        return privacy.cloud_filter(text)[0]
+    except Exception:                                         # noqa: BLE001 — süzgeç yüklenemezse en azından sırlar silinir
+        from .redact import redact
+        return redact(text)
+
+
+def outbound_messages(provider: str, messages: list[dict]) -> list[dict]:
+    """Hedef bulutsa (yerel değilse) her mesaj içeriğini süzer; özgün liste değişmez. TÜM bulut çağrıları (sohbet, akış, özet,
+    ajan) buradan geçer: 'kişi bilgilerini maskele' ayarı tek noktada uygulanır."""
+    from . import usage
+    if usage.is_local(provider):
+        return messages
+    out = []
+    for m in messages:
+        m2 = dict(m)
+        c = m.get("content")
+        if isinstance(c, str):
+            m2["content"] = _cloud_text(c)
+        elif isinstance(c, list):
+            m2["content"] = [(_cloud_text(p) if isinstance(p, str) else
+                              {**p, "text": _cloud_text(p["text"])} if isinstance(p, dict) and isinstance(p.get("text"), str) else p) for p in c]
+        out.append(m2)
+    return out
+
+
+def outbound_texts(provider: str, texts: list[str]) -> list[str]:
+    from . import usage
+    return list(texts) if usage.is_local(provider) else [_cloud_text(t) for t in texts]
+
+
 # ---------------------------------------------------------------- HTTP
 
 def _redact(text: str, key) -> str:
@@ -382,6 +418,7 @@ def chat(spec: str, messages: list[dict], tools: list[dict] | None = None, schem
         return _out(provider, model, text, [], 0, 0)
     key = _need_key(provider, ps)
     _budget(provider)
+    messages = outbound_messages(provider, messages)
     url, headers, body = _build(provider, ps, model, messages, tools, schema, think, False, key)
     try:
         with _open(provider, url, headers, body, timeout, key) as r:
@@ -433,6 +470,7 @@ def stream_text(spec: str, messages: list[dict], timeout: int = 600, schema: dic
         raise ProviderError(provider, 0, "bilinmeyen sağlayıcı")
     key = _need_key(provider, ps)
     _budget(provider)
+    messages = outbound_messages(provider, messages)
     url, headers, body = _build(provider, ps, model, messages, None, schema, think, True, key)
     if ps["kind"] != "ollama":
         headers["Accept"] = "text/event-stream"
@@ -498,6 +536,7 @@ def embed(spec: str, texts: list[str], timeout: int = 120, task: str = "embed") 
         _embed_build(provider, ps, model, texts, None)       # anlaşılır hatayı fırlatır
     key = _need_key(provider, ps)
     _budget(provider)
+    texts = outbound_texts(provider, texts)
     url, headers, body = _embed_build(provider, ps, model, texts, key)
     try:
         with _open(provider, url, headers, body, timeout, key) as r:

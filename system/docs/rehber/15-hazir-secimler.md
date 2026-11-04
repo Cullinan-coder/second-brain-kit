@@ -24,7 +24,7 @@ Mail, takvim, arama, hafıza ve plan; ağır özellikler kapalı.
 
 Her şey açık (ek özellikler hariç: uyandırma sözcüğü, ekran izleme, görsel üretme).
 
-**Açılan modüller (47):** [Yerel asistan](moduller/assistant.md), [Otomasyonlar ve ajanlar](moduller/automation.md), [Beyin dizini](moduller/brain.md), [Tarayıcı geçmişi](moduller/browser.md), [Google Takvim](moduller/calendar.md), [Beyne at](moduller/capture.md), [Bilgi kartları](moduller/cards.md), [Kariyer ve iş](moduller/career.md), [Claude Code hafızası](moduller/claude_hooks.md), [İletişim yardımcıları](moduller/comms.md), [Bilgisayar kontrolü](moduller/computer.md), [Google Rehber](moduller/contacts.md), [Okul (ÖBS/LMS)](moduller/courses.md), [Tarih çıkarma](moduller/dates.md), [Fatura ve kargo](moduller/derived.md), [Sabah özeti maili](moduller/digest.md), [Google Drive](moduller/drive.md), [Oturum özetleri](moduller/flush.md), [GitHub derin](moduller/github.md), [Gmail](moduller/gmail.md), [Şirket/okul maili (IMAP)](moduller/imap.md), [Mesaj içe aktarmaları](moduller/imports_comm.md), [Yaşam ve akademik içe aktarmalar](moduller/imports_life.md), [Medya ve okuma içe aktarmaları](moduller/imports_media.md), [Not ve görev içe aktarmaları](moduller/imports_notes.md), [Not kutusu](moduller/inbox.md), [Kişisel yaşam](moduller/life.md), [LinkedIn arşivi](moduller/linkedin.md), [Bilgisayar dosyaları](moduller/local_files.md), [Spotify ve YouTube](moduller/media.md), [Hafıza ve kişilik](moduller/memory_ui.md), [Model katmanı](moduller/models.md), [Gece koşusu](moduller/night.md), [Telefon erişimi](moduller/phone.md), [Gizlilik ve güvenlik](moduller/privacy.md), [Projeler ve GitHub](moduller/projects.md), [Kalite ve gözlemlenebilirlik](moduller/quality.md), [Arama ve cevaplar](moduller/search.md), [Claude Code oturumları](moduller/sessions.md), [Kurulum paneli ve ürünleşme](moduller/setup.md), [SMS ve aramalar](moduller/sms.md), [Görev ve planlama](moduller/tasks_plan.md), [Telegram botu](moduller/telegram.md), [Arayüz ve tasarım](moduller/ui_core.md), [Ekran ve kamera](moduller/vision.md), [Ses](moduller/voice.md), [WhatsApp](moduller/whatsapp.md)
+**Açılan modüller (49):** [Yerel asistan](moduller/assistant.md), [Otomasyonlar ve ajanlar](moduller/automation.md), [Beyin dizini](moduller/brain.md), [Tarayıcı geçmişi](moduller/browser.md), [Google Takvim](moduller/calendar.md), [Beyne at](moduller/capture.md), [Bilgi kartları](moduller/cards.md), [Kariyer ve iş](moduller/career.md), [Claude Code hafızası](moduller/claude_hooks.md), [ClipBoardLine (kopya geçmişi)](moduller/clipboardline.md), [İletişim yardımcıları](moduller/comms.md), [Bilgisayar kontrolü](moduller/computer.md), [Google Rehber](moduller/contacts.md), [Okul (ÖBS/LMS)](moduller/courses.md), [Tarih çıkarma](moduller/dates.md), [Fatura ve kargo](moduller/derived.md), [Sabah özeti maili](moduller/digest.md), [Google Drive](moduller/drive.md), [Oturum özetleri](moduller/flush.md), [GitHub derin](moduller/github.md), [Gmail](moduller/gmail.md), [Şirket/okul maili (IMAP)](moduller/imap.md), [Mesaj içe aktarmaları](moduller/imports_comm.md), [Yaşam ve akademik içe aktarmalar](moduller/imports_life.md), [Medya ve okuma içe aktarmaları](moduller/imports_media.md), [Not ve görev içe aktarmaları](moduller/imports_notes.md), [Not kutusu](moduller/inbox.md), [Kişisel yaşam](moduller/life.md), [LinkedIn arşivi](moduller/linkedin.md), [Bilgisayar dosyaları](moduller/local_files.md), [Spotify ve YouTube](moduller/media.md), [Hafıza ve kişilik](moduller/memory_ui.md), [Model katmanı](moduller/models.md), [Nashi (dosya dönüştürücü)](moduller/nashi.md), [Gece koşusu](moduller/night.md), [Telefon erişimi](moduller/phone.md), [Gizlilik ve güvenlik](moduller/privacy.md), [Projeler ve GitHub](moduller/projects.md), [Kalite ve gözlemlenebilirlik](moduller/quality.md), [Arama ve cevaplar](moduller/search.md), [Claude Code oturumları](moduller/sessions.md), [Kurulum paneli ve ürünleşme](moduller/setup.md), [SMS ve aramalar](moduller/sms.md), [Görev ve planlama](moduller/tasks_plan.md), [Telegram botu](moduller/telegram.md), [Arayüz ve tasarım](moduller/ui_core.md), [Ekran ve kamera](moduller/vision.md), [Ses](moduller/voice.md), [WhatsApp](moduller/whatsapp.md)
 
 ## Meslek
 
@@ -145,6 +145,7 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Bilgi kartları](moduller/cards.md) |  | ● | ● |
 | [Kariyer ve iş](moduller/career.md) |  |  | ● |
 | [Claude Code hafızası](moduller/claude_hooks.md) | ● | ● | ● |
+| [ClipBoardLine (kopya geçmişi)](moduller/clipboardline.md) |  |  | ● |
 | [İletişim yardımcıları](moduller/comms.md) |  |  | ● |
 | [Bilgisayar kontrolü](moduller/computer.md) |  |  | ● |
 | [Google Rehber](moduller/contacts.md) |  | ● | ● |
@@ -169,8 +170,8 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Spotify ve YouTube](moduller/media.md) |  |  | ● |
 | [Hafıza ve kişilik](moduller/memory_ui.md) |  | ● | ● |
 | [Model katmanı](moduller/models.md) | ● | ● | ● |
+| [Nashi (dosya dönüştürücü)](moduller/nashi.md) |  |  | ● |
 | [Gece koşusu](moduller/night.md) |  |  | ● |
-| [Kopya geçmişi (Pano)](moduller/pano.md) |  |  |  |
 | [Telefon erişimi](moduller/phone.md) |  | ● | ● |
 | [Gizlilik ve güvenlik](moduller/privacy.md) | ● | ● | ● |
 | [Projeler ve GitHub](moduller/projects.md) |  | ● | ● |
@@ -203,6 +204,7 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Bilgi kartları](moduller/cards.md) | ● |  |  | ● |  |  |  | ● |
 | [Kariyer ve iş](moduller/career.md) |  | ● |  |  | ● | ● |  |  |
 | [Claude Code hafızası](moduller/claude_hooks.md) |  |  | ● |  |  |  |  |  |
+| [ClipBoardLine (kopya geçmişi)](moduller/clipboardline.md) |  |  |  |  |  |  |  |  |
 | [İletişim yardımcıları](moduller/comms.md) |  | ● |  |  | ● | ● | ● |  |
 | [Bilgisayar kontrolü](moduller/computer.md) |  |  |  |  |  |  |  |  |
 | [Google Rehber](moduller/contacts.md) |  | ● |  |  | ● | ● |  |  |
@@ -227,8 +229,8 @@ Birleşik bellek; 16 GB altında orta profil, 32 GB+ güçlü profil önerilir.
 | [Spotify ve YouTube](moduller/media.md) |  |  |  |  |  |  | ● |  |
 | [Hafıza ve kişilik](moduller/memory_ui.md) | ● |  |  |  |  |  |  |  |
 | [Model katmanı](moduller/models.md) |  |  |  |  |  |  |  |  |
+| [Nashi (dosya dönüştürücü)](moduller/nashi.md) |  |  |  |  |  |  |  |  |
 | [Gece koşusu](moduller/night.md) |  |  | ● |  |  |  |  |  |
-| [Kopya geçmişi (Pano)](moduller/pano.md) |  |  |  |  |  |  |  |  |
 | [Telefon erişimi](moduller/phone.md) |  |  |  |  |  |  |  |  |
 | [Gizlilik ve güvenlik](moduller/privacy.md) |  |  |  |  |  |  |  |  |
 | [Projeler ve GitHub](moduller/projects.md) |  | ● | ● |  |  |  |  |  |

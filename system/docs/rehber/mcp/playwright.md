@@ -28,7 +28,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add playwright --scope user -- npx @playwright/mcp@latest
+claude mcp add playwright --scope user -- npx @playwright/mcp@0.0.84
 ```
 
 

@@ -1,6 +1,6 @@
 # Modüller (özellik grupları)
 
-Second Brain **51 modül**den oluşur; her modül özellik kataloğundaki maddeleri gruplar. Her modülün sayfasında: ne işe yarar, nasıl açılır, ne ister, nasıl kullanılır, hangi hazır seçimlerde açıktır ve maddeleri tek tek bulunur.
+Second Brain **52 modül**den oluşur; her modül özellik kataloğundaki maddeleri gruplar. Her modülün sayfasında: ne işe yarar, nasıl açılır, ne ister, nasıl kullanılır, hangi hazır seçimlerde açıktır ve maddeleri tek tek bulunur.
 
 ## Mail ve takvim
 
@@ -87,7 +87,6 @@ Second Brain **51 modül**den oluşur; her modül özellik kataloğundaki maddel
 | Modül | Ne yapar | Madde | Varsayılan |
 |---|---|---|---|
 | [İletişim yardımcıları](moduller/comms.md) | Mail taslağı, zincir özeti, takip, kişiye özel ton, ilişki sağlığı. | 10 | açık |
-| [Kopya geçmişi (Pano)](moduller/pano.md) | Kopyaladığın metin, bağlantı ve görselleri yerelde geçmiş olarak saklar; ara, sabitle, klasörle. Parola, anahtar, IBAN ve kart numarası gibi görünenler hiç kaydedilmez. | 8 | kapalı |
 | [Görev ve planlama](moduller/tasks_plan.md) | Kanban, günlük plan, alışkanlık, OKR, haftalık gözden geçirme, toplantı hazırlığı. | 14 | açık |
 
 ## Kariyer ve yaşam
@@ -112,3 +111,10 @@ Second Brain **51 modül**den oluşur; her modül özellik kataloğundaki maddel
 | [Yaşam ve akademik içe aktarmalar](moduller/imports_life.md) | Fotoğraf, Haritalar, banka CSV, e-Devlet, sosyal, sağlık, ekran süresi, akademik kaynaklar, kurslar, iş ilanları. | 10 | açık |
 | [Medya ve okuma içe aktarmaları](moduller/imports_media.md) | Kindle, Pocket/Raindrop, YouTube, Spotify, RSS. | 5 | açık |
 | [Not ve görev içe aktarmaları](moduller/imports_notes.md) | Notion, Keep, Apple Notlar, OneNote, Evernote, Todoist, Trello, Jira, Linear. | 5 | açık |
+
+## Hazır uygulamalar
+
+| Modül | Ne yapar | Madde | Varsayılan |
+|---|---|---|---|
+| [ClipBoardLine (kopya geçmişi)](moduller/clipboardline.md) | Hazır açık kaynak (MIT) uygulama; kopyaladığın metin, bağlantı ve görselleri (görsellerde OCR ile) saklar. Second Brain onu kurar, istersen bilgisayar açılınca başlatır ve içeriğini (parola, anahtar, kart, IBAN gibi sırlar hariç) beynine okur. | 4 | açık |
+| [Nashi (dosya dönüştürücü)](moduller/nashi.md) | Hazır açık kaynak (MIT) uygulama; dosya dönüştürme, sıkıştırma ve düzenleme araçları. Second Brain onu kurar, istersen bilgisayar açılınca başlatır ve dışa aktardığı dosyaların kaydını (desteklenen türlerde içeriğiyle) beynine okur. | 4 | açık |

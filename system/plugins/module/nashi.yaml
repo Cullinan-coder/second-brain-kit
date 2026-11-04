@@ -1,0 +1,60 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular. `app:` bölümünü sb/apps.py okur (kurulum, başlangıç, veri yolu).
+id: nashi
+type: module
+name:
+  tr: Nashi (dosya dönüştürücü)
+  en: Nashi (file converter)
+desc:
+  tr: Hazır açık kaynak (MIT) uygulama; dosya dönüştürme, sıkıştırma ve düzenleme araçları. Second Brain onu kurar, istersen bilgisayar açılınca başlatır ve dışa aktardığı dosyaların kaydını (desteklenen türlerde içeriğiyle) beynine okur.
+  en: A ready-made open source (MIT) app for converting, compressing and editing files. Second Brain installs it, can start it at login, and reads the record of files it exported (with their content for supported types) into your brain.
+category: apps
+module: nashi
+catalog_ids:
+- 253
+- 256
+- 257
+- 258
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - nashi
+health:
+  cli: sb apps status nashi
+default_on: true
+presets:
+- yogunluk:guc
+app:
+  name: Nashi
+  repo: orkunisitmak/nashi-app
+  homepage: https://github.com/orkunisitmak/nashi-app
+  license: MIT
+  size_mb: 91
+  tag_pattern: '^v(\d+\.\d+\.\d+)-(\d+)$'
+  about:
+    tr: 'Dosya dönüştürme, sıkıştırma ve düzenleme; dışa aktarılan son 50 işlemin kaydı beyne okunur.'
+    en: 'File conversion, compression and editing; the record of the last 50 exports is read into the brain.'
+  win:
+    version: 0.7.14
+    tag: v0.7.14-45
+    asset: Nashi-Windows-x64.zip
+    sums: SHA256SUMS.txt
+    method: zip-extract
+    install_dir: '%LOCALAPPDATA%\Programs\Nashi'
+    exe: '%LOCALAPPDATA%\Programs\Nashi\Nashi.exe'
+    process: Nashi.exe
+    data: '%LOCALAPPDATA%\Nashi'
+    start_args: []
+    background_args: ['--background']
+  mac:
+    version: 0.7.14
+    tag: v0.7.14-45
+    asset: Nashi-macOS-arm64.zip
+    sums: SHA256SUMS.txt
+    method: zip-extract
+    install_dir: '~/Applications'
+    exe: '~/Applications/Nashi.app'
+    process: Nashi
+    data: '~/Library/Application Support/Nashi'

@@ -89,8 +89,24 @@ def _desktop_write(name: str, command: str, args: list[str], env: dict[str, str]
     p.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
+def _wrap_secrets(eng, command: str, args: list[str], env: dict[str, str], secret_env: dict[str, str],
+                  secret_args: dict[int, str]) -> tuple[str, list[str], dict[str, str]]:
+    """Sırları `claude mcp add -e KEY=değer` ile düz metin yapılandırmaya YAZMAZ (D-16): komut `sb.mcp_env` sarmalayıcısıyla
+    sarılır, değerler çalışma anında şifre kasasından okunur. secret_env: {ORTAM_ADI: keyring_adı}; secret_args: {arg_sırası: keyring_adı}."""
+    if not secret_env and not secret_args:
+        return command, args, env
+    real = list(args)
+    for i, ring in secret_args.items():
+        real[i] = f"@ring:{ring}"
+    real_cmd, real_args = _runner(command, real)
+    wrap = ["run", "--directory", str(eng.code_root()), "python", "-m", "sb.mcp_env"]
+    for k, ring in secret_env.items():
+        wrap += ["--env", f"{k}=@ring:{ring}"]
+    return _uv(), [*wrap, "--", real_cmd, *real_args], {k: v for k, v in env.items() if k not in secret_env}
+
+
 def _add(name: str, command: str, args: list[str], env: dict[str, str], log) -> int:
-    cmd, args = _runner(command, args)
+    cmd, args = _runner(command, args) if command != _uv() else (command, args)
     full = ["claude", "mcp", "add", name, "--scope", "user"]
     for k, v in env.items():
         full += ["-e", f"{k}={v}"]
@@ -116,9 +132,12 @@ def install(eng, b: dict) -> dict:
     fields = {f["key"]: f for f in (m.get("requires") or {}).get("fields") or []}
     vals: dict[str, str] = {}
     kr = E._keyring()
+    rings: dict[str, str] = {}                                # gizli alan → keyring adı
     for k, f in fields.items():
         v = given.get(k)
         ring = f"mcp-{mid}-{k}".replace("_", "-")
+        if f.get("secret"):
+            rings[k] = ring
         if isinstance(v, str) and v:
             vals[k] = v
             if f.get("secret"):
@@ -150,6 +169,17 @@ def install(eng, b: dict) -> dict:
             return {"ok": False, "message": f"Ön koşul başarısız: {pre[0]} kurulu mu? ({' '.join(pre)[:80]})", "log": log[-20:]}
         cmd, args = mc["command"], [sub(a) for a in mc.get("args") or []]
     env = {k: sub(v) for k, v in (mc.get("env") or {}).items()} if mid != "second-brain" else {}
+    secret_env, secret_args = {}, {}
+    if mid != "second-brain" and kr:
+        for k, v in (mc.get("env") or {}).items():            # {gizli_alan} ortam değeri → sarmalayıcı (keyring)
+            ref = REF_RE.fullmatch(str(v))
+            if ref and ref.group(1) in rings and vals.get(ref.group(1)):
+                secret_env[k] = rings[ref.group(1)]
+        for i, a in enumerate(mc.get("args") or []):          # {gizli_alan} bağımsız değişken (ör. bağlantı adresi)
+            ref = REF_RE.fullmatch(str(a))
+            if ref and ref.group(1) in rings and vals.get(ref.group(1)):
+                secret_args[i] = rings[ref.group(1)]
+    cmd, args, env = _wrap_secrets(eng, cmd, args, env, secret_env, secret_args)
     E._run_capture(["claude", "mcp", "remove", mid, "-s", "user"], 30)
     rc = _add(mid, cmd, args, env, lg)
     return {"ok": rc == 0, "message": "MCP eklendi" if rc == 0 else "claude mcp add başarısız", "log": log[-20:]}
@@ -170,7 +200,18 @@ def custom(eng, b: dict) -> dict:
         return {"ok": False, "message": "claude komutu bulunamadı (Claude Code kurulu değil)"}
     A._remember(eng, *env.values())                           # değerlerin hepsi sır sayılır
     log: list[str] = []
-    rc = _add(name, command, list(args), dict(env), lambda l: (log.append(E.redact(str(l), eng._secrets)), eng.log(l)))
+    secret_env: dict[str, str] = {}
+    try:
+        kr = E._keyring()
+    except Exception:                                         # noqa: BLE001 — şifre kasası yoksa eski davranış
+        kr = None
+    if kr and env:                                            # değerler yapılandırmaya düz metin yazılmaz (D-16)
+        for k, v in env.items():
+            ring = f"mcp-{name}-{k}".lower().replace("_", "-")
+            kr.set_password(E.KEYRING_SERVICE, ring, v)
+            secret_env[k] = ring
+    command, cargs, cenv = _wrap_secrets(eng, command, list(args), dict(env), secret_env, {})
+    rc = _add(name, command, cargs, cenv, lambda l: (log.append(E.redact(str(l), eng._secrets)), eng.log(l)))
     return {"ok": rc == 0, "message": "MCP eklendi" if rc == 0 else "claude mcp add başarısız", "log": log[-20:]}
 
 

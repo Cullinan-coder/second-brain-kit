@@ -301,11 +301,20 @@ SAFE_CMDS = {"pwd", "df", "du", "ps", "uptime", "ifconfig", "sw_vers", "which", 
              "whoami", "hostname", "nvidia-smi", "get-content", "type", "cat", "get-command",
              "get-computerinfo", "get-hotfix", "get-uptime", "python", "node", "git", "uv", "ollama", "winget"}
 # Yalnız salt okunur alt komutlar (paket kurma, yükseltme, dal silme, uzak depo değiştirme onaylı).
+# python/node/uv: yalnız sürüm sorgusu ("python -v" ayrıntı kipidir, -c ile kod çalıştırır: D-01).
 SAFE_SUBCMDS = {"git": {"status", "log", "diff", "show"}, "winget": {"list", "search", "show"},
-                "ollama": {"list", "ps", "show", "--version"}, "uv": {"--version"}, "python": {"--version", "-v"},
+                "ollama": {"list", "ps", "show", "--version"}, "uv": {"--version"}, "python": {"--version"},
                 "node": {"--version", "-v"}}
+VERSION_ONLY = {"python", "node", "uv"}                  # sürüm bayrağından başka hiçbir bağımsız değişken yok
+# Boru sonrası yalnız çıktıyı biçimleyen komutlar. Select-String/findstr dosya okuyabildiği için (-Path) çıkarıldı (D-09).
 SAFE_PIPES = {"sort-object", "sort", "select-object", "select", "format-table", "ft", "format-list", "fl", "measure-object",
-              "out-string", "select-string", "sls", "findstr"}
+              "out-string"}
+GIT_BAD_OPTS = ("--no-index", "--ext-diff", "--textconv", "--output", "--exec", "--open-files-in-pager", "--upload-pack",
+                "--git-dir", "--work-tree", "-o", "--paginate")
+READERS = {"get-content", "type", "cat"}
+READER_VALUE_OPTS = {"-totalcount", "-head", "-first", "-tail", "-last", "-encoding", "-readcount", "-delimiter"}
+READER_PATH_OPTS = {"-path", "-literalpath"}
+READER_FLAG_OPTS = {"-raw"}
 # Onaylansa BİLE çalışmaz: disk/önyükleme/güvenlik ayarı/şifreli-uzaktan kod/yetki yükseltme.
 FORBIDDEN = re.compile(
     r"\bsudo\b|\bsu\b|diskutil\s+(erase|partition|apfs\s+delete)|csrutil|launchctl|defaults\s+write|spctl|dscl|"
@@ -317,11 +326,55 @@ FORBIDDEN = re.compile(
     r"\\\\windows\\\\system32|schtasks|new-scheduledtask|register-scheduledtask|wsl\b|bash\b|curl[^|]*\|\s*(sh|bash|iex|powershell)",
     re.I | re.M)
 
+# Basit çağrı gramerı (D-01): "ayrıştır ve doğrula". Komut = `ad düz-bağımsız-değişkenler [| boru-komutu düz-bağımsız-değişkenler]*`.
+# Düz bağımsız değişken: yalnız ASCII harf/rakam ve `_ . - / \ ~ : * =` ya da bu karakterlerden (ve boşluktan) oluşan tırnaklı dize.
+# Alt ifade ( ), $( ), @( ), betik bloğu { }, değişken $, ters tırnak, zincir ; &, yönlendirme < >, çağrı işleçleri & ., virgül dizisi,
+# yeni satır, ortam genişletmesi %, Unicode benzer karakterler: hiçbiri bu gramere uymaz → en az "onayli".
+_PLAIN_CH = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-/\\~:*=")
+_QUOTED_CH = _PLAIN_CH | frozenset(" #+")
+
+
+def _parse_simple(cmd: str) -> list[list[str]] | None:
+    """Komutu boru parçalarına/belirteçlere ayırır; düz olmayan herhangi bir yapı varsa None."""
+    segs: list[list[str]] = [[]]
+    cur, has, i, n = "", False, 0, len(cmd)
+    while i < n:
+        ch = cmd[i]
+        if ch in " \t":
+            if has:
+                segs[-1].append(cur)
+                cur, has = "", False
+        elif ch == "|":
+            if has:
+                segs[-1].append(cur)
+                cur, has = "", False
+            if not segs[-1]:
+                return None                                  # boş parça: `||` ya da başta `|`
+            segs.append([])
+        elif ch in "'\"":
+            j = cmd.find(ch, i + 1)
+            if j < 0:
+                return None
+            body = cmd[i + 1:j]
+            if not set(body) <= _QUOTED_CH:
+                return None
+            cur, has, i = cur + body, True, j
+        elif ch in _PLAIN_CH:
+            cur, has = cur + ch, True
+        else:
+            return None                                      # ( ) $ @ { } ; & ` < > , % ! yeni satır, ASCII dışı, denetim karakteri ...
+        i += 1
+    if has:
+        segs[-1].append(cur)
+    if not segs[-1] or sum(len(s) for s in segs) > 40:
+        return None
+    return segs
+
 
 def _readable_path(arg: str) -> bool:
     """`cat/type/Get-Content` hedefi kasada ya da ~/Workspace altında mı (göreli yol ev klasörüne göre)."""
     arg = re.sub(r"^-(path|literalpath)\s+", "", arg.strip(), flags=re.I).strip("'\" ")
-    if not arg or "*" in arg or "?" in arg:
+    if not arg or "*" in arg or "?" in arg or "," in arg or ";" in arg:
         return False
     from .config import VAULT
     try:
@@ -333,27 +386,64 @@ def _readable_path(arg: str) -> bool:
     return any(r in target.parents for r in roots) and config not in target.parents
 
 
+def _reader_paths(args: list[str]) -> list[str] | None:
+    """Get-Content/type/cat bağımsız değişkenlerinden okunacak yollar; tanınmayan seçenek varsa None."""
+    paths, i = [], 0
+    while i < len(args):
+        a = args[i]
+        low = a.lower()
+        if low in READER_PATH_OPTS:
+            if i + 1 >= len(args):
+                return None
+            paths.append(args[i + 1])
+            i += 2
+        elif low in READER_VALUE_OPTS:
+            i += 2
+        elif low in READER_FLAG_OPTS:
+            i += 1
+        elif a.startswith("-"):
+            return None
+        else:
+            paths.append(a)
+            i += 1
+    return paths
+
+
 def classify_command(cmd: str) -> str:
-    """'serbest' (salt-okunur izinli) | 'onayli' | 'yasak'."""
+    """'serbest' (salt-okunur izinli) | 'onayli' | 'yasak'.
+    Metin regex'iyle izin listesi yerine ayrıştır-ve-doğrula (D-01): komut tek bir basit çağrı + düz bağımsız değişkenler
+    (+ biçimleyici borular) değilse HER ŞEY en az 'onayli'."""
+    import unicodedata
     c = cmd.strip()
-    if not c or len(c) > 1000 or FORBIDDEN.search(c):
+    if not c or len(c) > 1000 or FORBIDDEN.search(c) or FORBIDDEN.search(unicodedata.normalize("NFKC", c)):
         return "yasak"
     if re.search(r"[;&<>`{}]|\$\(|@\(|\|\||secret|\.ssh|credential|keyring|\.secondbrain|password|sifre|şifre", c, re.I):
         return "onayli"                                         # zincir/yönlendirme/betik bloğu: göster ve sor
     if re.search(r"\benv:|\$env|--output|\\\\|\bftp:|\.env\b|\.pem\b|\.key\b|\.pfx\b|\.p12\b|\.kdbx\b|token|cookie|"
-                 r"login data|\.npmrc|\.aws|\.git-credentials|id_rsa", c, re.I):
+                 r"login data|\.npmrc|\.aws|\.git-credentials|id_rsa|hosts\.yml|local state", c, re.I):
         return "onayli"                                         # ortam değişkeni (anahtarlar), dosyaya yazma, ağ paylaşımı, sır dosyaları
-    parts = [p.strip() for p in c.split("|")]
-    first = parts[0].split()
-    head = first[0].lower()
+    segs = _parse_simple(c)
+    if segs is None:
+        return "onayli"                                         # alt ifade, değişken, çağrı işleci, ASCII dışı ... düz çağrı değil
+    first = segs[0]
+    head, args = first[0].lower(), first[1:]
     if head not in SAFE_CMDS:
         return "onayli"
-    if head in SAFE_SUBCMDS and (len(first) < 2 or first[1].lower() not in SAFE_SUBCMDS[head]):
-        return "onayli"
-    if head in ("get-content", "type", "cat") and not _readable_path(" ".join(first[1:])):
-        return "onayli"                                         # dosya okuma: yalnız kasa ve Workspace içi onaysız
-    if any(p.split()[0].lower() not in SAFE_PIPES for p in parts[1:] if p.split()):
-        return "onayli"
+    if head in VERSION_ONLY:
+        if len(first) != 2 or first[1].lower() not in SAFE_SUBCMDS[head]:
+            return "onayli"
+    elif head in SAFE_SUBCMDS:
+        if not args or args[0].lower() not in SAFE_SUBCMDS[head]:
+            return "onayli"
+        if head == "git" and any(a.lower().startswith(GIT_BAD_OPTS) for a in args[1:]):
+            return "onayli"                                     # --no-index (rastgele dosya okuma), --output, --ext-diff ...
+    if head in READERS:
+        paths = _reader_paths(args)
+        if not paths or len(paths) != 1 or not _readable_path(paths[0]):
+            return "onayli"                                     # dosya okuma: yalnız kasa ve Workspace içi onaysız, tek yol
+    for p in segs[1:]:
+        if p[0].lower() not in SAFE_PIPES:
+            return "onayli"
     return "serbest"
 
 

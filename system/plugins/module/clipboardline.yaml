@@ -1,0 +1,60 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular. `app:` bölümünü sb/apps.py okur (kurulum, başlangıç, veri yolu).
+id: clipboardline
+type: module
+name:
+  tr: ClipBoardLine (kopya geçmişi)
+  en: ClipBoardLine (clipboard history)
+desc:
+  tr: Hazır açık kaynak (MIT) uygulama; kopyaladığın metin, bağlantı ve görselleri (görsellerde OCR ile) saklar. Second Brain onu kurar, istersen bilgisayar açılınca başlatır ve içeriğini (parola, anahtar, kart, IBAN gibi sırlar hariç) beynine okur.
+  en: A ready-made open source (MIT) app that keeps what you copy (text, links, images with OCR). Second Brain installs it, can start it at login, and reads its content into your brain (secrets such as passwords, keys, cards and IBANs are skipped).
+category: apps
+module: clipboardline
+catalog_ids:
+- 251
+- 252
+- 254
+- 255
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - clipboardline
+health:
+  cli: sb apps status clipboardline
+default_on: true
+presets:
+- yogunluk:guc
+app:
+  name: ClipBoardLine
+  repo: orkunisitmak/clipboardline
+  homepage: https://github.com/orkunisitmak/clipboardline
+  license: MIT
+  size_mb: 520
+  tag_pattern: '^windows-(\d+\.\d+\.\d+)-build(\d+)$'
+  about:
+    tr: 'Kopya geçmişi: kopyaladığın metin, bağlantı ve görseller raflarda durur; ara, sabitle, klasörle. Görsellerdeki yazı OCR ile okunur.'
+    en: 'Clipboard history: copied text, links and images live on shelves; search, pin, file into folders. Text inside images is read with OCR.'
+  win:
+    version: 1.7.8
+    tag: windows-1.7.8-build71
+    asset: ClipBoardLine-Setup-1.7.8-x64.exe
+    sums: SHA256SUMS
+    method: nsis-silent
+    install_dir: '%LOCALAPPDATA%\Programs\clipboardline-desktop'
+    exe: '%LOCALAPPDATA%\Programs\clipboardline-desktop\ClipBoardLine.exe'
+    process: ClipBoardLine.exe
+    data: '%APPDATA%\ClipBoardLine'
+    start_args: []
+    background_args: []
+  mac:
+    version: 1.7.8
+    tag: clipboardline-1.7.8-build78
+    asset: ClipboardLine-1.7.8-build78.zip
+    sums: SHA256SUMS
+    method: zip-extract
+    install_dir: '~/Applications'
+    exe: '~/Applications/ClipBoardLine.app'
+    process: ClipBoardLine
+    data: '~/Library/Application Support/ClipBoardLine'

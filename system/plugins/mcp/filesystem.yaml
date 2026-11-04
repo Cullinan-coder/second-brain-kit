@@ -30,7 +30,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@modelcontextprotocol/server-filesystem'
+  - '@modelcontextprotocol/server-filesystem@2.1.0'
   - '{allowed_dir}'
   env: {}
   install: npm view @modelcontextprotocol/server-filesystem version

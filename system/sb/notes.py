@@ -43,17 +43,36 @@ def safe_filename(name: str) -> str:
     return re.sub(r"\s+", " ", UNSAFE_FILENAME.sub("", name)).strip()
 
 
-PRIVATE_RE = re.compile(r"\A---\r?\n(?:(?!---).*\r?\n)*?visibility:\s*private\s*\r?\n")
+# Gevşek yedek desen (YAML ayrıştırılamazsa): büyük/küçük harf, tırnak, satır sonu yorumu (D-11).
+PRIVATE_RE = re.compile(r"^[ \t]*visibility[ \t]*:[ \t]*['\"]?[ \t]*private[ \t]*['\"]?[ \t]*(?:#.*)?$", re.M | re.I)
+FRONTMATTER_READ = 256 * 1024         # ön bilginin tamamı okunur (eskiden 2000 karakter: uzun ön bilgide gizlilik işareti kaçıyordu)
+
+
+def is_private_text(text: str) -> bool:
+    """Not metni `visibility: private` mi. TEK doğruluk kaynağı (notes + agents). Ön bilgi YAML olarak ayrıştırılır; BOM, tırnak,
+    büyük harf (`Private`), satır sonu yorumu ve uzun ön bilgi fark etmez. Ayrıştırılamıyorsa gevşek desenle bakar (gizli yönünde hata)."""
+    t = text.lstrip("\ufeff")
+    if not t.startswith("---"):
+        return False
+    m = FRONTMATTER_RE.match(t)
+    block = m.group(1) if m else t[3:]
+    try:
+        fm = yaml.safe_load(block)
+    except yaml.YAMLError:
+        fm = None
+    if isinstance(fm, dict):
+        return str(fm.get("visibility", "")).strip().lower() == "private" or bool(PRIVATE_RE.search(block))
+    return bool(PRIVATE_RE.search(block))
 
 
 def is_private(path: Path) -> bool:
     """`visibility: private` notlar hiçbir otomatik bağlama (Claude MCP, asistan getirmesi, kanca) girmez."""
     try:
-        with open(path, encoding="utf-8") as f:
-            head = f.read(2000)
+        with open(path, encoding="utf-8-sig", errors="replace") as f:
+            head = f.read(FRONTMATTER_READ)
     except OSError:
         return False
-    return bool(PRIVATE_RE.match(head))
+    return is_private_text(head)
 
 
 def split_note(text: str) -> tuple[dict, str]:

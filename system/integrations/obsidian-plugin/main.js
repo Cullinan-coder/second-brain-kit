@@ -7,9 +7,17 @@ const DOWN = 'Second Brain sunucusuna ulaşılamadı. Asistan çalışıyor mu? 
 
 function rid() { return 'obs' + Math.random().toString(36).slice(2, 12); }
 
+// Yerel asistanın oturum jetonu (sb/localauth.py): ~/.secondbrain/chat.token (denetim D-04).
+function sbToken() {
+  try {
+    const fs = require('fs'), os = require('os'), path = require('path');
+    return fs.readFileSync(path.join(process.env.SB_DATA || path.join(os.homedir(), '.secondbrain'), 'chat.token'), 'utf8').trim();
+  } catch (e) { return ''; }
+}
+
 async function call(plugin, path, body) {
   const url = plugin.settings.baseUrl.replace(/\/+$/, '') + path;
-  const opt = { url, headers: { 'X-SB': '1' }, throw: false };
+  const opt = { url, headers: { 'X-SB': '1', 'X-SB-Token': sbToken() }, throw: false };
   if (body !== undefined) { opt.method = 'POST'; opt.contentType = 'application/json'; opt.body = JSON.stringify(Object.assign({ sid: plugin.sid }, body)); }
   else opt.url += (path.includes('?') ? '&' : '?') + 'sid=' + encodeURIComponent(plugin.sid);
   let r;

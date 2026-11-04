@@ -355,9 +355,18 @@ def voice_setup(eng, gpu: bool, wait: bool = False) -> bool:
 
 
 # ------------------------------------------------------------------ telefon
+def _chat_token() -> str:
+    """Yerel asistanın oturum jetonu (~/.secondbrain/chat.token; sb/localauth.py)."""
+    d = Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
+    try:
+        return (d / "chat.token").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def _post_json(url: str, obj: dict, timeout: int = 4) -> dict:
     req = urllib.request.Request(url, data=json.dumps(obj).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "X-SB": "1"})
+                                 headers={"Content-Type": "application/json", "X-SB": "1", "X-SB-Token": _chat_token()})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read(100000))
 

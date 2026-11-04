@@ -41,7 +41,7 @@ Gizli değerler (`slack_bot_token`) **yalnız işletim sisteminin şifre kasası
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add slack --scope user -e SLACK_BOT_TOKEN=<slack_bot_token> -e SLACK_TEAM_ID=<slack_team_id> -- npx -y @modelcontextprotocol/server-slack
+claude mcp add slack --scope user -e SLACK_BOT_TOKEN=<slack_bot_token> -e SLACK_TEAM_ID=<slack_team_id> -- npx -y @modelcontextprotocol/server-slack@2025.4.25
 ```
 
 

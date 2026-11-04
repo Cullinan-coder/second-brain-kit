@@ -25,7 +25,8 @@ def _frontmatter(txt: str) -> str:
 
 
 def is_private_text(txt: str) -> bool:
-    return bool(PRIVATE_RE.search(_frontmatter(txt)))
+    from .notes import is_private_text as _impl          # tek işlev (D-11): notes.is_private ile aynı sonuç
+    return _impl(txt)
 
 AGENTS: list[dict] = [
     {"id": "ders", "ad": "Ders asistanı", "aciklama": "Ders notlarından soruya cevap ve çalışma önerisi verir.",

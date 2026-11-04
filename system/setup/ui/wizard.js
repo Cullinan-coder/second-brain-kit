@@ -797,6 +797,7 @@ R.startup = (box) => {
   box.append(h('p', { class: 'muted', text: t('auto.intro') }),
     h('label', { class: 'check big' }, on, h('span', {}, h('b', { text: t('auto.on') }), h('small', { class: 'muted', text: t('auto.on.d') }))),
     h('label', { class: 'check' }, mini, h('span', { text: t('auto.min') })), h('p', { class: 'muted', text: t('auto.consent') }));
+  appsSection(box);
   if (MODE === 'settings') {
     box.append(h('div', { class: 'row' }, btn(t('auto.save'), async () => {
       const r = await api('/api/autostart', { on: S.auto.on, minimized: S.auto.minimized });
@@ -804,6 +805,52 @@ R.startup = (box) => {
     }, 'primary')), out);
   }
 };
+/* Hazır uygulamalar (ClipBoardLine, Nashi): kart başına Kur / Aç / başlangıç seçimi. Deneme kipinde sunucu "[deneme] atlandı" der. */
+function appsSection(box) {
+  const wrap = h('div', { class: 'panelbox', id: 'apps-box' });
+  const out = h('p', { class: 'msg muted', 'aria-live': 'polite' });
+  const job = jobPanel();
+  const draw = async () => {
+    clear(wrap);
+    wrap.append(h('h4', { text: t('apps.title') }), h('p', { class: 'muted', text: t('apps.intro') }));
+    const r = await api('/api/apps?lang=' + enc(S.lang));
+    if (!r.ok || !r.data) { wrap.append(unavailableBox(r)); return; }
+    if (r.data.sandbox) wrap.append(h('p', { class: 'warn', text: t('apps.sandbox') }));
+    arr(r.data.apps).forEach((a) => {
+      const modes = ['login', 'startup', 'off'];
+      const sel = h('select', { id: 'apps-mode-' + a.id, 'aria-label': t('apps.mode') }, modes.map((m) => h('option', { value: m, text: t('apps.mode.' + m), selected: m === a.autostart })));
+      sel.addEventListener('change', async () => {
+        const rr = await api('/api/apps/autostart', { id: a.id, mode: sel.value });
+        msg(out, rr.ok && rr.data ? rr.data.message : unavailable(rr), rr.ok ? 'ok' : 'bad');
+      });
+      const status = !a.supported ? t('apps.unsupported') : a.installed
+        ? t('apps.installed', { v: a.version || a.pinned_version || '?' }) + ' · ' + (a.running ? t('apps.running') : t('apps.stopped'))
+        : t('apps.notinstalled', { v: a.pinned_version || '?' });
+      const row = h('div', { class: 'row' });
+      if (a.supported && !a.installed) {
+        row.append(btn(t('apps.install', { mb: a.size_mb || '?' }), async () => {
+          const rr = await api('/api/apps/install', { id: a.id });
+          msg(out, rr.ok ? t('apps.installing', { name: a.title }) : unavailable(rr), rr.ok ? 'muted' : 'bad');
+          if (rr.ok) startWatch((d) => { msg(out, d && d.error ? d.error : t('apps.done'), d && d.error ? 'bad' : 'ok'); draw(); });
+        }, 'primary'));
+      }
+      if (a.installed) {
+        row.append(btn(t('apps.open'), async () => {
+          const rr = await api('/api/apps/start', { id: a.id });
+          msg(out, rr.ok && rr.data ? rr.data.message : unavailable(rr), rr.ok ? 'ok' : 'bad');
+          setTimeout(draw, 1500);
+        }));
+      }
+      if (a.supported) row.append(h('label', { class: 'inline' }, h('span', { class: 'muted', text: t('apps.mode') + ' ' }), sel));
+      wrap.append(h('div', { class: 'card app-card', 'data-app': a.id }, h('b', { text: a.title }), h('p', { class: 'muted', text: a.about || a.desc }),
+        h('p', { class: 'muted small', text: t('apps.meta', { mb: a.size_mb || '?', lic: a.license || '' }) }),
+        h('p', { class: a.installed ? 'ok' : 'warn', text: status }), row));
+    });
+    wrap.append(h('p', { class: 'muted small', text: t('apps.privacy') }));
+  };
+  box.append(wrap, out, job.el);
+  draw();
+}
 async function applyAutostart() {
   if (!S.auto.on) return;                       // otomatik başlatma YALNIZ kullanıcı "evet" derse
   await api('/api/autostart', { on: true, minimized: S.auto.minimized });

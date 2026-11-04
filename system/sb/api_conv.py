@@ -47,8 +47,12 @@ def _att_block(att_id: str) -> str:
     return f"[EK: {meta.get('name', 'dosya')}]\n{text[:ATT_CHARS]}".rstrip()
 
 
+def _att_blocks(user_msg: dict) -> list[str]:
+    return [b for b in (_att_block(a["id"]) for a in user_msg.get("attachments") or []) if b]
+
+
 def _full_text(user_msg: dict) -> str:
-    blocks = [b for b in (_att_block(a["id"]) for a in user_msg.get("attachments") or []) if b]
+    blocks = _att_blocks(user_msg)
     return user_msg["text"] + ("\n\n" + "\n\n".join(blocks) if blocks else "")
 
 
@@ -67,6 +71,10 @@ def _turn(ctx: Ctx, conv: dict, user_msg: dict, reuse: dict | None = None) -> di
     _need_respond(ctx)
     idx = convstore.find_msg(conv, user_msg["id"])[0]
     _prime(ctx, convstore.model_history(conv, upto=idx))
+    blocks = _att_blocks(user_msg)
+    if blocks and ctx.session is not None:                   # ek metni kullanıcının sözü değil dış içeriktir (D-06b)
+        ctx.session.external = True
+        ctx.session.attachment_text = "\n\n".join(blocks)
     out = ctx.respond(_full_text(user_msg)) or {}
     reply_text = str(out.get("reply", ""))
     sources = convstore.search_sources(user_msg["text"], 5)
@@ -184,7 +192,9 @@ def _reset_session(ctx: Ctx) -> None:
     if s is not None:
         s.messages.clear()
         s.proposals.clear()
-        s.tainted = False
+        s.tainted = False                                   # kirlilik yalnız yeni sohbette sıfırlanır (D-06)
+        s.external = False
+        s.attachment_text = ""
         s.vision_reply = ""
 
 

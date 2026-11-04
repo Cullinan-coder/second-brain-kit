@@ -35,7 +35,7 @@ FEATURES = CODE / "features.yaml"
 HAND_PAGES = [
     "00-baslangic", "01-kurulum", "02-sihirbaz-adim-adim", "03-hesaplar", "04-api-anahtarlari", "05-modeller-ses",
     "06-mcp", "07-veri-yukleme", "08-uygulama-turu", "09-asistan-kullanimi", "10-guvenlik-gizlilik", "11-sorun-giderme",
-    "12-sss", "13-sozluk", "14-komut-referansi",
+    "12-sss", "13-sozluk", "14-komut-referansi", "22-uygulamalar",
 ]
 GEN_TOP = ["15-hazir-secimler", "16-moduller", "17-ozellik-katalogu", "18-veri-kaynaklari", "19-mcp-katalogu",
            "20-sektor-paketleri", "21-ne-ister"]
@@ -78,7 +78,8 @@ MODULE_VIEWS = {
     "assistant": ["Sohbet ekranı (ana pencere)"], "voice": ["Sohbet kutusundaki mikrofon düğmesi", "Ayarlar (Cevapları sesli oku, Ses)"],
     "wake_word": ["Ayarlar (Uyandırma sözcüğü kutusu)"], "models": ["Uygulama ayarları → Modeller sekmesi"],
     "capture": ["Gönder menüsü → Beyne At; Ctrl+Alt+B"], "vision": ["Sohbet: «ekranımda ne var?» gibi istekler"],
-    "pano": ["Kopya geçmişi (Görünümler menüsü; kısayol: /)"],
+    "clipboardline": ["Çalışmaya başla (Uygulamalar kartı)", "Uygulama ayarları → Başlangıç sekmesi (Hazır uygulamalar)"],
+    "nashi": ["Çalışmaya başla (Uygulamalar kartı)", "Uygulama ayarları → Başlangıç sekmesi (Hazır uygulamalar)"],
     "gmail": ["İletişim", "Pano"], "calendar": ["Pano (Bugün)", "Bugün planı"], "dates": ["Pano (Onay bekleyen)"],
 }
 # Modül → ek komutlar (sb --help çıktısından; STEP_MODULE'den gelenlere eklenir)
@@ -98,7 +99,8 @@ MODULE_CMDS = {
     "github": ["github-deep"], "projects": ["projects-sync", "project-deep"], "local_files": ["local-files", "content-sync"],
     "sessions": ["sessions-sync"], "imports_comm": ["import"], "imports_life": ["import", "history-import", "takeout"],
     "imports_media": ["import"], "imports_notes": ["import"], "whatsapp": ["import"], "browser": ["import"],
-    "pano": ["pano"], "media": [], "computer": [], "vision": [], "phone": [], "career": [], "life": [], "comms": [], "cards": [],
+    "clipboardline": ["apps"], "nashi": ["apps"],
+    "media": [], "computer": [], "vision": [], "phone": [], "career": [], "life": [], "comms": [], "cards": [],
 }
 
 
@@ -731,6 +733,8 @@ def secret_findings(text: str) -> list[str]:
     for m in EMAIL_RE.finditer(text):
         local, _, dom = m.group(0).lower().rpartition("@")
         if local in EMAIL_OK_LOCAL or dom in EMAIL_OK_DOMAIN:
+            continue
+        if re.fullmatch(r"[\d.]+", dom):                                           # npx paket@1.2.3 / uvx sürüm sabiti e-posta değildir
             continue
         if dom.endswith(("png", "jpg", "js", "py", "md", "json", "yaml")):      # `a@b.png` gibi dosya adı sanılanlar
             continue

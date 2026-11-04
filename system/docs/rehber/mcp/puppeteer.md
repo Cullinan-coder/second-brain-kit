@@ -30,7 +30,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add puppeteer --scope user -- npx -y @modelcontextprotocol/server-puppeteer
+claude mcp add puppeteer --scope user -- npx -y @modelcontextprotocol/server-puppeteer@2025.5.12
 ```
 
 

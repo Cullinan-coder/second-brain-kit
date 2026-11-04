@@ -20,7 +20,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@modelcontextprotocol/server-puppeteer'
+  - '@modelcontextprotocol/server-puppeteer@2025.5.12'
   env: {}
   install: npm view @modelcontextprotocol/server-puppeteer version
   docs_url: https://github.com/modelcontextprotocol/servers-archived/tree/main/src/puppeteer

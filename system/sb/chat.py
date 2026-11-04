@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import re
+import socket
+import sys
 import threading
 import uuid
 from datetime import date, datetime, time as dtime, timedelta
@@ -21,6 +23,8 @@ from .redact import redact
 from .config import FULL_NAME, USER
 
 PORT = 8765
+EXTENSION_SID = "eklenti"
+EXTENSION_PATHS = {"/api/v2/share", "/api/v2/chat"}     # eklenti Origin'i yalnız bunlara erişir (D-03/D-04)
 ALLOWED_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
 ALLOWED_ORIGINS = {f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}"}
 DAYS_TR = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
@@ -121,7 +125,12 @@ AUTO_ACTIONS = {"open_app", "media", "play_youtube", "play_spotify", "web_search
 UNTRUSTED_READS = {"screen_read", "camera_read"}
 # Kalıcı (sistem istemine yazan) ya da dışarıya istek atan eylemler: bağlamda dış içerik varken yalnız kullanıcının KENDİ mesajı isterse onaysız.
 PERSIST_ACTIONS = {"rule_add", "memory_add", "brain_capture"}
-EXTERNAL_READS = {"brain_search", "brain_person", "web_search"}      # sonucu mail/SMS/belge/web metni içerebilir
+# Kalıcı yazma (D-02/D-06/D-08): bağlamda dış içerik (mail/SMS/belge/web/ek/eklenti seçimi/ekran) VARKEN hep onay kartı.
+# Tek istisna brain_capture: hedef adres kullanıcının KENDİ yazdığı mesajda birebir geçiyorsa (ek metni sayılmaz).
+PERSIST_WRITES = {"rule_add", "memory_add", "note_update", "note_archive", "inbox_add", "brain_capture"}
+# Sonucu dış metin (mail/SMS/belge/web/davetiye başlığı/beyne atılmış sayfa) içerebilen okumalar: bayrak oturumda YAPIŞIR.
+EXTERNAL_READS = {"brain_search", "brain_person", "web_search", "brain_note", "brain_project", "brain_course", "brain_today",
+                  "calendar_list"}
 _ASK_RE = {"rule_add": r"kural|bundan sonra|her zaman|asla|hep ", "memory_add": r"hatırla|aklında tut|unutma|kaydet|not et"}
 
 
@@ -129,12 +138,12 @@ VAULT_EDITS = {"note_update", "note_archive", "undo_last", "rule_add", "memory_a
 
 
 def _perm(action: str) -> bool:
-    """İzin profili bu eylem için EK onay istiyor mu (privacy.needs_approval; okunamazsa normal davranış)."""
+    """İzin profili bu eylem için EK onay istiyor mu (privacy.needs_approval). Okunamazsa SIKI davranır: onay iste (D-26)."""
     try:
         from . import privacy
         return privacy.needs_approval(action)
     except Exception:                                         # noqa: BLE001
-        return False
+        return True
 
 
 def _user_asked(session, name: str, args: dict) -> bool:
@@ -143,7 +152,7 @@ def _user_asked(session, name: str, args: dict) -> bool:
     if name == "brain_capture":
         target = str(args.get("target", "")).strip().lower()
         return bool(target) and target in text
-    return bool(re.search(_ASK_RE.get(name, r"$^"), text))
+    return False                         # kural/hafıza/not yazma: bağlamda dış içerik varken anahtar sözcükle onaysız YAPILMAZ (D-06d)
 ACTION_TITLES = {"play_spotify": "🎵 Spotify'da çal", "play_youtube": "▶️ YouTube'da aç", "open_app": "🖥️ Uygulamayı aç",
                  "media": "🔊 Medya", "web_search": "🔎 Tarayıcıda ara", "note_update": "📝 Notu güncelle",
                  "note_archive": "🗄️ Notu arşivle", "undo_last": "↩️ Son değişikliği geri al", "rule_add": "📏 Kural ekle",
@@ -198,10 +207,19 @@ class Session:
         self.messages: list[dict] = []
         self.proposals: dict[str, dict] = {}
         self.remote = remote          # telefondan (Tailscale) gelen oturum: bilgisayar eylemleri hep onaylı
-        self.tainted = False          # bu turda ekran/kamera okundu: sonraki eylemler onaylı
-        self.external = False         # bağlamda dış metin (mail/SMS/belge/web) var: kalıcı eylemler kullanıcı istemediyse onaylı
+        self.tainted = False          # ekran/kamera okundu ya da eklenti seçimi geldi: sonraki eylemler onaylı (YAPIŞKAN: oturum boyunca)
+        self.external = False         # bağlamda dış metin (mail/SMS/belge/web/ek) var: komut ve kalıcı yazmalar onaylı (YAPIŞKAN)
         self.user_text = ""
+        self.attachment_text = ""     # ek metinleri: kullanıcının sözü DEĞİL, dış içerik (D-06)
         self.vision_reply = ""
+
+    @property
+    def dirty(self) -> bool:
+        """Güvenilmeyen içerik bu oturumun bağlamında (bir kez girdiyse oturum boyunca, yeni sohbete kadar)."""
+        return self.tainted or self.external
+
+    def mark_untrusted(self) -> None:
+        self.tainted = self.external = True
 
 
 def add_proposal(session: Session, kind: str, title: str, detail: str, run) -> str:
@@ -249,11 +267,13 @@ def music_query(text: str) -> str:
     return " ".join(MUSIC_FILLER.sub(" ", text.lower()).split())
 
 
-def action_hint(text: str) -> list[str]:
+def action_hint(text: str, allow_command: bool = True) -> list[str]:
     import re
     t = text.lower()
     out = []
     for pat, tool in ACTION_HINTS:
+        if tool == "run_command" and not allow_command:           # dış içerik bağlamdayken kodun kendisi komut ÖNERMEZ
+            continue
         if re.search(pat, t) and tool not in out:
             out.append(tool)
     if "brain_capture" in out:                                  # bağlantıdaki "youtube" müzik/uygulama isteği değil
@@ -376,6 +396,15 @@ def _auto_action(name: str, args: dict) -> str:
     return f"Hata: bilinmeyen araç {name}"
 
 
+def _persist_run(name: str, args: dict):
+    """Kalıcı yazma eylemini onaydan sonra çalıştıracak işlev."""
+    if name in AUTO_ACTIONS:
+        return lambda: _auto_action(name, args)
+    if name == "brain_capture":
+        return lambda: __import__("sb.capture", fromlist=["x"]).capture(str(args.get("target", "")).strip())
+    return lambda: __import__("sb.inbox", fromlist=["x"]).add(str(args.get("text", "")))
+
+
 def _read_untrusted(session: Session, name: str, args: dict) -> str:
     from . import actions
     png = actions.screenshot_png() if name == "screen_read" else actions.camera_png()
@@ -415,7 +444,7 @@ def _command(session: Session, args: dict) -> str:
     kind = actions.classify_command(cmd)
     if kind == "yasak":
         return actions.run_command(cmd)                       # reddeder; açıklama döner
-    if kind == "serbest" and not session.tainted and not session.remote and not _perm("komut"):
+    if kind == "serbest" and not session.dirty and not session.remote and not _perm("komut"):
         vault_ops.log("asistan", "komut", "", cmd[:200], "")
         return _clip(actions.run_command(cmd))
 
@@ -467,17 +496,13 @@ def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
         if name in VAULT_EDITS and _perm("kasa_duzenleme"):  # sıkı profil: kasa düzenlemeleri de onaylı
             what = ACTION_TITLES.get(name, name)
             arg = next((str(v) for v in args.values() if v not in (None, "")), "")
-            run = (lambda: _auto_action(name, args)) if name in AUTO_ACTIONS else \
-                  (lambda: __import__("sb.capture", fromlist=["x"]).capture(str(args.get("target", "")).strip())) if name == "brain_capture" else \
-                  (lambda: __import__("sb.inbox", fromlist=["x"]).add(str(args.get("text", ""))))
-            return add_proposal(session, "eylem", f"{what}: {arg[:120]}" if arg else what, "izin profili (sıkı): kasa düzenlemesi onaylı", run)
-        if name in PERSIST_ACTIONS and session.external and not _user_asked(session, name, args):
-            what = ACTION_TITLES.get(name, name)                 # mail/SMS/belge içindeki talimat kalıcı kural/hafıza yazamasın, URL çekemesin
+            return add_proposal(session, "eylem", f"{what}: {arg[:120]}" if arg else what, "izin profili (sıkı): kasa düzenlemesi onaylı",
+                                _persist_run(name, args))
+        if name in PERSIST_WRITES and session.dirty and not _user_asked(session, name, args):
+            what = ACTION_TITLES.get(name, name)                 # mail/SMS/belge/ek/eklenti içindeki talimat kalıcı yazamasın, URL çekemesin
             arg = next((str(v) for v in args.values() if v not in (None, "")), "")
-            run = (lambda: _auto_action(name, args)) if name in AUTO_ACTIONS else \
-                  (lambda: __import__("sb.capture", fromlist=["x"]).capture(str(args.get("target", "")).strip()))
             return add_proposal(session, "eylem", f"{what}: {arg[:120]}" if arg else what,
-                                "dış içerik (mail/SMS/belge) bağlamdayken bu istek senin mesajında yok — onay gerekiyor", run)
+                                "dış içerik (mail/SMS/belge/ek/ekran) bağlamda — kalıcı yazma onay gerektiriyor", _persist_run(name, args))
         if name in AUTO_ACTIONS:
             if session.tainted or session.remote:
                 why = "ekran/kamera okunduktan sonra onay gerekiyor" if session.tainted else "telefondan istendi — bilgisayarda yapılacak"
@@ -523,7 +548,7 @@ def run_tool(session: Session, name: str, args: dict, calendar=None) -> str:
             return f"Hata: bilinmeyen araç {name}"
         allowed = {k: v for k, v in args.items() if k in fn.__code__.co_varnames[:fn.__code__.co_argcount]}
         return _clip(str(fn(**allowed)))
-    except Exception as e:                      # araç hatası modele geri bildirilir, sunucu düşmez
+    except (Exception, SystemExit) as e:                      # araç hatası modele geri bildirilir, sunucu düşmez
         return f"Araç hatası ({name}): {type(e).__name__}: {str(e)[:200]}"
 
 
@@ -725,20 +750,25 @@ def latest_mail_reply(n: int = 3) -> str:
 def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
     """Bir kullanıcı mesajını işler: otomatik getirme + araç çağırma döngüsü → {reply, trace, proposals}."""
     cfg = llm.config()
-    session.tainted = False                                  # kirli içerik bayrağı her yeni istekte sıfırlanır
-    session.user_text = text
+    att = getattr(session, "attachment_text", "") or ""      # ek metni kullanıcı sözü DEĞİL, dış içerik (D-06b)
+    typed = text.replace(att, "").strip() if att and att in text else text
+    if att:
+        session.external = True
+    session.attachment_text = ""
+    # Kirlilik bayrakları YAPIŞKAN: bir kez dış içerik girdiyse oturum (yeni sohbet) boyunca sıfırlanmaz (D-06).
+    session.user_text = typed
     session.messages.append({"role": "user", "content": text})
     session.messages[:] = session.messages[-HISTORY_MSGS:]
     uidx = len(session.messages) - 1
     try:
         ctx, label = retrieve(text)
-    except Exception as e:                                  # getirme hatası sohbeti durdurmaz
+    except (Exception, SystemExit) as e:                                  # getirme hatası sohbeti durdurmaz
         ctx, label = "", f"getirme hatası: {type(e).__name__}"
-    session.external = bool(re.search(r"son mailler|arama \d|anlam \d", label or ""))    # dış metin bağlamda
+    session.external = session.external or bool(re.search(r"son mailler|arama \d|anlam \d|yaklaşan tarihler", label or ""))   # dış metin bağlamda
     augmented = (f"{text}\n\n[KASA BAĞLAMI — otomatik getirildi. Cevabını SADECE buna ve araç sonuçlarına dayandır; "
                  "olmayan bilgiyi UYDURMA, 'kasada bulamadım' de. Sohbet/selamlaşmaysa bağlamı yok say.]\n"
                  + (ctx or "(otomatik arama bir şey bulamadı)"))
-    hint = action_hint(text)
+    hint = action_hint(typed, allow_command=not (session.dirty or session.remote))
     pre_calls: list[str] = []
     if hint:                                                 # eylem isteği: kasa bağlamı yerine net yönlendirme
         augmented = (f"{text}\n\n[BU BİR EYLEM İSTEĞİ. Önce şu aracı çağır: {', '.join(hint)}. Cevabı aracın sonucuna dayandır; "
@@ -782,9 +812,18 @@ def respond(session: Session, text: str, chat_fn=ollama_tools_chat) -> dict:
             return {"reply": reply, "trace": [f"otomatik getirme: {label or 'son mailler'}", "son mailler [kod cevapladı]"],
                     "proposals": pending(session)}
     low = text.lower().strip()
-    if (m := re.match(r"^(?:geceye|gece listesine|gece işlerine|gece islerine) ekle\s*:?\s*(.+?)(?:\s+@(\S.*))?$", text.strip(), re.S | re.I)):
-        from . import worker                                  # yalnız listeye yazar (çalıştırmaz): telefondan da onaysız
-        reply = worker.night_add(m.group(1), (m.group(2) or "").strip())
+    if (m := re.match(r"^(?:geceye|gece listesine|gece işlerine|gece islerine) ekle\s*:?\s*(.+?)(?:\s+@(\S.*))?$", typed.strip(), re.S | re.I)):
+        from . import worker
+        where = " ".join((m.group(2) or "").split())
+        if session.remote:                                    # claude -p'yi yazdırır: yalnız bilgisayardan (D-05)
+            reply = "Gece işi yalnız bilgisayardaki asistandan eklenebilir (telefon çerezi çalınsa bile uzaktan kod olmasın)."
+        elif session.dirty:                                   # dış içerik bağlamda: liste kalıcı yazmadır → onay kartı (D-02)
+            task = m.group(1)
+            add_proposal(session, "eylem", f"🌙 Gece listesine ekle: {' '.join(task.split())[:100]}",
+                         "dış içerik bağlamda — gece işi eklemek onay gerektiriyor", lambda: worker.night_add(task, where))
+            reply = "Gece işi onay kartına konuldu; Onayla'ya basarsan listeye eklenir."
+        else:
+            reply = worker.night_add(m.group(1), where)
         session.messages.append({"role": "assistant", "content": reply})
         return {"reply": reply, "trace": ["gece listesi [kod]"], "proposals": pending(session)}
     if re.search(r"gece (koşusu|kosusu|işleri|isleri|listesi)\w*\s+(başlat|baslat|çalıştır|calistir|başla|basla)|"
@@ -850,6 +889,9 @@ def pending(session: Session) -> list[dict]:
             for p in session.proposals.values() if p["status"] == "bekliyor"]
 
 
+REMOTE_APPROVABLE = {"takvim", "eylem"}      # beyaz liste: telefondan yalnız bunlar onaylanır
+
+
 def decide(session: Session, pid: str, ok: bool, calendar=None) -> str:
     p = session.proposals.get(pid)
     if not p or p["status"] != "bekliyor":
@@ -857,8 +899,8 @@ def decide(session: Session, pid: str, ok: bool, calendar=None) -> str:
     if not ok:
         p["status"] = "iptal"
         return f"İptal edildi: {p.get('summary') or p['title']}"
-    if session.remote and p.get("kind") in ("komut", "whatsapp"):        # çerez çalınsa bile uzaktan kod/mesaj olmasın
-        return "Bu onay yalnız bilgisayardan verilebilir (komut ve WhatsApp). Kart bilgisayardaki asistanda bekliyor."
+    if session.remote and p.get("kind") not in REMOTE_APPROVABLE:        # çerez çalınsa bile uzaktan kod/mesaj/gece koşusu olmasın (D-05)
+        return "Bu onay yalnız bilgisayardan verilebilir (komut, WhatsApp, gece koşusu, silme). Kart bilgisayardaki asistanda bekliyor."
     if "_run" in p:
         p["status"] = "yapıldı"
         return str(p["_run"]())
@@ -888,7 +930,7 @@ form button{background:var(--ac);color:#fff}
 <script>
 const log=document.getElementById('log'),q=document.getElementById('q'),sid=Math.random().toString(36).slice(2);
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json','X-SB':'1'},body:JSON.stringify(Object.assign({sid},b))});return r.json()}
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json','X-SB':'1','X-SB-Token':'__TOKEN__'},body:JSON.stringify(Object.assign({sid},b))});return r.json()}
 function cards(ps){document.querySelectorAll('.p').forEach(e=>e.remove());ps.forEach(p=>{const d=document.createElement('div');d.className='p';
 d.innerHTML='<b></b><span class="dt"></span><br>';d.querySelector('b').textContent=p.title;
 d.querySelector('.dt').textContent=p.detail;
@@ -1010,7 +1052,10 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
         if sid not in sessions and len(sessions) >= MAX_SESSIONS:
             for k in list(sessions)[: len(sessions) - MAX_SESSIONS + 1]:
                 sessions.pop(k, None)
-        return sessions.setdefault(sid, Session(remote=is_remote))
+        s = sessions.setdefault(sid, Session(remote=is_remote))
+        if sid == EXTENSION_SID:                                   # tarayıcı eklentisi = web sayfası içeriği: güvenilmez (D-03)
+            s.mark_untrusted()
+        return s
     lock = MODEL_LOCK
 
     class H(BaseHTTPRequestHandler):
@@ -1032,6 +1077,31 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
 
         def _authed(self) -> bool:
             return not is_remote or (auth is not None and auth.check_cookie(self.headers.get("Cookie", "")))
+
+        def _extension(self) -> bool:
+            """İstek kullanıcının izin verdiği bir tarayıcı eklentisinden mi (tarayıcının koyduğu Origin; sayfa taklit edemez)."""
+            o = self.headers.get("Origin")
+            return not is_remote and bool(o) and o in extension_origins()
+
+        def _token_ok(self) -> bool:
+            """Yerel kapıda oturum jetonu (D-04). Uzak (telefon) kapıda eşleme çerezi geçerlidir; jeton aranmaz."""
+            if is_remote:
+                return True
+            from . import localauth
+            return localauth.valid(self.headers.get(localauth.HEADER))
+
+        def _same_origin_fetch(self) -> bool:
+            """Tarayıcı bu isteğin çapraz siteden geldiğini söylüyorsa (Sec-Fetch-Site) ya da Origin yabancıysa reddet."""
+            site = self.headers.get("Sec-Fetch-Site")
+            if site and site not in ("same-origin", "none"):
+                return False
+            o = self.headers.get("Origin")
+            return not o or o in ALLOWED_ORIGINS
+
+        def _page(self, tpl: str) -> str:
+            from . import localauth
+            return (tpl.replace("__MODEL__", llm.config()["ollama"]["model"]).replace("__LOCAL__", "0" if is_remote else "1")
+                    .replace("__TOKEN__", "" if is_remote else localauth.token()))
 
         def _send(self, code: int, body: bytes, ctype: str = "application/json; charset=utf-8", cookie: str = "") -> None:
             self.send_response(code)
@@ -1067,7 +1137,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     try:
                         msg = (f"Spotify izin vermedi: {q['error'][0]}" if "error" in q
                                else spotify_api.callback(q.get("code", [""])[0], q.get("state", [""])[0]))
-                    except Exception as e:
+                    except (Exception, SystemExit) as e:
                         msg = f"Spotify bağlanamadı: {type(e).__name__}: {str(e)[:150]}"
                 else:
                     msg = "yok"
@@ -1109,16 +1179,19 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 from urllib.parse import parse_qs, urlparse
                 from . import mobile
                 q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
-                return self._send(200, mobile.share_page(q.get("title", ""), q.get("text", ""), q.get("url", "")).encode("utf-8"),
-                                  "text/html; charset=utf-8")
+                html = mobile.share_page(q.get("title", ""), q.get("text", ""), q.get("url", ""))
+                if not is_remote:                                         # yerel açılışta jeton gömülür (D-04); telefonda çerez geçerli
+                    html = html.replace("<head>", '<head><meta name="sb-token" content="' + self._page("__TOKEN__") + '">'
+                                        '<script src="/static/sbtoken.js"></script>', 1)
+                return self._send(200, html.encode("utf-8"), "text/html; charset=utf-8")
             if route == "/bubble" and not is_remote and (WEB / "bubble.html").exists():     # mini sohbet balonu (aynı kaynak)
-                return self._send(200, (WEB / "bubble.html").read_bytes(), "text/html; charset=utf-8")
+                return self._send(200, self._page((WEB / "bubble.html").read_text(encoding="utf-8")).encode("utf-8"), "text/html; charset=utf-8")
             if route in ("/", "/index.html", "/classic"):
                 if not self._authed():
                     return self._send(200, PAIR_PAGE.encode("utf-8"), "text/html; charset=utf-8")
                 index = WEB / "index.html"
                 tpl = index.read_text(encoding="utf-8") if route != "/classic" and index.exists() else PAGE
-                page = tpl.replace("__MODEL__", llm.config()["ollama"]["model"]).replace("__LOCAL__", "0" if is_remote else "1")
+                page = self._page(tpl)               # jeton gömülü sayfa: SOP başka sitenin okumasını engeller (CORS başlığı yok)
                 cookie = ""
                 if is_remote:                                       # kayan süre: telefonda her açılışta 180 gün yeniden başlar
                     import re as _re
@@ -1138,6 +1211,10 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                 return self._send(404, b'{"error":"yok"}')
             if r.local_only and is_remote:
                 return self._send(403, b'{"error":"yalniz bilgisayardan"}')
+            if method == "GET" and not is_remote and (r.model or r.sensitive):
+                # Model çağıran / yan etkili / kurulum jetonu veren GET: <img src> ile başka siteden tetiklenemesin (D-19, D-04).
+                if self.headers.get("X-SB") != "1" or not self._token_ok() or not self._same_origin_fetch() or self._extension():
+                    return self._send(403, b'{"error":"jeton"}')
             query = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
             data, raw, ctype = {}, b"", self.headers.get("Content-Type", "")
             if method == "POST":
@@ -1161,6 +1238,8 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     if not isinstance(data, dict):
                         return self._send(400, b'{"error":"gecersiz"}')
             sid = str(data.get("sid") or query.get("sid") or "x")[:40]
+            if self._extension():
+                sid = EXTENSION_SID                                    # eklenti kullanıcının sohbet oturumuna yazamaz (D-03)
             s = _session(sid)
 
             def _respond(text: str) -> dict:
@@ -1168,7 +1247,7 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                     from . import telemetry
                     with telemetry.timed("chat", "respond"):
                         return respond(s, str(text)[:12000], chat_fn)        # ekli dosya metni (≤6000) sığsın
-                except Exception as e:                                # noqa: BLE001
+                except (Exception, SystemExit) as e:                                # noqa: BLE001
                     return {"reply": f"Hata: {type(e).__name__}: {str(e)[:200]}", "trace": [], "proposals": pending(s)}
 
             ctx = webroutes.Ctx(method, self.path.split("?")[0], data, query, raw, ctype, sid, is_remote, s, _respond, calendar)
@@ -1191,6 +1270,11 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
         def do_POST(self):
             if not self._ok_host() or self.headers.get("X-SB") != "1" or not self._ok_origin():
                 return self._send(403, b'{"error":"yasak"}')
+            if self._extension():
+                if self.path.split("?")[0] not in EXTENSION_PATHS:     # eklenti: yalnız paylaş/sohbet, o da güvenilmez oturumda
+                    return self._send(403, b'{"error":"eklenti"}')
+            elif not self._token_ok():
+                return self._send(403, b'{"error":"jeton"}')
             if self.path.startswith("/api/v2/"):
                 return self._v2("POST")
             try:
@@ -1221,12 +1305,12 @@ def make_handler(chat_fn=ollama_tools_chat, calendar=None, auth: RemoteAuth | No
                         from . import telemetry
                         with telemetry.timed("chat", "respond"):
                             out = respond(s, str(data.get("text", ""))[:4000], chat_fn)
-                    except Exception as e:
+                    except (Exception, SystemExit) as e:
                         out = {"reply": f"Hata: {type(e).__name__}: {str(e)[:200]}", "trace": [], "proposals": pending(s)}
                 elif self.path == "/api/decide":
                     try:
                         msg = decide(s, str(data.get("id", "")), bool(data.get("ok")), calendar)
-                    except Exception as e:
+                    except (Exception, SystemExit) as e:
                         msg = f"Hata: {type(e).__name__}: {str(e)[:200]}"
                     out = {"message": msg, "proposals": pending(s)}
                 elif self.path == "/api/reset":
@@ -1278,8 +1362,34 @@ def reminder_loop(stop: threading.Event, calendar_factory=lambda: Calendar("main
                 notify(title, body)
                 seen.add(key)
                 path.write_text(json.dumps(sorted(seen)[-500:]), encoding="utf-8")
-        except Exception as e:                                   # ağ/token hatası: sonraki turda yeniden dene
-            print(f"hatırlatma hatası: {type(e).__name__}: {e}", flush=True)
+        except BaseException as e:                               # noqa: BLE001 — ağ/token hatası, giriş yok (SystemExit) dahil: iş parçacığı ÖLMEZ (D-15)
+            _loop_error("hatırlatma", e)
+        stop.wait(interval)
+
+
+def _loop_error(name: str, e: BaseException) -> None:
+    """Arka plan döngüsünde yakalanan her hata (SystemExit dahil) günlüğe yazılır; döngü sürer (D-15)."""
+    print(f"{name} hatası: {type(e).__name__}: {e}", flush=True)
+    try:
+        from .config import DATA
+        (DATA / "logs").mkdir(parents=True, exist_ok=True)
+        with (DATA / "logs" / "loops.log").open("a", encoding="utf-8") as f:
+            f.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {name}: {type(e).__name__}: {str(e)[:300]}\n")
+    except OSError:
+        pass
+
+
+def apps_loop(stop: threading.Event, interval: int = 300, sync=None) -> None:
+    """Hazır uygulamalar (ClipBoardLine, Nashi): asistan açıkken 5 dakikada bir hafif senkron. Kurulu/açık modül yoksa hiçbir şey yapmaz; hata sunucuyu düşürmez."""
+    from . import apps
+    sync = sync or (lambda: apps.sync_all(require_enabled=True))
+    stop.wait(20)                                                  # sunucu açılışını yavaşlatma
+    while not stop.is_set():
+        try:
+            if any(apps.installed(i) for i in apps.ids()):
+                sync()
+        except BaseException as e:                                   # noqa: BLE001 — iş parçacığı ölmesin (D-15)
+            _loop_error("uygulama senkronu", e)
         stop.wait(interval)
 
 
@@ -1309,6 +1419,17 @@ def tailscale_ip() -> str:
         return ""
 
 
+class AssistantServer(ThreadingHTTPServer):
+    """İkinci sürecin aynı porta bağlanmasına izin vermez (D-14). Windows'ta SO_REUSEADDR başka bir dinleyicinin portunu paylaşır;
+    onun yerine SO_EXCLUSIVEADDRUSE kullanılır. POSIX'te SO_REUSEADDR yalnız TIME_WAIT için güvenlidir."""
+    allow_reuse_address = sys.platform != "win32"
+
+    def server_bind(self) -> None:
+        if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
 def remote_loop(stop: threading.Event, auth: RemoteAuth, port: int) -> None:
     """Tailscale açılınca telefon dinleyicisini YALNIZ Tailscale adresinde başlatır (internete ya da ev ağına açılmaz)."""
     server = None
@@ -1318,7 +1439,7 @@ def remote_loop(stop: threading.Event, auth: RemoteAuth, port: int) -> None:
             if server:
                 server.shutdown()
             try:
-                server = ThreadingHTTPServer((ip, port), make_handler(auth=auth, is_remote=True))
+                server = AssistantServer((ip, port), make_handler(auth=auth, is_remote=True))
                 auth.ip = ip
                 threading.Thread(target=server.serve_forever, daemon=True).start()
                 print(f"Telefon erişimi: http://{ip}:{port}/ (eşleme kodu bilgisayardaki sayfada)", flush=True)
@@ -1337,7 +1458,13 @@ def serve(port: int = PORT) -> None:
     auth = RemoteAuth(DATA / "remote_tokens.json")
     threading.Thread(target=reminder_loop, args=(stop,), daemon=True).start()
     threading.Thread(target=remote_loop, args=(stop, auth, port), daemon=True).start()
-    server = ThreadingHTTPServer(("127.0.0.1", port), make_handler(auth=auth))
+    threading.Thread(target=apps_loop, args=(stop,), daemon=True).start()
+    try:
+        server = AssistantServer(("127.0.0.1", port), make_handler(auth=auth))
+    except OSError as e:                                             # port başka bir asistan/süreç tarafından tutuluyor (D-14)
+        print(f"Asistan başlamadı: 127.0.0.1:{port} kullanımda ({e}). Başka bir asistan çalışıyor olabilir.", flush=True)
+        stop.set()
+        raise SystemExit(1)
     print(f"Asistan hazır: http://127.0.0.1:{port}/  (Ctrl+C ile durdur)", flush=True)
     try:
         server.serve_forever()

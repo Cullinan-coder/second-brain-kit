@@ -20,7 +20,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@modelcontextprotocol/server-sequential-thinking'
+  - '@modelcontextprotocol/server-sequential-thinking@2.0.0'
   env: {}
   install: npm view @modelcontextprotocol/server-sequential-thinking version
   docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking

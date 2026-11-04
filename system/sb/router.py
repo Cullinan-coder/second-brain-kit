@@ -98,8 +98,8 @@ def _strict_local() -> bool:
     try:
         from . import privacy
         return privacy.needs_approval("bulut")
-    except Exception:                                         # noqa: BLE001 — profil okunamazsa normal yönlendirme
-        return False
+    except Exception:                                         # noqa: BLE001 — profil okunamazsa SIKI: buluta gitme (D-26)
+        return True
 
 
 # ---------------------------------------------------------------- önbellek (madde 33)

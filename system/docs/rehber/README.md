@@ -34,11 +34,12 @@ Bu rehber Second Brain'i kurmaktan günlük kullanıma, hesap bağlamaktan sorun
 - [MCP kataloğu](19-mcp-katalogu.md)
 - [Sektör paketleri](20-sektor-paketleri.md)
 - [Hangi özellik ne ister](21-ne-ister.md)
+- [22 · Uygulamalar: ClipBoardLine ve Nashi](22-uygulamalar.md)
 
 ## Sayfa sayıları
 
-- Elle yazılan bölüm: 15
-- Modül sayfası: 51
-- Veri kaynağı sayfası: 39
+- Elle yazılan bölüm: 16
+- Modül sayfası: 52
+- Veri kaynağı sayfası: 42
 - MCP sayfası: 18
 - Özellik maddesi: 258

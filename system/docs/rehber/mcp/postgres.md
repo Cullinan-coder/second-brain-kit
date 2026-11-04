@@ -37,7 +37,7 @@ Gizli değerler (`postgres_url`) **yalnız işletim sisteminin şifre kasasına*
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add postgres --scope user -- npx -y @modelcontextprotocol/server-postgres {postgres_url}
+claude mcp add postgres --scope user -- npx -y @modelcontextprotocol/server-postgres@0.6.2 {postgres_url}
 ```
 
 

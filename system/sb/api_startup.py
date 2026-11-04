@@ -40,6 +40,6 @@ def status(ctx: Ctx) -> dict:
     return startup.status()
 
 
-@route("GET", "/api/v2/startup/settings-url", local_only=True)
+@route("GET", "/api/v2/startup/settings-url", local_only=True, sensitive=True)    # kurulum jetonunu verir: jetonsuz GET'e verilmez (D-04)
 def settings(ctx: Ctx) -> dict:
     return {"url": settings_url()}

@@ -515,3 +515,29 @@ def test_madde7_ice_aktarma_sayisi_gecmise_yazilir(sbx):
     assert IM.parse_count(["hiçbir sayı yok"]) is None
     IM._record(eng, "whatsapp", "s.txt", True, "ok", 3)
     assert call("GET", "/api/imports")[1]["imports"][-1]["count"] == 3
+
+
+# ------------------------------------------------------------------ hazır uygulamalar (ClipBoardLine, Nashi)
+def test_apps_sandbox_listing_install_autostart(sbx, monkeypatch):
+    call, wait, box, real, eng = sbx
+    from sb import apps
+    monkeypatch.setattr(apps, "_proc_running", lambda name: False)
+    for fn in ("_reg_set", "_reg_del", "_reg_get", "_spawn", "_open", "_run"):
+        monkeypatch.setattr(apps, fn, lambda *a, **k: (_ for _ in ()).throw(AssertionError("deneme kipinde gerçek sistem/ağ çağrısı")))
+    code, d = call("GET", "/api/apps?lang=tr")
+    assert code == 200 and d["sandbox"] is True and [a["id"] for a in d["apps"]] == ["clipboardline", "nashi"]
+    nashi = d["apps"][1]
+    assert nashi["autostart"] == "login" and nashi["title"].startswith("Nashi") and nashi["about"] and nashi["license"] == "MIT"
+    code, r = call("POST", "/api/apps/autostart", {"id": "nashi", "mode": "startup"})
+    assert code == 200 and r["skipped"] and r["mode"] == "startup" and "[deneme] atlandı" in r["message"]
+    assert call("GET", "/api/apps")[1]["apps"][1]["autostart"] == "startup"
+    assert (box / "data" / "apps.json").exists()
+    code, _ = call("POST", "/api/apps/autostart", {"id": "nashi", "mode": "bazen"})
+    assert code == 400 and call("POST", "/api/apps/install", {"id": "yok"})[0] == 400
+    code, _ = call("POST", "/api/apps/install", {"id": "clipboardline"})
+    assert code == 202
+    p = wait()
+    assert not p["error"] and any("[deneme] atlandı: ClipBoardLine" in ln for ln in p["log"])
+    code, r = call("POST", "/api/apps/start", {"id": "nashi"})
+    assert code == 200 and r["skipped"]
+    assert not [c for c in real if "apps" in " ".join(c)]

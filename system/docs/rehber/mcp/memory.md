@@ -28,7 +28,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add memory --scope user -- npx -y @modelcontextprotocol/server-memory
+claude mcp add memory --scope user -- npx -y @modelcontextprotocol/server-memory@2.0.1
 ```
 
 

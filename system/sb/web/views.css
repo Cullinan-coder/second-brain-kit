@@ -3,21 +3,3 @@ body.sbv-listening [data-voice-mic],body.sbv-listening #mic-btn,body.sbv-listeni
 @keyframes sbv-pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--danger) 25%,transparent)}}
 @media (prefers-reduced-motion:reduce){body.sbv-listening [data-voice-mic],body.sbv-listening #mic-btn,body.sbv-listening .mic-btn{animation:none}}
 
-/* Pano görünümü (Kopya geçmişi): yatay raflar, kart başına belirgin odak/seçim, yumuşak giriş */
-.pano-shelf{margin-bottom:var(--s5)}
-.pano-shelf>h3{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-xs);font-weight:var(--w-semi);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 var(--s2)}
-.pano-row{display:flex;gap:var(--s3);overflow-x:auto;padding:var(--s1) var(--s1) var(--s3);scroll-snap-type:x proximity;scroll-padding-inline:var(--s1)}
-.pano-card{flex:0 0 220px;height:132px;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;gap:var(--s1);padding:var(--s2) var(--s3);cursor:pointer;overflow:hidden;text-align:left;font:inherit;color:var(--fg);background:var(--surface);box-shadow:var(--shadow-xs);animation:view-in var(--d3) var(--ease) backwards}
-.pano-card::after{content:"";position:absolute;left:0;right:0;bottom:22px;height:24px;background:linear-gradient(transparent,var(--surface));pointer-events:none}
-.pano-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-2px)}
-.pano-card:focus-visible,.pano-card.sel{outline:2px solid var(--accent);outline-offset:2px;box-shadow:0 0 0 5px var(--accent-ring)}
-.pano-card.pinned{border-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft),var(--surface) 70%)}
-.pano-card.pinned::after{background:linear-gradient(transparent,var(--surface))}
-.pano-card .pano-body{flex:1;overflow:hidden;font-size:var(--t-sm);line-height:var(--lh-snug);white-space:pre-wrap;overflow-wrap:anywhere}
-.pano-card img{max-width:100%;max-height:78px;object-fit:contain;align-self:flex-start;border-radius:var(--r1)}
-.pano-card .pano-meta{position:relative;z-index:1;font-size:var(--t-xs);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-.pano-pins .pano-card{flex-basis:260px;height:150px}
-.pano-prev img{max-width:100%;max-height:60vh;border-radius:var(--r2)}
-.pano-prev .pre{max-height:50vh;overflow:auto}
-@media (prefers-reduced-motion:reduce){.pano-card{animation:none;transform:none!important}}
-@media (forced-colors:active){.pano-card::after{display:none}.pano-card.sel{outline-color:Highlight}}

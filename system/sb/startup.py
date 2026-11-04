@@ -19,7 +19,7 @@ from .config import SYSTEM
 
 SETTINGS = SYSTEM / "config" / "uygulama.yaml"
 TITLES = [("update", "Güncelleme denetimi"), ("health", "Sağlık kontrolü"), ("daily", "Günlük işler"),
-          ("warm", "Modelleri ısıt"), ("ready", "Hazır")]
+          ("apps", "Uygulamalar"), ("warm", "Modelleri ısıt"), ("ready", "Hazır")]
 
 _lock = threading.Lock()
 _state: dict = {}
@@ -174,6 +174,28 @@ def _step_daily() -> dict:
     return {"message": "Günlük işler tamamlandı."}
 
 
+def _apps_work() -> dict:
+    """Başlangıç kipi 'startup' olan kurulu uygulamaları başlatır; ardından ClipBoardLine/Nashi verisini beyne okur (testte taklit)."""
+    from . import apps
+    started = [r for r in apps.start_startup_apps(log=lambda *_: None) if r.get("started")]
+    synced = apps.sync_all(require_enabled=True)
+    return {"started": [r["id"] for r in started], "synced": synced}
+
+
+def _step_apps() -> dict:
+    from . import apps
+    if not any(apps.installed(i) for i in apps.ids()):
+        return {"status": "skipped", "message": "Kurulu hazır uygulama yok (ClipBoardLine, Nashi: `sb apps install <ad>`)."}
+    res = _apps_work()
+    bits = []
+    if res["started"]:
+        bits.append("başlatıldı: " + ", ".join(res["started"]))
+    bits += [apps.format_sync(r) for r in res["synced"]]
+    bad = [r for r in res["synced"] if r.get("error")]
+    return {"status": "warn" if bad else "ok", "message": "; ".join(bits)[:300] or "Yapılacak bir şey yok.",
+            **({"fix": "Ayrıntı: `sb apps status` ve `sb apps sync all`."} if bad else {})}
+
+
 def _step_warm() -> dict:
     try:
         done = _warm_models()
@@ -189,6 +211,7 @@ def _pipeline(auto_update: bool) -> None:
         _timed("update", lambda: _step_update(auto_update))
         _timed("health", _step_health)
         _timed("daily", _step_daily)
+        _timed("apps", _step_apps)
         _timed("warm", _step_warm)
         with _lock:
             bad = [s for s in _state["steps"] if s["status"] == "error"]

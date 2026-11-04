@@ -13,6 +13,7 @@ Kurulumdan önce hangi hesap/anahtarın gerekeceğini görmek için tek tablo. A
 | [Bilgi kartları](moduller/cards.md) | — | — | — | — |
 | [Kariyer ve iş](moduller/career.md) | — | — | — | — |
 | [Claude Code hafızası](moduller/claude_hooks.md) | — | — | Claude Code | — |
+| [ClipBoardLine (kopya geçmişi)](moduller/clipboardline.md) | — | — | clipboardline | — |
 | [İletişim yardımcıları](moduller/comms.md) | — | — | — | — |
 | [Bilgisayar kontrolü](moduller/computer.md) | — | — | — | — |
 | [Google Rehber](moduller/contacts.md) | [Google](03-hesaplar.md#hesap-google) | — | — | — |
@@ -37,8 +38,8 @@ Kurulumdan önce hangi hesap/anahtarın gerekeceğini görmek için tek tablo. A
 | [Spotify ve YouTube](moduller/media.md) | [Spotify](03-hesaplar.md#hesap-spotify) | `spotify_client_secret` | — | — |
 | [Hafıza ve kişilik](moduller/memory_ui.md) | — | — | — | — |
 | [Model katmanı](moduller/models.md) | [OpenAI](04-api-anahtarlari.md#anahtar-openai), [Anthropic](04-api-anahtarlari.md#anahtar-anthropic), [Gemini](04-api-anahtarlari.md#anahtar-gemini), [OpenRouter](04-api-anahtarlari.md#anahtar-openrouter), [Groq](04-api-anahtarlari.md#anahtar-groq), [DeepSeek](04-api-anahtarlari.md#anahtar-deepseek), [Mistral](04-api-anahtarlari.md#anahtar-mistral) | `openai_key`, `anthropic_key`, `gemini_key`, `openrouter_key`, `groq_key`, `deepseek_key`, `mistral_key` | — | — |
+| [Nashi (dosya dönüştürücü)](moduller/nashi.md) | — | — | nashi | — |
 | [Gece koşusu](moduller/night.md) | — | — | Claude Code | — |
-| [Kopya geçmişi (Pano)](moduller/pano.md) | — | — | — | — |
 | [Telefon erişimi](moduller/phone.md) | [Tailscale](03-hesaplar.md#hesap-tailscale) | — | Tailscale | — |
 | [Gizlilik ve güvenlik](moduller/privacy.md) | — | `vault_key` | — | — |
 | [Projeler ve GitHub](moduller/projects.md) | [GitHub](03-hesaplar.md#hesap-github) | — | — | — |

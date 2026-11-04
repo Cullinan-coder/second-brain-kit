@@ -10,6 +10,7 @@ import zipfile
 from pathlib import Path
 
 from . import academic, browser, kindle, rss, spotify, telegram, whatsapp, youtube
+from . import clipboardline, nashi, spotify_tech
 from . import bank, discord, learning, notes, notion, places, reading, screentime, slack, social, tasks_import
 
 REGISTRY = {
@@ -23,10 +24,12 @@ REGISTRY = {
     "gphotos": places.run_photos, "gmaps": places.run_maps, "bank": bank.run,
     "coursera": learning.run_coursera, "udemy": learning.run_udemy, "screentime": screentime.run,
     "whatsapp": whatsapp.run,
+    "clipboardline": clipboardline.run, "nashi": nashi.run,       # sb 0.11: hazır uygulamalar (yol = uygulamanın veri klasörü; sb apps sync)
     "telegram": telegram.run,
     "kindle": kindle.run,
     "youtube": youtube.run,
     "spotify": spotify.run,
+    "spotify-teknik": spotify_tech.run,                       # my_spotify_data.zip (Technical Log Information)
     "browser": browser.run,
     "rss": rss.run,
     "arxiv": academic.run_arxiv,
@@ -47,11 +50,15 @@ def detect(path) -> str | None:
     p = Path(path)
     name = p.name.lower()
     if p.is_dir():
+        if spotify_tech.is_tech_pack(p):
+            return "spotify-teknik"
         return "spotify" if any("streaminghistory" in x.name.lower().replace("_", "") for x in p.glob("*.json")) else None
     if not p.exists():
         return None
     ext = p.suffix.lower()
     if ext == ".zip":
+        if spotify_tech.is_tech_pack(p):
+            return "spotify-teknik"
         try:
             with zipfile.ZipFile(p) as z:
                 return "whatsapp" if any(n.lower().endswith(".txt") for n in z.namelist()) else None

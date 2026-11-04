@@ -46,6 +46,7 @@ DAILY_REST = [
     ("drive notları", ["drive-index"], 900),
     ("bilgisayar dosyaları", ["local-files"], 5400),
     ("belge içerikleri", ["content-sync"], 7200),
+    ("hazır uygulamalar (ClipBoardLine, Nashi)", ["apps", "sync", "all"], 900),
     ("projeler", ["projects-sync"], 3600),
     ("proje derleme", ["project-deep", "--all"], 10800),
     ("ders dosyaları", ["course-files"], 900),

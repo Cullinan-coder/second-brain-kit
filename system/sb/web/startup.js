@@ -40,6 +40,28 @@
     const foot = st.running ? 'Çalışıyor…' : st.done ? (st.ok ? 'Bitti.' : 'Bitti; sorunlar var.') : 'Henüz çalıştırılmadı.';
     kids.push(el('p', { text: foot }));
     box.replaceChildren(...kids);
+    if (st.done && !st.running) paintApps();
+  }
+
+  /* Uygulamalar kartı: ClipBoardLine / Nashi durumu, Aç, Şimdi senkronla */
+  let appsBox = null;
+  async function paintApps() {
+    if (!appsBox || !appsBox.isConnected) return;
+    const r = await SB.api('/api/v2/apps/status');
+    if (!r || r.error) { appsBox.replaceChildren(el('p', { text: 'Uygulama durumu okunamadı.' })); return; }
+    appsBox.replaceChildren(el('h3', { text: 'Uygulamalar' }), ...(r.apps || []).map((a) => {
+      const state = !a.supported ? 'bu sistemde desteklenmiyor' : !a.installed ? 'kurulu değil (kurmak için: sb apps install ' + a.id + ')'
+        : (a.running ? 'çalışıyor' : 'kapalı') + (a.version ? ' · sürüm ' + a.version : '');
+      const sync = a.last_sync ? 'Son senkron: ' + a.last_sync.replace('T', ' ') + ' · ' + (a.records || 0) + ' kayıt'
+        + (a.skipped_secret ? ' · ' + a.skipped_secret + ' kayıt sır içerdiği için atlandı' : '') : 'Henüz senkron yok';
+      const open = el('button', { cls: 'btn sm', type: 'button', text: 'Aç', disabled: !a.installed || a.running, on: { click: async () => {
+        const x = await SB.api('/api/v2/apps/start', { id: a.id }); SB.toast(x && x.message || (x && x.error) || 'Tamam'); setTimeout(paintApps, 1500); } } });
+      const syn = el('button', { cls: 'btn sm', type: 'button', text: 'Şimdi senkronla', disabled: !a.supported, on: { click: async () => {
+        const x = await SB.api('/api/v2/apps/sync', { id: a.id }); SB.toast(x && x.text || (x && x.error) || 'Tamam'); paintApps(); } } });
+      return el('div', { cls: 'card', attrs: { 'data-app': a.id } }, [
+        el('strong', { text: a.title || a.name }), el('div', { text: state }), el('div', { text: sync }),
+        el('div', { cls: 'row' }, [open, syn])]);
+    }));
   }
 
   async function poll() {
@@ -70,9 +92,11 @@
     render(root) {
       box = el('div', { attrs: { role: 'status', 'aria-live': 'polite' } });
       const go = el('button', { cls: 'btn', type: 'button', text: 'Çalışmaya başla', on: { click: run } });
-      root.append(el('div', { cls: 'sbv stack' }, [el('p', { text: 'Güncelleme, sağlık, günlük işler ve model ısıtma sırayla çalışır.' }), go, box]));
+      appsBox = el('div', { cls: 'stack', attrs: { 'aria-label': 'Uygulamalar' } });
+      root.append(el('div', { cls: 'sbv stack' }, [el('p', { text: 'Güncelleme, sağlık, günlük işler, uygulamalar (ClipBoardLine, Nashi) ve model ısıtma sırayla çalışır.' }), go, box, appsBox]));
       poll();
-      return () => { box = null; if (timer) { clearTimeout(timer); timer = null; } };
+      paintApps();
+      return () => { box = null; appsBox = null; if (timer) { clearTimeout(timer); timer = null; } };
     }
   });
   SB.registerView('app-settings', {

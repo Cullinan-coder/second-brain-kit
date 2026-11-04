@@ -153,6 +153,41 @@ def _check_requires(m: dict, errs: list[str]) -> None:
         errs.append("requires.apps: liste olmalı")
 
 
+APP_METHODS = ("nsis-silent", "zip-extract")
+
+
+def _check_app(a, errs: list[str]) -> None:
+    """Modül manifestindeki `app:` bölümü (sb/apps.py okur): resmî sürüm paketi + kurulum + veri yolu."""
+    if not isinstance(a, dict):
+        errs.append("app: sözlük olmalı")
+        return
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", str(a.get("repo") or "")):
+        errs.append("app.repo 'sahip/depo' biçiminde olmalı")
+    if not isinstance(a.get("size_mb"), (int, float)) or a["size_mb"] <= 0:
+        errs.append("app.size_mb pozitif sayı olmalı")
+    try:
+        re.compile(str(a.get("tag_pattern") or ""))
+    except re.error:
+        errs.append("app.tag_pattern geçerli düzenli ifade olmalı")
+    _bi(a.get("about"), "app.about", errs)
+    if not any(a.get(k) for k in ("win", "mac")):
+        errs.append("app: en az bir platform (win/mac) gerekli")
+    for plat_ in ("win", "mac"):
+        s = a.get(plat_)
+        if s is None:
+            continue
+        need = ("version", "tag", "asset", "sums", "method", "exe", "process", "data")
+        miss = [k for k in need if not s.get(k)]
+        if miss:
+            errs.append(f"app.{plat_}: eksik alan {', '.join(miss)}")
+        if s.get("method") not in APP_METHODS:
+            errs.append(f"app.{plat_}.method {APP_METHODS} içinden olmalı")
+        if s.get("method") == "zip-extract" and not s.get("install_dir"):
+            errs.append(f"app.{plat_}: zip-extract için install_dir gerekli")
+        if "/" in str(s.get("asset", "")) or "\\" in str(s.get("asset", "")):
+            errs.append(f"app.{plat_}.asset dosya adı olmalı (yol değil)")
+
+
 def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
     errs: list[str] = []
     t, id_ = m.get("type"), m.get("id")
@@ -192,6 +227,8 @@ def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
             errs.append("module anahtarı id ile aynı olmalı")
         if not isinstance(m.get("catalog_ids"), list):
             errs.append("catalog_ids liste olmalı")
+        if m.get("app") is not None:
+            _check_app(m["app"], errs)
     elif t == "source":
         imp = m.get("import") or {}
         if not imp.get("formats") or not isinstance(imp["formats"], list):

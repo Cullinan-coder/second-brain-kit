@@ -2,13 +2,27 @@
 const BASE = "http://127.0.0.1:8765";
 const BLOCKED = /login|signin|checkout|bank/i;
 
-function chatText(info, tab) {
+// Sağ tık "Beyne at" araçsız yakalama ucuna gider (denetim D-03): web sayfasından seçilen metin
+// sohbet modeline ve araçlarına (komut, kural, hafıza) ASLA verilmez.
+function shareBody(info, tab) {
   const sel = (info.selectionText || "").trim();
   const url = info.linkUrl || info.pageUrl || (tab && tab.url) || "";
-  if (sel) return "Not al: " + sel.slice(0, 3000) + "\nKaynak: " + url;
-  return url; // yalnız adres -> sunucu brain_capture çalıştırır
+  if (sel) return {text: sel.slice(0, 3000), url};
+  return {text: url}; // yalnız adres -> sunucu yakalar, model çağrılmaz
 }
 
+async function share(body) {
+  const r = await fetch(BASE + "/api/v2/share", {
+    method: "POST",
+    headers: {"Content-Type": "application/json", "X-SB": "1"},
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  return ((j.results || []).join("\n")).slice(0, 2000) || "Kaydedildi";
+}
+
+// Açılır penceredeki soru kutusu: sohbet, ama sunucu bu oturumu güvenilmez sayar (komut/kalıcı yazma hep onaylı).
 async function send(text) {
   const r = await fetch(BASE + "/api/v2/chat", {
     method: "POST",
@@ -34,7 +48,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const url = info.linkUrl || info.pageUrl || (tab && tab.url) || "";
   if (BLOCKED.test(url)) { await setBadge(false); return; }
   try {
-    const reply = await send(chatText(info, tab));
+    const reply = await share(shareBody(info, tab));
     await chrome.storage.local.set({last: reply.slice(0, 2000)});
     await setBadge(true);
   } catch (e) {

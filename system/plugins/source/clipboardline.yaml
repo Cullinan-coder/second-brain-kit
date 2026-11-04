@@ -1,0 +1,43 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: clipboardline
+type: source
+name:
+  tr: ClipBoardLine kütüphanesi
+  en: ClipBoardLine library
+desc:
+  tr: ClipBoardLine'ın library.json dosyası → metin, bağlantı ve görsel OCR kayıtları (sır içerenler atlanır).
+  en: ClipBoardLine's library.json → text, link and image OCR records (records with secrets are skipped).
+category: imports
+parent: clipboardline
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - ClipBoardLine
+import:
+  formats:
+  - .json
+  how_to:
+    tr: '1. Normalde buna gerek yok: ClipBoardLine kuruluysa Second Brain veriyi kendiliğinden okur (`sb apps sync clipboardline`, günlük çalışma ve
+      asistan açıkken 5 dakikada bir).
+
+      2. Başka bir bilgisayardan taşımak istersen o bilgisayarda `%APPDATA%\ClipBoardLine\library.json` dosyasını kopyala.
+
+      3. Dosyayı Veri yükleme ekranına bırak ya da `sb import clipboardline <dosya> --dry-run` ile önce dene.
+      Parola, anahtar, kart, IBAN gibi sır içeren kayıtlar atlanır; dosya yalnız okunur.'
+    en: '1. You normally do not need this: when ClipBoardLine is installed Second Brain reads its data automatically (`sb apps sync clipboardline`,
+      the daily run, and every 5 minutes while the assistant is open).
+
+      2. To bring data from another computer, copy `%APPDATA%\ClipBoardLine\library.json` there.
+
+      3. Drop the file on the Data import screen or try `sb import clipboardline <file> --dry-run` first.
+      Records with secrets such as passwords, keys, cards or IBANs are skipped; the file is only read.'
+  connector: clipboardline
+health:
+  cli: sb apps status clipboardline
+default_on: true
+presets:
+- yogunluk:guc

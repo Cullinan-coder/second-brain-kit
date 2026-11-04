@@ -2,6 +2,53 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.11.0 — 2026-11-04 (ClipBoardLine ve Nashi: hazır uygulamalar)
+- **Hazır uygulamalar:** iki açık kaynak (MIT) uygulama OLDUĞU GİBİ kurulup beyne bağlanır; yeniden yazılmadı. **ClipBoardLine** (kopya geçmişi, Windows
+  Electron, ~520 MB; macOS zip) ve **Nashi** (dosya dönüştürücü, Windows taşınabilir zip ~91 MB; macOS zip). Resmî GitHub sürümü indirilir, sürümdeki
+  `SHA256SUMS` ile **SHA-256 doğrulanır** (uyuşmazsa dosya silinir, kurulum durur); yalnız `github.com/orkunisitmak/...` ve GitHub'ın dosya CDN'i; boyut sınırı;
+  zip güvenli açılır (zip-slip / sembolik bağ / zip bombası denetimi). ClipBoardLine NSIS sessiz kurulumla (`/S`; olmazsa normal kurulum penceresi açılır),
+  Nashi `%LOCALAPPDATA%\Programs\Nashi` altına. Kaynak kodlarının değiştirilmemiş kopyası kitte `apps/clipboardline/` ve `apps/nashi/` (`UPSTREAM.md`: depo, commit, tarih, lisans).
+- **Komut:** `sb apps list | status [id] | install <id> | start <id> | autostart <id> login|startup|off | update <id> | sync <id|all>`.
+- **Başlangıç kurulumda sorulur** (varsayılan: bilgisayar açılınca): `login` = kaldırılabilir `HKCU\...\Run` kaydı (uygulamanın kendi ayarına dokunulmaz;
+  macOS LaunchAgent), `startup` = Second Brain «Çalışmaya başla» ile, `off`. Sihirbaz **Başlangıç** adımı ve Ayarlar → Başlangıç sekmesinde **Hazır uygulamalar** kartları
+  (açıklama, boyut, durum, Kur + ilerleme, başlangıç seçimi); deneme kipinde indirme/kurulum/Run kaydı «[deneme] atlandı». TR/EN.
+- **Bağlayıcılar (salt okunur):** `ClipBoardLine` → metin, bağlantı (başlık), görsel OCR metni, ad, etiket, klasör, not (mail arşivi `items`, `sb search` ve beyin dizini görür);
+  parola/API anahtarı/kart/IBAN/TCKN/OTP içeren kayıt **atlanır** (sayısı raporlanır), çöpe atılan alınmaz. `Nashi` → son 50 dışa aktarımın yolu/türü/zamanı +
+  desteklenen türlerde (pdf, docx, pptx, xlsx, txt/md/csv, görsel OCR) içerik. Uygulamanın `library.json` dosyası kopyalanıp okunur, kilitliyse sonra denenir; tekrar önleme: kimlik + içerik karması.
+- **Otomatik:** günlük çalışma (`apps sync all`), «Çalışmaya başla» yeni **Uygulamalar** adımı (başlangıç kipi `startup` olanları açar + senkron), asistan açıkken 5 dakikada bir hafif senkron;
+  asistanın «Çalışmaya başla» görünümünde **Uygulamalar** kartı (durum, Aç, son senkron, kayıt sayısı, atlanan sır).
+- **Kaldırıldı:** 0.10.1'deki yerleşik «Kopya geçmişi (Pano)» modülü (`sb pano`, `/api/v2/pano/*`, Kopya geçmişi görünümü) — yerini ClipBoardLine aldı.
+- **Katalog** 258 madde (251-258 yeniden tanımlandı), modül 52 (`clipboardline`, `nashi`), veri kaynağı 41. **Rehber** 135 sayfa: «Uygulamalar: ClipBoardLine ve Nashi» + `sb apps` komutu.
+- Sınır: macOS kurulum/başlangıç komutları yazıldı ama denenmedi; bağlayıcılar yalnız Windows veri biçimini okur. ClipBoardLine'da metin toplama varsayılan kapalıdır (uygulamanın kendi ayarı).
+
+### Güvenlik (denetim 2026-11, `docs/denetim-2026-11.md`)
+- **Komut sınıflandırıcı yeniden yazıldı (D-01, D-09):** `run_command` artık metin regex'iyle değil, "ayrıştır ve doğrula" ile sınıflanır. Komut tek bir basit çağrı + düz bağımsız
+  değişkenler (+ `Sort-Object`/`Select-Object`/`Format-Table` gibi biçimleyici borular) değilse en az onay kartı çıkar: alt ifade `( )`, `$( )`, `@( )`, `{ }` betik bloğu, değişken,
+  ters tırnak, `;` `&` `<` `>`, virgüllü dizi, yeni satır, `%ortam%`, ASCII dışı (benzer) karakter, `python -c/-m/-v`, `node -e`. `python`/`node`/`uv` yalnız sürüm sorgusu.
+  `Select-String`/`findstr` boruları ve `git diff --no-index` onaylı; `cat` yalnız tek yol (kasa/Workspace içi). **Etkisi:** eskiden anında çalışan bazı komutlar (ör. `python -v`) artık kart ister.
+- **Dış içerik varken komut ve kalıcı yazma hep onaylı (D-02, D-06):** mail/SMS/belge/web/ek/ekran bağlamdayken `run_command` her zaman, `rule_add`/`memory_add`/`note_update`/`note_archive`/`inbox_add`
+  (ve `geceye ekle`) onay kartıyla çalışır; "kural/hatırla" gibi anahtar sözcükler artık onay yerine geçmez. Kirlilik bayrakları **yapışkandır**: bir kez girdiyse sohbet boyunca (yeni sohbete kadar) sürer.
+  `brain_note/project/course/today` ve `calendar_list` çıktıları da bağlamı kirli sayar. Ek (PDF/DOCX) metni kullanıcı sözü sayılmaz. Kod, kirli bağlamda `run_command`'ı kendisi önermez.
+  **Etkisi:** mail konuşulan bir sohbetin devamında "bundan sonra ..." gibi kural eklemek onay kartı çıkarır.
+- **Tarayıcı eklentisi (D-03):** sağ tık "Beyne at" artık sohbet modeline değil araçsız `/api/v2/share` ucuna gider. Eklenti kökeni yalnız `/api/v2/share` ve `/api/v2/chat`e erişir;
+  eklenti oturumu (`eklenti`) güvenilmez sayılır (komut/yazma hep onaylı) ve kullanıcının sohbet oturumuna yazamaz.
+- **Yerel kimlik (D-04, D-19):** 127.0.0.1:8765'e her durum değiştiren istek `X-SB-Token` ister (rastgele, kalıcı jeton `~/.secondbrain/chat.token`, yalnız kullanıcıya açık). Arayüz jetonu sayfa yüklenirken gömülü alır
+  (`sbtoken.js` bütün aynı-köken isteklere ekler); masaüstü uygulaması, tepsi, Obsidian eklentisi ve `tools/e2e.py` dosyadan okur. Kurulum jetonu veren `GET /api/v2/startup/settings-url`, model çağıran ve
+  keyring'e yazan GET uçları (`thread-summary`, `screen/summary`, `push/status`) jeton + aynı köken ister: başka bir sitedeki `<img>` ile tetiklenemez. Telefon yolu eşleme çerezini kullanmaya devam eder.
+  Not: aynı kullanıcı hesabıyla çalışan zararlı bir yerel süreç sayfayı yükleyip jetonu okuyabilir; bu önlem tarayıcı tabanlı saldırıları ve başka kullanıcı hesaplarını kapatır.
+- **Telefondan gece koşusu kapandı (D-05):** gece işi ekleme ve onaylama yalnız bilgisayardan; telefondan yalnız `takvim` ve `eylem` onayları. `/api/v2/agents/code` yalnız yerel. Gece işi yalnız izinli klasörlerde
+  çalışır (`config/hafiza.yaml` → `night_allowed_dirs`; yoksa kasa ve `~/Workspace`).
+- **Not ekleme (D-08):** `note_update` eklemesi tek satıra indirilir (satır sonuyla gece işi/başlık enjekte edilemez); gece işi `@klasör` değeri tek satır.
+- **Gizli not tespiti (D-11):** tek işlev (`notes.is_private_text`): ön bilgi YAML okunur; `"private"`, `Private`, BOM, satır sonu yorumu ve uzun ön bilgi yakalanır.
+- **Bulut süzgeci (D-12):** `providers` içinde (sohbet, akış, gömme) bulut hedefe giden her mesaja `redact` her zaman, "kişi bilgilerini maskele" açıksa e-posta/telefon/adres maskesi uygulanır.
+- **Çift sunucu (D-14):** Windows'ta `SO_EXCLUSIVEADDRUSE`; ikinci süreç 8765'e bağlanamaz (net hata mesajı).
+- **Arka plan döngüleri (D-15):** hatırlatma/uygulama senkronu iş parçacıkları `SystemExit` dahil her hatayı `~/.secondbrain/logs/loops.log`'a yazar ve sürer; `run_tool` ve API uçları da `SystemExit`i yakalar.
+- **MCP kataloğu (D-16):** `@latest`/sürümsüz `npx -y` ve `uvx` paketleri tam sürüme (`paket@x.y.z`, `==`), GitHub MCP görüntüsü `:v2.1.0`'a sabitlendi. Sırlar `claude mcp add -e KEY=değer` ile
+  `~/.claude.json`'a düz metin yazılmaz; `python -m sb.mcp_env` sarmalayıcısı çalışma anında şifre kasasından okur (kendi MCP'm ekranındaki değerler de). Arşivlenmiş paketler (brave-search, gdrive, puppeteer, postgres, slack) hâlâ katalogda, açıklamada "arşivlendi" notu var.
+- **`undo_last` (D-21):** geri alınacak commit asistan günlüğündeki son girdiden belirlenir; son değişiklik commit edilemediyse (ör. `index.lock`) eski bir değişikliği geri almak yerine nedenini söyler. Commit hataları günlüğe yazılır.
+- **`restore` (D-24):** `_system/`, `.git/` ve `.venv/` yollarına yazmaz; hedef kasa dışına çözümlenirse ya da yolda sembolik bağ varsa üye atlanır.
+- **İzin profili (D-26):** `izinler.yaml` varsa ama okunamıyorsa **sıkı** profil uygulanır ve arayüzde uyarı gösterilir (eskiden sessizce "normal"); `_perm`/`_strict_local` istisnada onay ister / bulutu kapatır.
+
 ## 0.10.1 — 2026-11-04 (Kopya geçmişi / Pano + sihirbaz düzeltmesi)
 - **Kopya geçmişi (Pano)**, varsayılan KAPALI yeni modül (`pano`; ClipBoardLine'dan esinli): kopyaladığın metin, bağlantı ve görseller üç rafta yerelde saklanır;
   sabitleme, klasör, etiket, arama ve görsellerde OCR, tutma süresi (1-30 gün) ve geri alınabilir çöp kutusu. Parola, anahtar, IBAN, kart numarası gibi görünen

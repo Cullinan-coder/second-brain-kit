@@ -26,6 +26,9 @@ def fake(monkeypatch, tmp_path):
     monkeypatch.setattr(startup, "_daily_done_today", lambda: False)
     monkeypatch.setattr(startup, "_run_daily", lambda: calls.__setitem__("daily", calls["daily"] + 1) or 0)
     monkeypatch.setattr(startup, "_warm_models", lambda: calls.__setitem__("warm", calls["warm"] + 1) or ["Ollama (x)"])
+    from sb import apps
+    monkeypatch.setattr(apps, "installed", lambda *a, **k: True)
+    monkeypatch.setattr(startup, "_apps_work", lambda: {"started": ["nashi"], "synced": [{"kaynak": "clipboardline", "okunan": 2, "yeni": 2}]})
     with startup._lock:
         startup._state.clear()
         startup._state.update(startup._fresh())
@@ -35,10 +38,11 @@ def fake(monkeypatch, tmp_path):
 def test_pipeline_all_steps(fake):
     assert startup.start(background=False)
     st = startup.status()
-    assert [s["id"] for s in st["steps"]] == ["update", "health", "daily", "warm", "ready"]
+    assert [s["id"] for s in st["steps"]] == ["update", "health", "daily", "apps", "warm", "ready"]
     by = {s["id"]: s for s in st["steps"]}
     assert by["update"]["status"] == "ok" and by["health"]["status"] == "warn"
     assert "Codex" in by["health"]["fix"] and "npm i -g" in by["health"]["fix"]
+    assert by["apps"]["status"] == "ok" and "başlatıldı: nashi" in by["apps"]["message"] and "clipboardline: okunan 2" in by["apps"]["message"]
     assert by["daily"]["status"] == "ok" and by["warm"]["status"] == "ok" and by["ready"]["status"] == "warn"
     assert all("duration_s" in s and "message" in s for s in st["steps"])
     assert st["done"] and not st["running"] and st["ok"] is True
@@ -91,7 +95,7 @@ def test_warm_failure_is_warning(fake, monkeypatch):
 
 def test_status_and_settings_routes(fake, monkeypatch):
     code, out = call("/api/v2/startup/status")
-    assert code == 200 and len(out["steps"]) == 5
+    assert code == 200 and len(out["steps"]) == 6
     made = []
 
     class Srv:

@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 MAX_UPLOAD = 30 * 1024 * 1024
-MODULES = ("api_conv", "api_views", "api_memory", "voice", "vision", "api_plan", "api_school", "api_comms", "api_career", "api_privacy", "api_personal", "api_auto", "api_agents", "api_mobile", "api_startup", "webroutes_pano")   # yoksa ya da hata verirse atlanır
+MODULES = ("api_conv", "api_views", "api_memory", "voice", "vision", "api_plan", "api_school", "api_comms", "api_career", "api_privacy", "api_personal", "api_auto", "api_agents", "api_mobile", "api_startup", "api_apps")   # yoksa ya da hata verirse atlanır
 
 
 class ApiError(Exception):
@@ -57,17 +57,18 @@ class Route:
     local_only: bool = False
     model: bool = False
     upload: bool = False
+    sensitive: bool = False        # yan etkili/gizli veri veren GET: yerelde jeton + aynı köken ister (D-19)
 
 
 ROUTES: dict[tuple[str, str], Route] = {}
 LOAD_ERRORS: dict[str, str] = {}
 
 
-def route(method: str, path: str, *, local_only: bool = False, model: bool = False, upload: bool = False):
+def route(method: str, path: str, *, local_only: bool = False, model: bool = False, upload: bool = False, sensitive: bool = False):
     assert path.startswith("/api/v2/"), path
 
     def deco(fn):
-        ROUTES[(method.upper(), path)] = Route(method.upper(), path, fn, local_only, model, upload)
+        ROUTES[(method.upper(), path)] = Route(method.upper(), path, fn, local_only, model, upload, sensitive)
         return fn
     return deco
 
@@ -101,7 +102,7 @@ def call(r: Route, ctx: Ctx) -> tuple[int, bytes, str, str]:
         out = r.fn(ctx)
     except ApiError as e:
         return e.code, json.dumps({"error": e.message}, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", ""
-    except Exception as e:                                       # noqa: BLE001
+    except (Exception, SystemExit) as e:                          # noqa: BLE001 — kütüphanedeki SystemExit (giriş yok) bağlantıyı yanıtsız bırakmasın (D-15)
         msg = f"{type(e).__name__}: {str(e)[:200]}"
         return 500, json.dumps({"error": msg}, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8", ""
     if isinstance(out, Raw):

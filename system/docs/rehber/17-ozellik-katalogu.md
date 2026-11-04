@@ -232,14 +232,14 @@ Durumlar: **hazır**, **planlandı (henüz yok)**, **yapım aşamasında (kısme
 | 177 | [Takvim çakışma tespiti](moduller/calendar.md#madde-177) | Google Takvim | hazır |
 | 178 | [Sınav takvimi ve çalışma planı](moduller/courses.md#madde-178) | Okul (ÖBS/LMS) | hazır |
 | 179 | [Bugün en önemli 3 iş](moduller/tasks_plan.md#madde-179) | Görev ve planlama | hazır |
-| 251 | [Kopya geçmişi — metin, bağlantı ve görsel toplama (yerel izleyici, varsayılan kapalı)](moduller/pano.md#madde-251) | Kopya geçmişi (Pano) | hazır |
-| 252 | [Kopya geçmişi — görsel, metin ve bağlantı için üç raf](moduller/pano.md#madde-252) | Kopya geçmişi (Pano) | hazır |
-| 253 | [Kopya geçmişi — sabitleme, klasör ve etiket](moduller/pano.md#madde-253) | Kopya geçmişi (Pano) | hazır |
-| 254 | [Kopya geçmişi — arama ve görsellerde OCR](moduller/pano.md#madde-254) | Kopya geçmişi (Pano) | hazır |
-| 255 | [Kopya geçmişi — tutma süresi seçimi ve çöp kutusu](moduller/pano.md#madde-255) | Kopya geçmişi (Pano) | hazır |
-| 256 | [Kopya geçmişi — sır süzgeci (parola, anahtar, IBAN, kart numarası kaydedilmez)](moduller/pano.md#madde-256) | Kopya geçmişi (Pano) | hazır |
-| 257 | [Kopya geçmişi — uygulama kara listesi (parola yöneticileri) ve boyut sınırları](moduller/pano.md#madde-257) | Kopya geçmişi (Pano) | hazır |
-| 258 | [Kopya geçmişi — klavyeyle gezinme, tek tuşla geri kopyalama ve sb pano komutu](moduller/pano.md#madde-258) | Kopya geçmişi (Pano) | hazır |
+| 251 | [Hazır uygulamalar — katalog, SHA-256 doğrulamalı indirme ve sürüm denetimi (sb apps)](moduller/clipboardline.md#madde-251) | ClipBoardLine (kopya geçmişi) | hazır |
+| 252 | [ClipBoardLine — resmî Windows/macOS sürümünün kurulumu, açılışı ve durum denetimi](moduller/clipboardline.md#madde-252) | ClipBoardLine (kopya geçmişi) | hazır |
+| 253 | [Nashi — taşınabilir Windows/macOS sürümünün kurulumu, açılışı ve durum denetimi](moduller/nashi.md#madde-253) | Nashi (dosya dönüştürücü) | hazır |
+| 254 | [Uygulama başlangıcı — bilgisayar açılınca / Çalışmaya başla ile / başlamasın (kurulumda sorulur)](moduller/clipboardline.md#madde-254) | ClipBoardLine (kopya geçmişi) | hazır |
+| 255 | [ClipBoardLine → beyin — metin, bağlantı, görsel OCR metni, etiket ve klasörler (sır içeren kayıt atlanır)](moduller/clipboardline.md#madde-255) | ClipBoardLine (kopya geçmişi) | hazır |
+| 256 | [Nashi → beyin — dışa aktarılan dosyaların kaydı ve desteklenen türlerde içeriği](moduller/nashi.md#madde-256) | Nashi (dosya dönüştürücü) | hazır |
+| 257 | [Kurulum sihirbazında Uygulamalar bölümü ve asistanda Uygulamalar kartı](moduller/nashi.md#madde-257) | Nashi (dosya dönüştürücü) | hazır |
+| 258 | [Uygulamalar günlük çalışmada, Çalışmaya başla adımında ve asistan açıkken 5 dakikada bir senkron](moduller/nashi.md#madde-258) | Nashi (dosya dönüştürücü) | hazır |
 
 ## İletişim
 

@@ -28,7 +28,7 @@ if launcher and Path(launcher).exists():
             datas.append((str(item), "launcher" + ("/" + item.name if item.is_dir() else "")))
 
 hiddenimports = [
-    "setup", "setup.app", "setup.server", "setup.engine", "setup.accounts", "setup.autostart", "setup.imports", "setup.mcp",
+    "setup", "setup.app", "setup.server", "setup.engine", "setup.accounts", "setup.autostart", "setup.appsetup", "setup.imports", "setup.mcp",
     "webview", "yaml", "keyring", "keyring.backends", "send2trash", "imaplib", "ssl", "sqlite3",
 ]
 hiddenimports += (["webview.platforms.cocoa"] if IS_MAC else ["webview.platforms.winforms", "webview.platforms.edgechromium", "clr"])

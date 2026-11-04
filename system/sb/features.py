@@ -53,9 +53,10 @@ MODULES: dict[str, tuple[str, str, str, bool]] = {
     "wake_word": ("Uyandırma sözcüğü", "'Hey <asistan>' ile dinlemeye başlar (yalnız sekme açıkken)", "Ses", False),
     "screen_watch": ("Ekran izleme", "İzin verilince belirli süre ekranı okuyup gün özeti çıkarır (görüntü saklanmaz)", "görsel model", False),
     "image_gen": ("Görsel üretme", "Metinden görsel (bulut sağlayıcı anahtarı gerekir)", "OpenAI/Gemini anahtarı", False),
+    "clipboardline": ("ClipBoardLine", "Hazır kopya geçmişi uygulamasını kurar/başlatır; içeriğini (sırlar hariç) beyne okur", "uygulama kurulumu (~520 MB)", True),
+    "nashi": ("Nashi", "Hazır dosya dönüştürücü uygulamayı kurar/başlatır; dışa aktardığı dosyaları beyne okur", "uygulama kurulumu (~91 MB)", True),
     "memory_ui": ("Hafıza ve kişilik", "Asistan kimliği, ortak günlük, tercih öğrenme, hafıza düzenleyici, yansıma", "model", True),
     "cards": ("Bilgi kartları", "Notlardan kart üretme ve aralıklı tekrar", "model", True),
-    "pano": ("Kopya geçmişi (Pano)", "Kopyaladığın metin, bağlantı ve görselleri yerelde geçmiş olarak saklar; ara, sabitle, klasörle", "—", False),
     "automation": ("Otomasyonlar ve ajanlar", "Kurallar (her X olduğunda Y), hazır ajanlar, onay kuyruğu", "model", True),
 }
 TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her zaman açık)
@@ -70,7 +71,7 @@ STEP_MODULE = {          # günlük çalışma komutu → modül
     "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "project-deep": "projects",
     "course-files": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
     "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
-    "github-deep": "github", "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
+    "github-deep": "github", "apps": None, "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
 }
 
 

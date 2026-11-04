@@ -47,7 +47,8 @@ def server(monkeypatch):
 
 def _post(url, body, ctype="application/json", headers=None):
     data = body if isinstance(body, bytes) else json.dumps(body).encode()
-    h = {"Content-Type": ctype, "X-SB": "1", **(headers or {})}
+    from sb import localauth
+    h = {"Content-Type": ctype, "X-SB": "1", "X-SB-Token": localauth.token(), **(headers or {})}
     return urllib.request.urlopen(urllib.request.Request(url, data=data, headers=h))
 
 

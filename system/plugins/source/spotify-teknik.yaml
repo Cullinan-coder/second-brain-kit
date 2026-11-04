@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: spotify-teknik
+type: source
+name:
+  tr: Spotify teknik günlük paketi
+  en: Spotify technical log package
+desc:
+  tr: Spotify 'Technical Log Information' (my_spotify_data.zip) → aramalar, beğeniler, tekrar dinlenenler, sözüne bakılanlar + "Müzik zevki" notu. Cihaz/ağ günlükleri alınmaz.
+  en: Spotify 'Technical Log Information' (my_spotify_data.zip) → searches, saves, on-repeat, lyrics viewed + a "Music taste" note. Device/network logs are skipped.
+category: imports
+parent: imports_media
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - .zip
+  - klasör
+  how_to:
+    tr: '1. Spotify web: spotify.com/account/privacy (Hesap → Gizlilik ayarları) adresine git ve giriş yap.
+
+      2. ''Verilerini indir'' bölümünde ''Teknik günlük bilgileri'' (Technical log information) kutusunu işaretle ve ''Veri iste''ye bas.
+
+      3. E-postadaki onay bağlantısına tıkla; hazırlanması günler sürebilir, hazır olunca indirme bağlantısı gelir.
+
+      4. İnen `my_spotify_data.zip` dosyasını açmadan Veri yükleme ekranına bırak (ya da `sb import spotify-teknik <zip>`).
+
+      Bu paket dinleme geçmişi İÇERMEZ (o "Genişletilmiş akış geçmişi" ile gelir, bkz. Spotify dinleme geçmişi). Şarkı adları,
+      daha önce yüklenmiş dinleme geçmişinden ya da Spotify bağlıysa Spotify API''den bulunur. Dosya yalnız bu bilgisayarda okunur.'
+    en: '1. Spotify web: go to spotify.com/account/privacy and sign in.
+
+      2. Under ''Download your data'' tick ''Technical log information'' and press ''Request data''.
+
+      3. Click the emailed confirmation link; preparation can take days, then a download link arrives.
+
+      4. Drop `my_spotify_data.zip` unopened on the Data import screen (or `sb import spotify-teknik <zip>`).
+
+      This package does NOT contain listening history (that comes with "Extended streaming history"). Track names are resolved
+      from a previously imported listening history or, if Spotify is connected, the Spotify API. The file is read only on this computer.'
+  connector: spotify-teknik
+health:
+  cli: sb import spotify-teknik <zip> --dry-run
+default_on: true
+presets:
+- yogunluk:guc
+- meslek:icerik

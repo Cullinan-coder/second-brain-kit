@@ -1,0 +1,43 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: nashi
+type: source
+name:
+  tr: Nashi dışa aktarım kaydı
+  en: Nashi export history
+desc:
+  tr: Nashi'nin library.json dosyası → dışa aktarılan dosyaların yolu, zamanı ve (desteklenen türlerde) içeriği.
+  en: Nashi's library.json → path, time and (for supported types) content of exported files.
+category: imports
+parent: nashi
+catalog_ids: []
+requires:
+  accounts: []
+  fields: []
+  secrets: []
+  hardware: {}
+  apps:
+  - Nashi
+import:
+  formats:
+  - .json
+  how_to:
+    tr: '1. Normalde buna gerek yok: Nashi kuruluysa Second Brain kaydı kendiliğinden okur (`sb apps sync nashi`, günlük çalışma ve asistan açıkken
+      5 dakikada bir).
+
+      2. Başka bir bilgisayardan taşımak istersen o bilgisayarda `%LOCALAPPDATA%\Nashi\library.json` dosyasını kopyala.
+
+      3. Dosyayı Veri yükleme ekranına bırak ya da `sb import nashi <dosya> --dry-run` ile önce dene.
+      Kayıttaki dosyalar bu bilgisayarda hâlâ varsa pdf, docx, txt ve görsel (OCR) içerikleri de okunur; sır içeren içerik eklenmez.'
+    en: '1. You normally do not need this: when Nashi is installed Second Brain reads its record automatically (`sb apps sync nashi`, the daily run,
+      and every 5 minutes while the assistant is open).
+
+      2. To bring data from another computer, copy `%LOCALAPPDATA%\Nashi\library.json` there.
+
+      3. Drop the file on the Data import screen or try `sb import nashi <file> --dry-run` first.
+      If the listed files still exist on this computer their pdf, docx, txt and image (OCR) content is read too; content with secrets is not added.'
+  connector: nashi
+health:
+  cli: sb apps status nashi
+default_on: true
+presets:
+- yogunluk:guc

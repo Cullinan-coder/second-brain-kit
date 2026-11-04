@@ -17,7 +17,7 @@ def share(ctx: Ctx) -> dict:
     return out
 
 
-@route("GET", "/api/v2/push/status")
+@route("GET", "/api/v2/push/status", sensitive=True)       # keyring'e VAPID anahtarı yazar (D-19)
 def push_status(ctx: Ctx) -> dict:
     return mobile.push_status()
 

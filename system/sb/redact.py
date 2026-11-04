@@ -41,3 +41,14 @@ def redact(text: str) -> str:
     text = CARD_RE.sub(card, text)
     text = TCKN_RE.sub(lambda m: "[TCKN gizlendi]" if _tckn(m.group()) else m.group(), text)
     return OTP_CONTEXT_RE.sub(lambda m: m.group(0)[: -len(m.group(2))] + "••••", text)
+
+
+PEM_RE = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
+PLAIN_PASS_RE = re.compile(r"\b(?:password|passwd|pwd|parola|şifre|sifre|api[_ -]?key|secret|token)\s*[:=]\s*(?![\s'\"`$\[{(<]|\.\.\.)\S{4,}", re.I)
+
+
+def contains_secret(text: str | None) -> bool:
+    """Metin bir sır içeriyor mu? (parola/anahtar, kart, IBAN, TCKN, tek kullanımlık kod.) Bağlayıcılar böyle kaydı maskelemek yerine ATLAR."""
+    if not text:
+        return False
+    return bool(PEM_RE.search(text) or PLAIN_PASS_RE.search(text) or redact(text) != text)

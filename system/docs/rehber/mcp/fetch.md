@@ -28,7 +28,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add fetch --scope user -- uvx mcp-server-fetch
+claude mcp add fetch --scope user -- uvx mcp-server-fetch==2026.10.28
 ```
 
 

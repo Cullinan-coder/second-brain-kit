@@ -33,7 +33,7 @@ MCP (Model Context Protocol), Claude'a ek araçlar vermenin standart yoludur. Bu
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add filesystem --scope user -- npx -y @modelcontextprotocol/server-filesystem {allowed_dir}
+claude mcp add filesystem --scope user -- npx -y @modelcontextprotocol/server-filesystem@2.1.0 {allowed_dir}
 ```
 
 

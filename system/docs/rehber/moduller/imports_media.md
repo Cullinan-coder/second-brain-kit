@@ -47,6 +47,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 - [Pocket](../kaynaklar/pocket.md): Pocket okuma listesi (ril_export.html/CSV) → bağlantı kayıtları.
 - [Raindrop.io yer imleri](../kaynaklar/raindrop.md): Raindrop dışa aktarımı (CSV) → bağlantı kayıtları.
 - [RSS ve haber bültenleri](../kaynaklar/rss.md): RSS/Atom akışları (config/rss.yaml) → makale kayıtları. Ağ kullanan tek bağlayıcı.
+- [Spotify teknik günlük paketi](../kaynaklar/spotify-teknik.md): Spotify 'Technical Log Information' (my_spotify_data.zip) → aramalar, beğeniler, tekrar dinlenenler, sözüne bakılanlar + "Müzik zevki" notu. Cihaz/ağ günlükleri alınmaz.
 - [Spotify dinleme geçmişi](../kaynaklar/spotify.md): Spotify 'Extended streaming history' → dinleme kayıtları.
 - [YouTube izleme geçmişi](../kaynaklar/youtube.md): İzleme geçmişi ve abonelikler (Takeout) → kayıtlar.
 

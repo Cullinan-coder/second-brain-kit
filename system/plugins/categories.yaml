@@ -35,3 +35,6 @@ privacy_quality:
 imports:
   tr: Veri kaynakları
   en: Data sources
+apps:
+  tr: Hazır uygulamalar
+  en: Ready-made apps

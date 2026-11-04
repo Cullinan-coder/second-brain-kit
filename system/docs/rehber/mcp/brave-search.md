@@ -39,7 +39,7 @@ Gizli değerler (`brave_key`) **yalnız işletim sisteminin şifre kasasına** y
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add brave-search --scope user -e BRAVE_API_KEY=<brave_key> -- npx -y @modelcontextprotocol/server-brave-search
+claude mcp add brave-search --scope user -e BRAVE_API_KEY=<brave_key> -- npx -y @modelcontextprotocol/server-brave-search@0.6.2
 ```
 
 

@@ -19,7 +19,7 @@ requires:
 mcp:
   command: npx
   args:
-  - '@playwright/mcp@latest'
+  - '@playwright/mcp@0.0.84'
   env: {}
   install: npm view @playwright/mcp version
   docs_url: https://github.com/microsoft/playwright-mcp

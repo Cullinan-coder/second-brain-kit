@@ -31,13 +31,13 @@ Gizli değerler (`github_pat`) **yalnız işletim sisteminin şifre kasasına** 
 
 1. 8. adımda **GitHub** kartını bul (seçimin için gerekenler başta, öbürleri aşağıda).
 2. **GitHub kişisel erişim belirteci (PAT)** alanını doldur (gizli değer (yalnız şifre kasasına yazılır), zorunlu). GitHub > Settings > Developer settings > Personal access tokens; yalnız gereken izinleri ver.
-3. **Kur ve bağla**'ya bas. Sihirbaz önce ön koşulu dener (`docker pull ghcr.io/github/github-mcp-server`); başarısızsa `Ön koşul başarısız: … kurulu mu?` der.
+3. **Kur ve bağla**'ya bas. Sihirbaz önce ön koşulu dener (`docker pull ghcr.io/github/github-mcp-server:v2.1.0`); başarısızsa `Ön koşul başarısız: … kurulu mu?` der.
 4. Başarılıysa kartta `GitHub kuruldu ✓` ve **kurulu** rozeti çıkar. Kaldırmak için kartta **Kaldır**.
 
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add github --scope user -e GITHUB_PERSONAL_ACCESS_TOKEN=<github_pat> -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
+claude mcp add github --scope user -e GITHUB_PERSONAL_ACCESS_TOKEN=<github_pat> -- docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server:v2.1.0
 ```
 
 

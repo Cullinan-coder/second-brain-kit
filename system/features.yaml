@@ -2020,66 +2020,66 @@ ozellikler:
   denetleyen: opus
   durum: tamamlandi
 - id: 251
-  ad: Kopya geçmişi — metin, bağlantı ve görsel toplama (yerel izleyici, varsayılan kapalı)
+  ad: Hazır uygulamalar — katalog, SHA-256 doğrulamalı indirme ve sürüm denetimi (sb apps)
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 252
-  ad: Kopya geçmişi — görsel, metin ve bağlantı için üç raf
+  ad: ClipBoardLine — resmî Windows/macOS sürümünün kurulumu, açılışı ve durum denetimi
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 253
-  ad: Kopya geçmişi — sabitleme, klasör ve etiket
+  ad: Nashi — taşınabilir Windows/macOS sürümünün kurulumu, açılışı ve durum denetimi
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 254
-  ad: Kopya geçmişi — arama ve görsellerde OCR
+  ad: Uygulama başlangıcı — bilgisayar açılınca / Çalışmaya başla ile / başlamasın (kurulumda sorulur)
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 255
-  ad: Kopya geçmişi — tutma süresi seçimi ve çöp kutusu
+  ad: ClipBoardLine → beyin — metin, bağlantı, görsel OCR metni, etiket ve klasörler (sır içeren kayıt atlanır)
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 256
-  ad: Kopya geçmişi — sır süzgeci (parola, anahtar, IBAN, kart numarası kaydedilmez)
+  ad: Nashi → beyin — dışa aktarılan dosyaların kaydı ve desteklenen türlerde içeriği
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 257
-  ad: Kopya geçmişi — uygulama kara listesi (parola yöneticileri) ve boyut sınırları
+  ad: Kurulum sihirbazında Uygulamalar bölümü ve asistanda Uygulamalar kartı
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi
 - id: 258
-  ad: Kopya geçmişi — klavyeyle gezinme, tek tuşla geri kopyalama ve sb pano komutu
+  ad: Uygulamalar günlük çalışmada, Çalışmaya başla adımında ve asistan açıkken 5 dakikada bir senkron
   kategori: verim
   faz: 6
-  surum: 0.10.1
-  uygulayan: opus
+  surum: 0.11.0
+  uygulayan: sonnet
   denetleyen: opus
   durum: tamamlandi

@@ -111,9 +111,20 @@ class SingleInstance:
 
 
 # ------------------------------------------------------------ uygulama
+
+def _chat_token() -> str:
+    """Yerel asistanın oturum jetonu (~/.secondbrain/chat.token; sb/localauth.py). Dosya yoksa '' (sunucu 403 verir)."""
+    import os
+    d = Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
+    try:
+        return (d / "chat.token").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def _api(path: str, body: dict | None = None) -> dict:
     data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(URL + path, data=data, headers={"X-SB": "1", "Content-Type": "application/json"})
+    req = urllib.request.Request(URL + path, data=data, headers={"X-SB": "1", "X-SB-Token": _chat_token(), "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=10) as r:
         return json.loads(r.read())
 

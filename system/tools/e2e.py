@@ -69,9 +69,18 @@ def check_cli() -> list[tuple[str, str, str, float]]:
     return rows
 
 
+def _chat_token() -> str:
+    import os
+    d = Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
+    try:
+        return (d / "chat.token").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def _post(path: str, body: dict, timeout: int = 300) -> dict:
     req = urllib.request.Request(BASE + path, json.dumps(body).encode("utf-8"),
-                                 {"Content-Type": "application/json", "X-SB": "1"})
+                                 {"Content-Type": "application/json", "X-SB": "1", "X-SB-Token": _chat_token()})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8"))
 

@@ -292,8 +292,9 @@ def test_mcp_install_custom_remove(srv, env, monkeypatch):
     assert r["ok"] is True and SECRET not in json.dumps(r) and SECRET not in "\n".join(eng.progress()["log"])
     assert kr.store[("second-brain", "mcp-github-github-pat")] == SECRET
     add = [c for c in calls["stream"] if c[:3] == ["claude", "mcp", "add"]][-1]
-    assert f"GITHUB_PERSONAL_ACCESS_TOKEN={SECRET}" in add and add[3] == "github" and "docker" in add
-    assert ["docker", "pull", "ghcr.io/github/github-mcp-server"] in calls["stream"]          # ön koşul
+    assert SECRET not in " ".join(add) and add[3] == "github" and "docker" in add            # D-16: sır `-e` ile düz metne yazılmaz
+    assert "sb.mcp_env" in add and "GITHUB_PERSONAL_ACCESS_TOKEN=@ring:mcp-github-github-pat" in add and "ghcr.io/github/github-mcp-server:v2.1.0" in add
+    assert ["docker", "pull", "ghcr.io/github/github-mcp-server:v2.1.0"] in calls["stream"]    # ön koşul (sürüm sabit)
     # kendi MCP'm
     r = call("POST", "/api/mcp/custom", {"name": "benim", "command": "node", "args": ["s.js"], "env": {"TOK": "abc-gizli"}})[1]
     assert r["ok"] and "abc-gizli" not in json.dumps(r)

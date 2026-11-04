@@ -320,6 +320,7 @@ axes:
       - cards
       - career
       - claude_hooks
+      - clipboardline
       - comms
       - computer
       - contacts
@@ -343,6 +344,7 @@ axes:
       - media
       - memory_ui
       - models
+      - nashi
       - night
       - phone
       - privacy

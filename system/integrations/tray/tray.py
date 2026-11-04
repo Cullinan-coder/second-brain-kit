@@ -24,9 +24,19 @@ def restart_server() -> None:
     subprocess.run(["schtasks", "/Run", "/TN", TASK], capture_output=True)
 
 
+def _chat_token() -> str:
+    import os
+    from pathlib import Path
+    d = Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
+    try:
+        return (d / "chat.token").read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def today_text() -> str:
     try:
-        req = urllib.request.Request(URL + "api/v2/dashboard", headers={"X-SB": "1"})
+        req = urllib.request.Request(URL + "api/v2/dashboard", headers={"X-SB": "1", "X-SB-Token": _chat_token()})
         d = json.load(urllib.request.urlopen(req, timeout=5))
         return "\n".join(f"{t.get('time', '')} {t.get('title', '')}" for t in d.get("today", [])[:5]) or "Bugün plan yok"
     except Exception as e:

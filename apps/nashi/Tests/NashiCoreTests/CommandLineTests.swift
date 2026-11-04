@@ -1,0 +1,137 @@
+import XCTest
+import AppKit
+@testable import NashiCore
+
+final class CommandLineTests:XCTestCase {
+    func testDependencyDiscoveryReturnsTheExifToolScriptInsteadOfItsDirectory() throws {
+        let script=try Dependencies.executable("exiftool")
+        XCTAssertTrue(try script.resourceValues(forKeys:[.isRegularFileKey]).isRegularFile == true)
+        let result=try ProcessRunner.run(URL(fileURLWithPath:"/usr/bin/perl"),[script.path,"-config","","-ver"])
+        XCTAssertEqual(result.text.trimmingCharacters(in:.whitespacesAndNewlines),"13.59")
+    }
+    func testPartialNestedImageOptionsUseDefaultsAndPerformRealEdits() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("pattern.png"),destination=root.appendingPathComponent("Output")
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        let context=try XCTUnwrap(CGContext(data:nil,width:64,height:64,bitsPerComponent:8,bytesPerRow:256,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.setFillColor(CGColor(gray:0,alpha:1));context.fill(CGRect(x:0,y:0,width:64,height:64))
+        context.setFillColor(CGColor(gray:1,alpha:1));context.fill(CGRect(x:32,y:0,width:32,height:64))
+        try ImageEngine.write(XCTUnwrap(context.makeImage()),to:input)
+        let bytes=try Data(contentsOf:input)
+        let options=String(decoding:try JSONSerialization.data(withJSONObject:["outputDirectory":destination.path,"imageAdjustments":["blur":2]]),as:UTF8.self)
+        XCTAssertEqual(NashiCommandLine.run(arguments:["Nashi","tool","editImage",input.path,"--options",options]),0)
+        let edited=try XCTUnwrap(FileManager.default.contentsOfDirectory(at:destination,includingPropertiesForKeys:nil).first)
+        var pixels=[UInt8](repeating:0,count:64*64*4)
+        try pixels.withUnsafeMutableBytes { buffer in
+            let rendered=try XCTUnwrap(CGContext(data:buffer.baseAddress,width:64,height:64,bitsPerComponent:8,bytesPerRow:256,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            rendered.draw(try ImageEngine.load(edited),in:CGRect(x:0,y:0,width:64,height:64))
+        }
+        XCTAssertGreaterThan(pixels[(32*64+31)*4],10)
+        var tags=ImageMetadataOptions();tags.updates=["author":"Private Author"]
+        let tagged=try ImageEngine.editMetadata(input,changes:tags)
+        let taggedBytes=try Data(contentsOf:tagged)
+        let strip=String(decoding:try JSONSerialization.data(withJSONObject:["outputDirectory":destination.path,"imageMetadata":["removeAll":true]]),as:UTF8.self)
+        XCTAssertEqual(NashiCommandLine.run(arguments:["Nashi","tool","removeMetadata",tagged.path,"--options",strip]),0)
+        let clean=try XCTUnwrap(FileManager.default.contentsOfDirectory(at:destination,includingPropertiesForKeys:nil).first{$0.lastPathComponent.contains("Clean")})
+        XCTAssertNil(ImageEngine.metadata(clean)["{TIFF}.Artist"])
+        XCTAssertEqual(try Data(contentsOf:input),bytes);XCTAssertEqual(try Data(contentsOf:tagged),taggedBytes)
+    }
+    func testPlainPathAndFileURLDestinationsPreserveSourceAndExistingFiles() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("source ' $().srt"),destination=root.appendingPathComponent("Output files")
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        let source=Data("1\n00:00:00,125 --> 00:00:01,250\nMerhaba dünya\n".utf8);try source.write(to:input)
+        for path in [destination.path,destination.absoluteString] {
+            let options=String(decoding:try JSONSerialization.data(withJSONObject:["outputDirectory":path,"revealInFinder":false]),as:UTF8.self)
+            XCTAssertEqual(NashiCommandLine.run(arguments:["Nashi","convert","vtt",input.path,"--options",options,"--json"]),0)
+        }
+        let outputs=try FileManager.default.contentsOfDirectory(at:destination,includingPropertiesForKeys:nil)
+        XCTAssertEqual(outputs.count,2)
+        for output in outputs { let text=try String(contentsOf:output,encoding:.utf8);XCTAssertTrue(text.contains("00:00:00.125 --> 00:00:01.250"));XCTAssertTrue(text.contains("Merhaba dünya")) }
+        XCTAssertEqual(try Data(contentsOf:input),source)
+    }
+    func testInspectFailsForMissingFilesOfEveryCategory() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let present=root.appendingPathComponent("present.txt");try Data("hello".utf8).write(to:present)
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","inspect",present.path]),0)
+        for name in ["absent.txt","absent.docx","absent.zip","absent.bin","absent.png"] {
+            XCTAssertNotEqual(NashiCommandLine.run(arguments:["nashi-cli","inspect",root.appendingPathComponent(name).path]),0,name)
+        }
+    }
+    func testUnknownOptionKeysFailWithoutWritingOutput() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("clip.srt"),destination=root.appendingPathComponent("Out")
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        try Data("1\n00:00:00,125 --> 00:00:01,250\nHi\n".utf8).write(to:input)
+        func json(_ object:[String:Any]) throws -> String { String(decoding:try JSONSerialization.data(withJSONObject:object),as:UTF8.self) }
+        for options in [["outputDirectry":destination.path],["outputDirectory":destination.path,"imageAdjustments":["blurr":2]]] as [[String:Any]] {
+            XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(options)]),1)
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:root.path).sorted(),["Out","clip.srt"])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),[])
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(["outputDirectory":destination.path,"width":NSNull(),"imageAdjustments":["blur":2]])]),0)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),["clip.vtt"])
+    }
+    func testUnknownKeysInsideArrayOptionsFailWithoutWritingOutput() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let input=root.appendingPathComponent("clip.srt"),destination=root.appendingPathComponent("Out")
+        try FileManager.default.createDirectory(at:destination,withIntermediateDirectories:true)
+        try Data("1\n00:00:00,125 --> 00:00:01,250\nHi\n".utf8).write(to:input)
+        func json(_ object:[String:Any]) throws -> String { String(decoding:try JSONSerialization.data(withJSONObject:object),as:UTF8.self) }
+        let rect:[String:Any]=["x":1,"y":1,"width":10,"height":10]
+        for options in [["imageAnnotations":[["kind":"rectangle","rect":rect,"colour":"#000000"]]],["videoRedactions":[["rect":rect,"start":0,"ende":2]]],["imageAnnotations":[["kind":"freehand","rect":rect,"points":[["x":1,"y":1,"z":3]]]]]] as [[String:Any]] {
+            XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(options.merging(["outputDirectory":destination.path]){$1})]),1)
+        }
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),[])
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt",input.path,"--options",try json(["outputDirectory":destination.path,"imageAnnotations":[["kind":"freehand","rect":rect,"color":"#000000","fillColor":NSNull(),"points":[["x":1,"y":1]]]],"videoRedactions":[["rect":rect,"start":0]]])]),0)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath:destination.path),["clip.vtt"])
+    }
+    func testRelativeOutputDirectoryWithColonIsAPath() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let files=FileManager.default,previous=files.currentDirectoryPath
+        XCTAssertTrue(files.changeCurrentDirectoryPath(root.path));defer{_=files.changeCurrentDirectoryPath(previous)}
+        try Data("1\n00:00:00,125 --> 00:00:01,250\nHi\n".utf8).write(to:root.appendingPathComponent("clip.srt"))
+        // Finder shows ':' in a folder name as '/', so "Q3/2024" is stored as "Q3:2024".
+        try files.createDirectory(at:root.appendingPathComponent("Q3:2024"),withIntermediateDirectories:true)
+        XCTAssertEqual(NashiCommandLine.run(arguments:["nashi-cli","convert","vtt","clip.srt","--options","{\"outputDirectory\":\"Q3:2024\"}"]),0)
+        XCTAssertEqual(try files.contentsOfDirectory(atPath:root.appendingPathComponent("Q3:2024").path),["clip.vtt"])
+    }
+    func testUsageGoesToStandardErrorAndListsEveryCommand() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let out=root.appendingPathComponent("out"),err=root.appendingPathComponent("err")
+        fflush(stdout);fflush(stderr)
+        let savedOut=dup(1),savedErr=dup(2)
+        let o=open(out.path,O_CREAT|O_WRONLY|O_TRUNC,0o600),e=open(err.path,O_CREAT|O_WRONLY|O_TRUNC,0o600)
+        dup2(o,1);dup2(e,2);close(o);close(e)
+        let code=NashiCommandLine.run(arguments:["nashi-cli"])
+        fflush(stdout);fflush(stderr)
+        dup2(savedOut,1);dup2(savedErr,2);close(savedOut);close(savedErr)
+        XCTAssertEqual(code,64)
+        XCTAssertEqual(try Data(contentsOf:out),Data())
+        let usage=try String(contentsOf:err,encoding:.utf8)
+        for word in ["convert FORMAT","tool TOOL_ID","inspect FILE","catalog","dependencies","--options JSON","--json"] { XCTAssertTrue(usage.contains(word),word) }
+    }
+    func testResultsThatCannotBeWrittenToStandardOutputFailTheRun() throws {
+        let root=try OutputFiles.temporaryDirectory();defer{try? FileManager.default.removeItem(at:root)}
+        let err=root.appendingPathComponent("err")
+        func run(_ arguments:[String],stdoutWritable:Bool)->Int32 {
+            fflush(stdout);fflush(stderr)
+            let savedOut=dup(1),savedErr=dup(2)
+            // A read-only descriptor makes every write fail, like a full disk.
+            let o=stdoutWritable ? open("/dev/null",O_WRONLY):open("/dev/null",O_RDONLY),e=open(err.path,O_CREAT|O_WRONLY|O_TRUNC,0o600)
+            dup2(o,1);dup2(e,2);close(o);close(e)
+            let code=NashiCommandLine.run(arguments:arguments)
+            fflush(stdout);fflush(stderr);clearerr(stdout)
+            dup2(savedOut,1);dup2(savedErr,2);close(savedOut);close(savedErr)
+            return code
+        }
+        XCTAssertEqual(run(["nashi-cli","catalog"],stdoutWritable:true),0)
+        XCTAssertEqual(run(["nashi-cli","catalog"],stdoutWritable:false),1)
+        XCTAssertTrue(try String(contentsOf:err,encoding:.utf8).contains("standard output"))
+        let input=root.appendingPathComponent("blank.png")
+        let context=try XCTUnwrap(CGContext(data:nil,width:8,height:8,bitsPerComponent:8,bytesPerRow:32,space:CGColorSpace(name:CGColorSpace.sRGB)!,bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+        try ImageEngine.write(XCTUnwrap(context.makeImage()),to:input)
+        XCTAssertEqual(run(["nashi-cli","inspect",input.path],stdoutWritable:true),0)
+        XCTAssertEqual(run(["nashi-cli","inspect",input.path],stdoutWritable:false),1)
+    }
+}

@@ -31,7 +31,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@modelcontextprotocol/server-postgres'
+  - '@modelcontextprotocol/server-postgres@0.6.2'
   - '{postgres_url}'
   env: {}
   install: npm view @modelcontextprotocol/server-postgres version

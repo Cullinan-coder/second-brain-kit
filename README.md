@@ -1,149 +1,360 @@
-# Second Brain Kit
+# Second Brain
 
-Kendi bilgisayarında çalışan, seni tanıyan bir **ikinci beyin + kişisel asistan**. Mailin, takvimin, Drive'ın, rehberin,
-SMS'lerin, LinkedIn'in, okul sistemin, kod projelerin ve Claude Code oturumların tek bir **Obsidian kasasına** toplanır,
-birbirine bağlanır ve her gün kendiliğinden güncellenir. Üstüne iki asistan oturur:
+**Kendi bilgisayarında çalışan, seni tanıyan bir ikinci beyin ve kişisel asistan.**
+Mailin, takvimin, Drive'ın, rehberin, SMS'lerin, okul sistemin, kod projelerin, panoya kopyaladıkların, dönüştürdüğün dosyalar ve
+yapay zeka sohbet geçmişin tek bir **Obsidian kasasında** toplanır, birbirine bağlanır ve her gün kendiliğinden güncellenir.
+Üstünde iki asistan çalışır: bilgisayarındaki **yerel model** (ücretsiz, veri dışarı çıkmaz) ve **Claude Code** (seni ve işlerini
+her oturumda hatırlar).
 
-- **Claude Code** — her oturumun başında seni, kurallarını, açık işlerini ve kaldığın yeri hatırlar (MCP + hafıza kancaları).
-- **Yerel asistan (Qwen, Ollama)** — ücretsiz, bilgisayarında çalışır. Obsidian'ın içinde ve telefonundan konuşursun:
-  "son mail neydi", "cuma 15:00 doktor ekle", "Spotify'da X çal", "ekranımda ne var", "şu başvuru kabul edildi, notu güncelle".
+| | |
+|---|---|
+| Sürüm | **0.11.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
+| Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
+| Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
+| Test | 840+ otomatik test, her push'ta Windows ve macOS'ta sıfırdan kurulum + test |
+| Erişim | Depo gizlidir; yalnız davet edilen kişiler kurabilir |
 
-> Windows'ta günlük kullanımda sınanmıştır. macOS desteği yazılmıştır ama gerçek Mac'te doğrulanmamıştır — bkz. [docs/MAC.md](docs/MAC.md).
+> **Bu README'yi okuyan biri** projenin ne yaptığını, nasıl kurulduğunu, verinin nereye gittiğini, neyin çalışıp neyin
+> çalışmadığını ve sorun çıkınca ne yapacağını bilmelidir. Eksik ya da yanlış bir şey görürsen bu bir hatadır.
 
 ---
 
-## Ne yapar?
+## İçindekiler
+1. [Ne işe yarar](#1-ne-işe-yarar)
+2. [Nasıl çalışır (mimari)](#2-nasıl-çalışır-mimari)
+3. [Gömülü uygulamalar: ClipBoardLine ve Nashi](#3-gömülü-uygulamalar-clipboardline-ve-nashi)
+4. [Gereksinimler ve donanım](#4-gereksinimler-ve-donanım)
+5. [Kurulum](#5-kurulum)
+6. [Kurulum sihirbazı adım adım](#6-kurulum-sihirbazı-adım-adım)
+7. [Günlük kullanım](#7-günlük-kullanım)
+8. [Veri kaynakları ve güncellik](#8-veri-kaynakları-ve-güncellik)
+9. [Modeller ve yapay zeka sağlayıcıları](#9-modeller-ve-yapay-zeka-sağlayıcıları)
+10. [Telefon](#10-telefon)
+11. [Güvenlik ve gizlilik](#11-güvenlik-ve-gizlilik)
+12. [Güncelleme, yedek ve geri alma](#12-güncelleme-yedek-ve-geri-alma)
+13. [Sorun çıkınca](#13-sorun-çıkınca)
+14. [Repo düzeni](#14-repo-düzeni)
+15. [Geliştirme ve test](#15-geliştirme-ve-test)
+16. [Bilinen sınırlar ve yol haritası](#16-bilinen-sınırlar-ve-yol-haritası)
+17. [Lisanslar](#17-lisanslar)
+
+---
+
+## 1. Ne işe yarar
 
 | Alan | Ne olur |
 |---|---|
-| **Toplama (her gün)** | Gmail (salt-okunur), şirket/okul IMAP, Google Takvim, Rehber, Drive (paylaşılanlar dahil), SMS/arama yedeği, bilgisayardaki dosyalar ve belge içerikleri, kod projeleri + GitHub, Claude Code oturumları, okul LMS (Moodle) bildirimleri, LinkedIn arşivi |
-| **Kasa (Obsidian)** | Dersler, projeler, başvurular, kişiler, konular, teknolojiler — hepsi `[[bağlantılı]]`, renkli grafik. Proje ve ders "dosyaları" Claude ile derlenir (mimari, durum, açık işler, kararlar) |
-| **Takvim** | Mailden/SMS'ten tarih çıkarılır (yerel model) → emin olunamayanlar onay listesine; etiket kuralları (`[SINAV]` kırmızı, `[ÖDEV]` 23:59 vb.) otomatik renk + hatırlatma |
-| **Sabah özeti** | Her gün mail: takvim, 7 günlük teslimler, önemli mailler, SMS, asistanın dün yaptıkları, hatalı adımlar |
-| **Yerel asistan** | Kasa soruları, takvime **onaylı** ekleme/silme, not güncelleme/arşivleme (git ile geri alınır), hatırlama ve kural öğrenme, hızlı not kutusu, uygulama açma, medya, YouTube/Spotify (Premium'da doğrudan çalma), sistem bilgisi, terminal (güvenli sınıflar), ekran/kamera okuma (OCR + görsel model), WhatsApp mesajı (onaylı), 15 dk kala bildirim |
-| **Telefon** | Tailscale özel ağı + 6 haneli eşleme: asistan telefonda da çalışır; telefondan gelen her bilgisayar eylemi onaya düşer |
-| **Claude Code hafızası** | Oturum başında kurallar + hafıza + açık konular + son oturum kartları + o klasörün projesi enjekte edilir; her oturum devir kartı bırakır |
+| **Toplama** | Gmail ve IMAP (Outlook, iCloud, Yandex, okul/şirket; **salt okunur**), Google Takvim, Kişiler, Drive, SMS/arama yedeği, bilgisayardaki dosyalar ve belge içerikleri, kod projeleri + GitHub, Claude Code oturumları, ders dosyaları, Telegram botu: **her gün kendiliğinden**. WhatsApp, Takeout, ChatGPT/Claude/Gemini geçmişi, Spotify, Notion, Evernote, Kindle, banka CSV ve 25+ kaynak: **dışa aktarma dosyasıyla** |
+| **Kasa (Obsidian)** | Dersler, projeler, başvurular, kişiler, konular, kavramlar; hepsi `[[bağlantılı]]`, kümelere ayrılmış, renkli bilgi grafiği. Tekrar eden kişiler kurallarla birleştirilir |
+| **Takvim** | Mail/SMS'ten tarih çıkarılır. Güveni düşük olan (ve yerel modelin bulduğu her tarih) önce onay listesine düşer. Etiket kuralları (`[SINAV]`, `[ÖDEV]`…) renk ve hatırlatma verir |
+| **Sabah özeti** | Her gün: takvim, 7 günlük teslimler, önemli mailler, bekleyen onaylar, başarısız adımlar. Kasaya not olarak yazılır, istenirse mail/Telegram ile gelir |
+| **Yerel asistan** | Kasana soru sor, takvime onaylı ekle, notu güncelle/arşivle (git ile geri alınır), kural ve hafıza öğret, uygulama aç, Spotify/YouTube, ekran/kamera okuma, onaylı WhatsApp, 15 dk kala bildirim. Masaüstü penceresinde ve telefonda |
+| **Claude Code hafızası** | Her oturumun başında kuralların, hafızan, açık konular, son oturum kartları ve o klasörün projesi bağlama eklenir; oturum sonunda devir kartı yazılır. `second-brain` MCP sunucusu ve 6 skill |
+| **Verimlilik / okul / kariyer** | Görev panosu, günlük plan, pomodoro, alışkanlık, haftalık gözden geçirme; ders panosu, GANO ve senaryo, çalışma planı; mail taslağı (yalnız kasada), takip, CRM, teklif, saat takibi, CV |
+| **Pano ve dosyalar** | [ClipBoardLine](#3-gömülü-uygulamalar-clipboardline-ve-nashi) kopyaladığın her şeyi tutar, Second Brain aranabilir yapar. [Nashi](#3-gömülü-uygulamalar-clipboardline-ve-nashi) dosya dönüştürür, çıktıları beyne girer |
 
-## Mimari (kısa)
+Tam liste: 258 madde, her biri için "ne işe yarar / nasıl açılır / ne ister": [17-ozellik-katalogu](system/docs/rehber/17-ozellik-katalogu.md).
+
+## 2. Nasıl çalışır (mimari)
 
 ```mermaid
 flowchart LR
   subgraph Kaynaklar
-    G[Gmail / IMAP] --- C[Takvim / Rehber / Drive]
+    G[Gmail / IMAP] --- C[Takvim / Kişiler / Drive]
     S[SMS yedeği] --- F[Bilgisayar dosyaları]
-    P[Kod projeleri + GitHub] --- CC[Claude Code oturumları]
-    L[LMS / LinkedIn]
+    P[Projeler / GitHub] --- CC[Claude Code oturumları]
+    E[Dışa aktarma dosyaları\nWhatsApp, Takeout, Spotify…]
+    CBL[ClipBoardLine\npano geçmişi] --- NSH[Nashi\ndönüştürülen dosyalar]
   end
-  Kaynaklar -->|sb daily 13:00| DB[(~/.secondbrain\nmail.db + FTS5\ngit DIŞI)]
-  DB --> V[Obsidian kasası\nnotlar + bağlantılar\ngit ile sürümlü]
+  Kaynaklar -->|günlük çalışma\noturum +10 dk, 13:00| DB[(~/.secondbrain\nmail.db + FTS5 arşiv\ngit DIŞI)]
+  CBL -->|5 dk'da bir| DB
+  DB --> V[Obsidian kasası\nMarkdown notlar\ngit ile sürümlü]
   V --> MCP[MCP sunucusu] --> CLAUDE[Claude Code]
-  V --> CHAT[Yerel asistan\nQwen + araçlar\n127.0.0.1:8765]
-  CHAT --> PC[Bilgisayar eylemleri\nonay sınıfları]
-  CHAT -. Tailscale .- PHONE[Telefon]
-  CLAUDE -. hafıza kancaları .- V
+  V --> CHAT[Asistan sunucusu\n127.0.0.1:8765]
+  CHAT --> R{Yönlendirici}
+  R -->|varsayılan, hassas veri| OL[Ollama\nyerel model]
+  R -->|izin verilirse| CLOUD[Bulut API\nOpenAI/Anthropic/Gemini…]
+  CHAT --> ACT[Bilgisayar eylemleri\nserbest / onaylı / yasak]
+  CHAT -. Tailscale .- PHONE[Telefon PWA]
+  APP[Masaüstü uygulaması\nSecond Brain.exe] --> CHAT
 ```
 
-Ayrıntı: [docs/MIMARI.md](docs/MIMARI.md) · Tasarım kararları ve dersler: [docs/NEDEN.md](docs/NEDEN.md) · Güvenlik: [docs/GUVENLIK.md](docs/GUVENLIK.md)
+**Parçalar:**
+- `sb` — Python paketi (CLI + kütüphane). Her şey `sb <komut>` ile çalışır (`sb --help`, 90+ komut; tam liste [14-komut-referansi](system/docs/rehber/14-komut-referansi.md)).
+- **Kasa** — düz Markdown + YAML ön bilgi. Obsidian olmadan da okunur. Kasa kendi git deposudur; her asistan değişikliği bir commit'tir.
+- **Yerel arşiv** `~/.secondbrain/` — mail/SMS/öğe veritabanı (SQLite + FTS5), kayıtlar, çökme raporları. Kasaya ve git'e girmez.
+- **Asistan sunucusu** — yalnız `127.0.0.1` üzerinde; arayüz düz HTML/CSS/JS (derleme adımı yok), masaüstü penceresi pywebview.
+- **Eklenti sistemi** — her modül, veri kaynağı, MCP ve uygulama `system/plugins/` altında bir YAML manifesti. Yeni sektör, kaynak ya da yazılım kod değişmeden manifestle eklenebilir.
+- **Zamanlanmış işler** — Windows Görev Zamanlayıcı / macOS launchd: günlük çalışma (oturum açılınca +10 dk ve 13:00), haftalık (Pazar 15:00), asistan sunucusu (oturum açılınca).
 
-## Gereksinimler
+Ayrıntı: [docs/MIMARI.md](docs/MIMARI.md) · tasarım kararları: [docs/NEDEN.md](docs/NEDEN.md).
 
-| | Zorunlu mu | Not |
+## 3. Gömülü uygulamalar: ClipBoardLine ve Nashi
+
+İki açık kaynak uygulama, **resmî sürümleriyle olduğu gibi** kurulur ve Second Brain ile birlikte çalışır. Kaynak kodlarının tam kopyası
+`apps/` altındadır (hangi commit'ten alındığı her birinin `UPSTREAM.md` dosyasında).
+
+| | ClipBoardLine | Nashi |
 |---|---|---|
-| Windows 10/11 ya da macOS 13+ | ✔ | |
-| [Obsidian](https://obsidian.md) | ✔ | kasayı görmek için |
-| Google hesabı + Google Cloud OAuth istemcisi | ✔ | 5 dk, ücretsiz — [docs/KURULUM-GOOGLE.md](docs/KURULUM-GOOGLE.md) |
-| [uv](https://docs.astral.sh/uv/) + Python 3.12 | ✔ | kurucu kendisi kurar |
-| [Ollama](https://ollama.com) + 16 GB ekran kartı | önerilir | yerel asistan; daha zayıf makinede `qwen3:4b` |
-| [Claude Code](https://claude.com/code) (Pro/Max abonelik) | önerilir | derin derleme + MCP + hafıza |
-| git | önerilir | kasada geri alma ve yedek |
-| Tailscale, Spotify Premium, şirket IMAP | isteğe bağlı | |
+| Ne yapar | Kopyaladığın görsel, metin ve bağlantıları üç rafta tutar; sabitleme, klasör, etiket, OCR'lı arama, önizleme, işaretleme/kırpma | 27 araç, 46 giriş biçimi: görsel/PDF/belge/medya dönüştürme, kırpma, QR, link'ten medya indirme |
+| Kaynak | [orkunisitmak/clipboardline](https://github.com/orkunisitmak/clipboardline) · `apps/clipboardline` | [orkunisitmak/nashi-app](https://github.com/orkunisitmak/nashi-app) · `apps/nashi` |
+| Windows | Electron, `ClipBoardLine-Setup-<sürüm>-x64.exe` (~520 MB) | WPF/.NET, taşınabilir `Nashi-Windows-x64.zip` (~91 MB) |
+| Kurulduğu yer | `%LOCALAPPDATA%\Programs\clipboardline-desktop\` | `%LOCALAPPDATA%\Programs\Nashi\` |
+| Kendi verisi | `%APPDATA%\ClipBoardLine\library.json` + `media\` | `%LOCALAPPDATA%\Nashi\library.json` (son 50 çıktı) |
+| Beyne ne girer | **Her şey**: metin, bağlantı, görsel OCR metni, ad, etiket, klasör. Şifre, API anahtarı, kart, IBAN, TCKN, OTP içeren kayıt **atlanır** ve sayısı raporlanır | Dışa aktarılan dosyanın adı, türü, zamanı; PDF/metin/belge/görsel içeriği okunabiliyorsa içerik |
+| Ne sıklıkla | Asistan açıkken 5 dk'da bir + günlük çalışma | Aynı |
 
-## Kurulum (tek komut)
-
-```powershell
-# Windows (PowerShell) — repo klasöründe
-powershell -ExecutionPolicy Bypass -File install.ps1
-```
-
+**Nasıl kurulur:** Sihirbazın "Uygulamalar" bölümünde ya da komutla:
 ```bash
-# macOS — repo klasöründe
-bash install.sh
+sb apps list                      # katalog ve durum
+sb apps install clipboardline     # resmî sürümü indirir, SHA-256'yı yayıncının SHA256SUMS'u ile karşılaştırır, kurar
+sb apps install nashi
+sb apps autostart clipboardline login    # login = bilgisayar açılınca · startup = "Çalışmaya başla" ile · off
+sb apps start nashi
+sb apps sync all                  # kütüphanelerini şimdi beyne al
+sb apps update                    # yeni sürüm var mı
 ```
+- SHA-256 uyuşmazsa indirilen dosya silinir ve kurulum durur.
+- Second Brain bu uygulamaların dosyalarına **hiç yazmaz**; kütüphanelerini salt okunur kopyalayarak okur.
+- **Başlangıç:** kurulumda her uygulama için sorulur, varsayılan "bilgisayar açılınca". Bu, Windows'ta `HKCU\…\Run` girdisidir ve `sb apps autostart <id> off` ile kaldırılır.
+- **ClipBoardLine'ın kendi ayarı:** metin ve görsel toplama ClipBoardLine'da varsayılan **kapalıdır** (yalnız bağlantılar açık). Hepsinin beyne girmesi için ClipBoardLine → Settings → Sources'ta metin ve görsel toplamayı aç.
+- **Nashi ilk açılış:** "Download media tools" (FFmpeg, yt-dlp, Deno, ~180 MB) video/ses için gerekir. "Office tools" (LibreOffice, ~360 MB) yalnız Office belgeleri için.
+- macOS dalı yazılıdır ama gerçek Mac'te denenmedi.
 
-Kurucu sırayla sorar ve yapar: profil → kasa (şablondan) → ayarlar → Python ortamı → Google girişi → Claude Code (MCP + kancalar) →
-Ollama modelleri → zamanlayıcı → git → `sb doctor` kontrolü. **Tekrar çalıştırılabilir**; var olan notlarına ve ayarlarına dokunmaz.
-Kod güncellemesi için repoyu `git pull` edip kurucuyu yeniden çalıştırman yeter.
+Ayrıntı ve sorun giderme: [22-uygulamalar](system/docs/rehber/22-uygulamalar.md).
 
-## Kurulumdan sonra (sırayla)
+## 4. Gereksinimler ve donanım
 
-1. **Obsidian** → *Open folder as vault* → kasa klasörü. *Community plugins* → **Obsidian Git** (10 dk'da bir otomatik commit önerilir).
-2. Kontrol: `uv run --directory <kasa>/_system python -m sb doctor` → ✗ olan her satır ne yapılacağını söyler.
-3. İlk toplama (uzun sürebilir): `... -m sb daily --force` (sonra her gün 13:00'te ve oturum açılınca kendiliğinden).
-4. Asistan: Obsidian'da `Asistan.md` notunu aç (sağ kenar çubuğuna sürüklemen önerilir).
-5. İsteğe bağlı: [Telefon](docs/KURULUM-TELEFON.md) · [Spotify](docs/KURULUM-SPOTIFY.md) · [SMS yedeği](docs/KURULUM-SMS.md) ·
-   [LinkedIn arşivi](docs/KURULUM-LINKEDIN.md) · [Telegram](docs/KURULUM-TELEGRAM.md) · [Syncthing (kasa telefonda)](docs/KURULUM-SYNCTHING.md)
+| Gerekli | Not |
+|---|---|
+| Windows 10/11 ya da macOS 13+ | Linux: kurucu çalışır ama zamanlayıcı, paket ve CI yok |
+| Internet + GitHub hesabı (depoya davetli) | Depo gizli |
+| [Obsidian](https://obsidian.md) | Kasayı görmek için (veriler Obsidian'sız da durur) |
+| Google hesabı + Google Cloud OAuth istemcisi | Gmail/Takvim/Drive için; 5 dk, ücretsiz ([docs/KURULUM-GOOGLE.md](docs/KURULUM-GOOGLE.md)) |
+| uv + Python 3.12 | Kurucu kendisi kurar |
+| [Ollama](https://ollama.com) | Yerel model için (önerilir; sihirbaz kurar) |
+| [Claude Code](https://claude.com/code) | Önerilir: derin derleme, MCP, hafıza |
+| Tailscale | İsteğe bağlı, telefon için |
 
-## Günlük kullanım
+**Donanım:** sihirbaz ekran kartı belleğine (VRAM) bakıp profil önerir.
+
+| Profil | VRAM | Yazı modeli | Görüntü modeli | İndirme |
+|---|---|---|---|---|
+| Güçlü | ≥ 14 GB | qwen3:14b | qwen3-vl:8b | ~15,4 GB |
+| Orta | 8–14 GB | qwen3:8b | qwen3-vl:4b | ~8,5 GB |
+| Küçük | 4–8 GB | qwen3:4b | yok (yalnız OCR) | ~2,6 GB |
+| Bulut | < 4 GB / GPU yok | qwen3:1.7b (yalnız özet) | yok | ~1,4 GB |
+
+- **Windows önerisi:** 16 GB RAM, 8 GB VRAM NVIDIA, ~25 GB boş disk. Asgari: 8 GB RAM ve bulut profili.
+- **Mac:** birleşik belleğin ~%70'i VRAM sayılır (8 GB → küçük, 16 GB → orta, 32 GB+ → güçlü). Intel Mac bulut profiline düşer.
+- **Zayıf makinede:** "Zayıf laptop / bulut" hazır seçimi. Sohbet bulut API'ye gider, hassas içerik yine de dışarı çıkmaz.
+- RAM/disk rakamları ölçüme değil deneyime dayanır; sihirbaz yetersiz RAM/disk için henüz uyarmıyor.
+
+## 5. Kurulum
+
+**Tek komut** (GitHub'a giriş yapılmış bir bilgisayarda; `<hesap>` depo sahibinin adı):
+```powershell
+# Windows PowerShell
+irm https://raw.githubusercontent.com/<hesap>/second-brain-kit/main/install.ps1 | iex
+```
+```bash
+# macOS
+curl -fsSL https://raw.githubusercontent.com/<hesap>/second-brain-kit/main/install.sh | sh
+```
+Komut masaüstüne **Second Brain Setup** (Windows `.exe`, Mac `.app`) indirir ve açar. Ya da [Releases](../../releases)'tan
+`Second-Brain-Setup.exe` / `Second-Brain-Setup-macOS.zip` indir.
+
+- **Kurulum dosyası imzasız.** Windows SmartScreen "Windows bilgisayarınızı korudu" der: **Ek bilgi → Yine de çalıştır**. macOS "açılamıyor" der: sağ tık → Aç.
+- Doğrulamak için indirilen dosyanın SHA-256'sını sürüm sayfasıyla karşılaştır. Kurulu kopyayı doğrulamak için: `python setup/engine.py --verify`.
+- **Komut satırı yolu** (sihirbazsız, repo klasöründe): `powershell -ExecutionPolicy Bypass -File install.ps1` ya da `bash install.sh`. Sessiz kurulum için `SB_SECRET_<ALAN>` ortam değişkenleri kullanılır.
+- **Denemek için:** sihirbazı gerçek sisteme dokunmadan açmak istersen `SB_SETUP_SANDBOX=<klasör>` ile ya da `--sandbox` bayrağıyla başlat. Sağ üstte "DENEME KİPİ" yazar; anahtarlar dosyaya, komutlar "[deneme] atlandı" olur.
+
+Ekran görüntülü tam anlatım: [01-kurulum](system/docs/rehber/01-kurulum.md).
+
+## 6. Kurulum sihirbazı adım adım
+
+| # | Adım | Ne sorulur / ne yapılır |
+|---|---|---|
+| 1 | Hoş geldin | Dil (TR/EN), deneme kipi bilgisi, yarım kalan kurulumu sürdürme |
+| 2 | Hazır seçim | 4 eksen: **meslek** (öğrenci, ajans, yazılımcı, akademisyen, girişimci, satış, içerik, araştırmacı), **donanım** (güçlü GPU, orta, zayıf/bulut, Mac), **gizlilik** (tam yerel, karma, bulut), **yoğunluk** (minimal, günlük, güç) |
+| 3 | Bütün özellikler | 258 maddenin hepsi tek tek açılıp kapatılabilir; kategori, arama, ne gerektirdiği rozeti |
+| 4 | Kişisel bilgiler | Ad, kasa klasörü (OneDrive ve 260 karakter yol uyarısı), saat dilimi, okul/iş, rol |
+| 5 | Hesaplar | Google (OAuth, istemci dosyası yükleme), IMAP/Gmail uygulama şifresi, Outlook, iCloud, Tailscale testi |
+| 6 | API anahtarları | OpenAI, Anthropic, Gemini, OpenRouter, Groq, DeepSeek, Mistral…; işletim sistemi anahtarlığına yazılır, bağlantı testi |
+| 7 | Yerel modeller | Donanım taraması, profil önerisi, Ollama kurulumu, model indirme ilerlemesi, ses (Whisper) |
+| 8 | MCP | Claude Code/Desktop'a bağlama, 18 hazır MCP kataloğu, kendi MCP'ni ekleme |
+| 9 | Veri yükleme | Seçimine göre gereken kaynaklar: "bu dosyayı nasıl alırsın" anlatımı, sürükle-bırak, önizle, içe aktar, geçmiş |
+| 10 | Telefon | Tailscale durumu, asistan adresi, 6 haneli eşleme kodu |
+| 11 | Başlangıç | Second Brain ve ClipBoardLine/Nashi bilgisayar açılınca mı, "Çalışmaya başla" ile mi |
+| 12 | Özet ve kurulum | Seçimlerin özeti, kurulum ilerlemesi, sağlık testi, sonraki adımlar |
+
+Kurulum bitince sihirbaz **ayarlar** kipinde (`?mode=settings`) masaüstü uygulamasının içinden yeniden açılır; her şeyi sonradan değiştirebilirsin.
+Ayrıntı: [02-sihirbaz-adim-adim](system/docs/rehber/02-sihirbaz-adim-adim.md).
+
+## 7. Günlük kullanım
+
+**Masaüstü uygulaması** (`Second Brain.exe`): tek pencere, tepsi simgesi, isteğe bağlı bilgisayarla açılma. **Çalışmaya başla** düğmesi sırayla:
+güncelleme denetimi → sağlık testi (`sb doctor`) → bugünün günlük işleri (yapılmadıysa) → uygulamalar ("Çalışmaya başla ile" seçilenler başlar + senkron) → modeli ısıtma → hazır.
 
 | İstek | Nerede |
 |---|---|
-| "Bu hafta neler var?", "son mail neydi", "X projesinde ne karar verdik" | Asistan (Obsidian/telefon) ya da Claude Code |
+| "Bu hafta neler var?", "son mail neydi", "X projesinde ne karar verdik" | Asistan ya da Claude Code |
 | "Cuma 15:00 doktor ekle", "takvimdeki X'i sil" | Asistan → onay kartı |
-| "Başvurum kabul edildi", "ödevi bitirdim", "şu notu arşivle", "geri al" | Asistan (sormadan yapar, sabah raporunda yazar) |
+| "Başvurum kabul edildi", "şu notu arşivle", "geri al" | Asistan (kasa değişikliği, git commit) |
 | "Not al: …" | Asistan → `00-Inbox/Dump` → her gün yerine dağıtılır |
-| "Bundan sonra hep şöyle yap" / "Bunu hatırla" | Asistan → `Asistan kuralları.md` / `Asistan hafızası.md` (Claude Code da okur) |
-| Kod/proje işi | Claude Code: oturum başında hafıza kendiliğinden gelir |
-| Video, makale, aklına gelen bir şey | Kopyala → **Ctrl+Alt+B** (Beyne at): video/sayfa özetlenir, metin not kutusuna düşer |
-| "Neler bağlı, ne eksik?" | Kasada `Araçlar ve erişimler` notu (her gün yenilenir) ya da `sb doctor` |
-| Dosya (PDF, Word, fatura) | Sağ tık › Gönder › **Beyne At**: özetlenir, `40-Kaynaklar/Belgeler`'e bağlanır |
-| "Son günlerde ne yaptık?" | Asistan ya da Claude Code (`sb recap`): iş sonu makbuzlarından gün gün |
-| Gece uzun iş | Asistana `geceye ekle: iş @klasör`, yatarken `gece koşusunu başlat` (onay kartı; bitince bildirim) |
-| Büyük iş, çok ajan | Claude Code'a "orkestrasyon" de: şef + alt ajanlar + yerel Qwen işçisi |
+| "Bundan sonra hep şöyle yap" / "Bunu hatırla" | `Asistan kuralları.md` / `Asistan hafızası.md` (Claude Code da okur) |
+| Kopyaladığım bir şeyi bulmak | Asistanda ara (ClipBoardLine kayıtları dahil) ya da ClipBoardLine'da `Ctrl+Alt+T` |
+| Dosya dönüştürmek | Nashi; çıktı otomatik beyne girer |
+| Video, makale, aklına gelen şey | Kopyala → `Ctrl+Alt+B` (Beyne at) ya da telefonda Paylaş → İkinci Beyin |
+| "Son günlerde ne yaptık?" | `sb recap` / asistan |
+| Uzun gece işi | `geceye ekle: iş @klasör` → `gece koşusunu başlat` (yalnız bilgisayardan, onaylı) |
 
-Komut satırı: `sb --help` (60+ komut). Hafıza: `receipt`, `recap`, `concept`, `connect`, `learn`, `trace`, `task`, `person`, `rule`,
-`error-log`, `hygiene`, `mode`. Aktarım: `capture`, `history-import`, `linkedin-import`. Bakım: `doctor`, `update`, `version`.
+Asistan kullanımı: [09-asistan-kullanimi](system/docs/rehber/09-asistan-kullanimi.md) · uygulama turu: [08-uygulama-turu](system/docs/rehber/08-uygulama-turu.md).
 
-Claude Code tarafı (kurucu ekler): hafıza kancaları (oturum başı / mesaj / sıkıştırma öncesi / oturum sonu), `second-brain` MCP
-sunucusu, 6 skill (`beyin`, `beyin-doktor`, `beyin-guncelle`, `gecmis-import`, `form-doldur`, `orkestrasyon`), durum çubuğu.
-Kasa kökündeki `AGENTS.md` sayesinde Codex, Gemini ve OpenCode da aynı kasayı kurallarıyla kullanır.
+## 8. Veri kaynakları ve güncellik
 
-## Klasörler
+| Sıklık | Kaynaklar |
+|---|---|
+| **Sürekli / 5 dk** | Takvim hatırlatmaları, ClipBoardLine, Nashi, telefondan "Beyne at", Syncthing klasörü |
+| **Günlük** (oturum +10 dk ve 13:00; kaçırılırsa açılınca) | Gmail, IMAP hesapları, Google Takvim, Drive, Kişiler, SMS/arama yedeği (sıklığını telefondaki yedek uygulaması belirler), bilgisayar dosyaları ve içerikleri, projeler/GitHub, Claude Code oturumları, ders dosyaları, Telegram botu |
+| **Haftalık** (Pazar 15:00) | Özet, hijyen raporu, bağlantı ve küme önerileri |
+| **Dışa aktarma dosyasıyla** (`sb import <kaynak> <dosya>` ya da sihirbaz 9. adım) | WhatsApp, Telegram Desktop, Discord, Slack, Instagram, X, LinkedIn, Takeout (Gemini, Chrome, Keep, YouTube, Fotoğraflar, Konum), Spotify (tam geçmiş ve teknik günlük paketi), Kindle, Notion, Evernote, OneNote, Apple Notlar, Pocket, Raindrop, Zotero, BibTeX, banka CSV, Coursera/Udemy, ekran süresi, Todoist/TickTick/Trello/Jira/Linear/MS To Do, ChatGPT/Claude/Gemini sohbetleri, tarayıcı geçmişi |
+| **Elle** | ÖBS (`data/obs.yaml`), RSS/arXiv (`sb import rss`) |
 
-```
-<kasa>/
-  00-Inbox/        onay-bekleyenler, Dump (hızlı notlar), _imports (zip'ler, git dışı)
-  10-Dersler/      ders notları + teslimler (takvim/ÖBS/LMS'den)
-  20-Projeler/     kod projeleri (derlenmiş proje dosyaları)
-  30-Kariyer/      başvurular, görüşmeler, LinkedIn profili
-  40-Kaynaklar/    Konular, Teknolojiler, Mail, Drive, Bilgisayar indeksleri
-  50-Günlük/       günlük + sabah özeti
-  60-Kişiler/      rehber + LinkedIn kişileri
-  90-Arşiv/        biten/eskiyen (silme yok, buraya taşınır)
-  _system/         kod (sb/), araçlar (tools/), ayarlar (config/), testler
-  Asistan.md · Asistan kuralları.md · Asistan hafızası.md · Son oturum.md · Açık konular.md · Dashboard.md
-~/.secondbrain/    yerel arşiv (mail.db), anahtar dosyası, kayıtlar — git'e ve telefona GİRMEZ
-```
+Dışa aktarılan kaynakları güncel tutmak senin elinde. Öneri: WhatsApp ve sohbet geçmişleri ayda bir, Takeout 2 ayda bir planlı, banka ay sonu.
+Her kaynağın "nasıl alınır" anlatımı: [system/docs/rehber/kaynaklar/](system/docs/rehber/kaynaklar/).
 
-## Güvenlik özeti
+## 9. Modeller ve yapay zeka sağlayıcıları
 
-- Mail **salt-okunur** (Gmail `readonly`, IMAP `EXAMINE`). Kod mail gönderemez/silemez (sabah özeti hariç: yalnız kendi adres listene).
-- Şifre/token **işletim sisteminin şifre kasasında** (Windows Kimlik Yöneticisi / macOS Anahtar Zinciri). Repoda ve kasada gizli bilgi yok.
-- Asistan eylemleri üç sınıf: **serbest** (geri alınabilir), **onaylı** (kart), **yasak** (onayla bile çalışmaz). Ekran/kamera içeriği
-  okunduğu turda her eylem onaya düşer (istem enjeksiyonuna karşı). Telefon yalnız Tailscale özel ağında.
-- Kasadaki her asistan değişikliği ayrı git commit'i → "geri al".
+- **Yerel:** Ollama (varsayılan), LM Studio, llama.cpp, vLLM.
+- **Bulut:** OpenAI, OpenRouter, Groq, DeepSeek, Mistral (OpenAI uyumlu; `base_url` ile Azure/vekil sunucu dahil), Anthropic, Gemini.
+- `config/llm.yaml`: görev başına hedef (`tasks:`), kurallar (`routing:`), hata/kota olunca yedek zinciri (`fallback:`), yanıt önbelleği. Maliyet `sb usage`, yerel 0 USD.
+- **Gizlilik süzgeci:** şifre, API anahtarı, OTP, kart, TCKN ve IBAN içeren metin ile `private` notlar buluta **hiç** gitmez, yerel modele düşer. "Tam yerel" + "sıkı" izin profilinde hiçbir istek buluta gitmez.
+- Claude Code (`claude -p`) aboneliğinle derin derleme işlerinde kullanılır.
 
-## Güncelleme
+## 10. Telefon
+
+Telefon kendi model çalıştırmaz; bilgisayardaki asistana **Tailscale** özel ağıyla bağlanır. Asistan bir **PWA**dır: ana ekrana eklenir.
+Cihaz eşleme 6 haneli kodla yapılır.
+
+| | Android | iOS |
+|---|---|---|
+| Asistan | ✔ | ✔ |
+| Paylaş → İkinci Beyin | ✔ (paylaş hedefi) | Kestirmeler (Shortcuts) ile |
+| Bildirim | Web Push (Tailscale HTTPS + `pywebpush`) | Yalnız ana ekrana eklenmiş PWA'da, iOS 16.4+ |
+| SMS/arama yedeği | ✔ | ✘ |
+
+- Bilgisayar kapalıysa telefon çalışmaz; çevrimdışı yalnız gönderme kuyruğu çalışır.
+- Telefondan gelen her bilgisayar eylemi onaya düşer. Komut, WhatsApp, gece koşusu ve izin profili değişikliği telefondan onaylanamaz.
+
+Ayrıntı: [docs/KURULUM-TELEFON.md](docs/KURULUM-TELEFON.md).
+
+## 11. Güvenlik ve gizlilik
+
+**İlke: veri senin bilgisayarında kalır, dışarı yalnız açık izinle çıkar.**
+
+- **Mail salt okunur:** Gmail `readonly`, IMAP `EXAMINE`. Kod mail gönderemez ya da silemez; taslaklar yalnız kasaya yazılır. Tek istisna, kendi adresine giden sabah özeti.
+- **Sırlar:** Windows Kimlik Yöneticisi / macOS Anahtar Zinciri. Dosyaya, repoya, kasaya ya da günlüklere yazılmaz.
+- **Asistan eylemleri üç sınıf:** **serbest** (geri alınabilir), **onaylı** (kart), **yasak** (onayla bile çalışmaz).
+  - Komutlar ayrıştırılıp sınıflanır; alt ifade, kodlanmış komut, zincirleme ve `python -c` gibi yollar onaya düşer.
+  - Mail/SMS/belge/web/ekran içeriği okunduğu oturumda komut ve kalıcı yazma işlemleri **her zaman** onaya düşer (istem enjeksiyonuna karşı).
+- **İzin profilleri** (`config/izinler.yaml`): sıkı / normal / serbest. Profiller yalnız onay ekler, hiçbiri takvim/WhatsApp/silme onayını kaldırmaz. Profil dosyası okunamazsa sıkıya düşer.
+- **Ağ yüzeyi:**
+  - Sunucular yalnız `127.0.0.1` dinler. Host/Origin denetimi yapılır, durum değiştiren isteklerde oturum jetonu aranır, port tek sürece bağlanır.
+  - Dış URL çekme yalnız herkese açık adreslere gider (SSRF koruması).
+- **Silme yok:** silinen not `90-Arşiv`e taşınır. Her asistan değişikliği git commit'idir ve geri alınabilir.
+- **Gömülü uygulamalar:** yalnız yayıncının resmî GitHub sürümünden indirilir, SHA-256 doğrulanır. Kütüphaneleri salt okunur okunur, sır içeren pano kaydı beyne girmez.
+- **Bilinen açık noktalar (dürüst):**
+  - Kurulum dosyaları ve güncellemeler **kod imzalı değil**.
+  - Kasa şifrelemesi git geçmişindeki eski düz metni silmez.
+  - KVKK paketi (aydınlatma metni, saklama/silme politikası) yok.
+  - Çok kullanıcılı/rol bazlı yetki yok.
+
+Ayrıntı: [docs/GUVENLIK.md](docs/GUVENLIK.md) · [10-guvenlik-gizlilik](system/docs/rehber/10-guvenlik-gizlilik.md).
+
+## 12. Güncelleme, yedek ve geri alma
 
 ```bash
-sb update            # ya da: uv run --directory <kasa>/_system python -m sb update
+sb update            # ne geleceğini gösterir, onay ister, kod yedeği alır, günceller
+sb update --check    # yalnız bak
+sb update --rollback # son kod yedeğine dön
+sb update --recover  # yarım kalan güncellemeyi tamamla/geri al
+sb version
 ```
-Kit klasöründe `git pull` yapar, yalnız kodu yeniler; notlarına, `config/*.yaml` ayarlarına ve şifrelerine dokunmaz.
-Ne değiştiğini `CHANGELOG.md` yazar. Yalnız bakmak için `sb update --check`, kurulu sürüm için `sb version`.
+- Güncelleme notlarına, `config/*.yaml` ayarlarına ve şifrelere dokunmaz. Değişiklikler [CHANGELOG.md](CHANGELOG.md)'de.
+- **Kasa:** git deposu. Uzak depo ayarlıysa günlük çalışma push eder; bu deponun **gizli** olduğundan emin ol.
+- **Yedek:** arayüzden kasa zip'i + kod zip'i (`~/.secondbrain/backups`). Kasa yedeği şimdilik zamanlanmıyor ve zip parolasız.
+- Klasör şifreleme: `sb encrypt <klasör> --confirm`. Anahtarı yedekle: `sb vault-key --export <dosya>`; anahtarsız şifreli not açılamaz.
 
-## Testler
+## 13. Sorun çıkınca
+
+| Komut | Ne yapar |
+|---|---|
+| `sb doctor` | Her bileşen için ✔/✗ ve "ne yapılacak": hesaplar, OAuth, anahtarlık, arşiv, Ollama/modeller, sağlayıcılar, Claude Code/MCP, kancalar, zamanlayıcı, asistan sunucusu, uygulamalar, yarım güncelleme, kasa git |
+| `sb logs` / `sb logs --bundle` | Günlükler / tanı paketi zip'i (son çökmeler + doktor çıktısı). Hiçbir yere kendiliğinden gönderilmez |
+| `sb perf` | Yavaşlık: adım süreleri, p95, en yavaşlar |
+| `sb hygiene` | Tekrar/kopuk/bayat notlar |
+| `sb apps status` | ClipBoardLine/Nashi kurulu mu, çalışıyor mu, son senkron |
+
+- Uzak destek bileşeni yoktur; bu kasıtlı. Destek için tanı paketini önce kendin incele, sonra paylaş.
+- Sık sorunlar: [11-sorun-giderme](system/docs/rehber/11-sorun-giderme.md) · [12-sss](system/docs/rehber/12-sss.md).
+
+## 14. Repo düzeni
+
+```
+second-brain-kit/
+  install.ps1 · install.sh · install.py     tek komut kurucular
+  packaging/                                PyInstaller tanımları (Setup.exe / Second Brain.exe / .app)
+  system/                                   kasanın _system klasörü olur
+    sb/                                     Python paketi: CLI, asistan, bağlayıcılar, yönlendirici, gizlilik
+      connectors/                           42 içe aktarıcı (whatsapp, spotify, spotify_tech, clipboardline, nashi…)
+      web/                                  asistan arayüzü (HTML/CSS/JS, tokens.css)
+    setup/                                  kurulum sihirbazı (motor + yerel sunucu + arayüz)
+    app/                                    masaüstü uygulaması
+    plugins/                                modül / kaynak / MCP / uygulama manifestleri, hazır seçimler
+    integrations/ · skills/                 Claude Code kancaları, skill'ler, tarayıcı eklentisi
+    tools/                                  rehber üretici, kit üretici, demo kasası, ekran görüntüsü aracı
+    tests/                                  840+ test
+    docs/rehber/                            136 sayfalık kullanıcı rehberi (üretilir; kaynağı docs/rehber-src/)
+  vault/                                    boş kasa şablonu (00-Inbox … 90-Arşiv, şablonlar)
+  apps/clipboardline/ · apps/nashi/         gömülü uygulamaların kaynak kodu (UPSTREAM.md: kaynak commit)
+  docs/                                     mimari, neden, güvenlik, hesap kurulum belgeleri
+  SHA256SUMS                                her dosyanın özeti
+```
+
+Kasa düzeni: `00-Inbox`, `10-Dersler`, `20-Projeler`, `30-Kariyer`, `40-Kaynaklar` (Mail, Drive, Spotify, ClipBoardLine…), `50-Günlük`, `60-Kişiler`, `90-Arşiv`, `_system`.
+
+## 15. Geliştirme ve test
 
 ```bash
-cd <kasa>/_system && uv run pytest -q          # 90+ birim testi (gerçek hesap/ağ gerektirmez)
+cd <kasa>/_system
+uv run pytest -q                        # gerçek hesap/ağ/kayıt defteri gerektirmez; gerçek sisteme dokunan çağrılar testte engellenir
+uv run python tools/build_guide.py      # rehberi manifestlerden üret (--check: bayat mı)
+uv run python tools/guide_shots.py      # rehber ekran görüntülerini uydurma demo kasasıyla yeniden çek
 ```
+- CI (`.github/workflows/test.yml`): her push'ta Windows ve macOS'ta sıfırdan sorusuz kurulum, `pytest` ve duman testleri.
+- `release.yml`: `v*` etiketinde Windows ve macOS kurulum paketlerini derler.
+- Yeni veri kaynağı, MCP, modül ya da uygulama eklemek için `system/plugins/` altına manifest yaz. Gerekirse `sb/connectors/` altına `parse()` + `run()` yaz; rehber sayfası kendiliğinden üretilir.
 
-Her push'ta GitHub Actions Windows ve macOS'ta sıfırdan kurulum yapıp testleri çalıştırır (`.github/workflows/test.yml`).
+## 16. Bilinen sınırlar ve yol haritası
+
+| Konu | Durum |
+|---|---|
+| Kod imzalama (Windows/Apple) | Yok, SmartScreen/Gatekeeper uyarısı çıkar |
+| Kasa şema sürümü / göç | Yok; not biçimi değişirse elle uyarlama gerekir |
+| Zamanlanmış şifreli yedek | Yok |
+| Kalite ölçümü | Tarih çıkarma, kişi birleştirme ve arama doğruluğu için değerlendirme seti yok |
+| Kaynak tazeliği | Klasör izleme, "bayat kaynak" uyarısı ve `sb today` yok |
+| Linux | Denenmedi; zamanlayıcı, paket ve CI yok |
+| Mobil | PWA; mağaza uygulaması yok (plan: Capacitor), bilgisayar kapalıyken çalışmaz |
+| Masaüstü uygulaması | Obsidian/Tailscale'i yönetmez; gömülü terminal ve Claude Code paneli yok |
+| ClipBoardLine/Nashi macOS | Kod yolu var, denenmedi |
+| Şirket kullanımı | KVKK paketi ve rol bazlı yetki yok |
+
+## 17. Lisanslar
+
+- Second Brain: depo sahibinin. Gizli depo, dağıtım yalnız davetle.
+- ClipBoardLine: MIT, `apps/clipboardline/LICENSE`.
+- Nashi: MIT, `apps/nashi/LICENSE`.
+- İkisinin üçüncü taraf bileşen lisansları kendi `THIRD_PARTY_NOTICES` dosyalarında (FFmpeg/yt-dlp GPL, LibreOffice MPL 2.0; Nashi bunları ilk açılışta ayrıca indirir).

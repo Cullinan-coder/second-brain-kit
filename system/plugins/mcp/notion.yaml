@@ -32,7 +32,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@notionhq/notion-mcp-server'
+  - '@notionhq/notion-mcp-server@2.6.1'
   env:
     NOTION_TOKEN: '{notion_token}'
   install: npm view @notionhq/notion-mcp-server version

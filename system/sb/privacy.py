@@ -49,21 +49,43 @@ def _yaml(path: Path) -> dict:
         return {}
 
 
+def _perm_cfg() -> tuple[dict, str]:
+    """(ayarlar, hata). Dosya YOKSA hata yok (normal profil); VAR ama okunamıyor/ayrıştırılamıyorsa hata döner (D-26)."""
+    try:
+        text = PERM_FILE.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}, ""
+    except OSError as e:
+        return {}, f"{PERM_FILE.name} okunamadı: {type(e).__name__}"
+    try:
+        cfg = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return {}, f"{PERM_FILE.name} bozuk (YAML hatası)"
+    if cfg is None:
+        return {}, ""
+    if not isinstance(cfg, dict):
+        return {}, f"{PERM_FILE.name} beklenen biçimde değil"
+    return cfg, ""
+
+
 def permissions() -> dict:
-    cfg = _yaml(PERM_FILE)
+    cfg, err = _perm_cfg()
     profiles = {k: dict(v) for k, v in PROFILES.items()}
     for name, rules in (cfg.get("profiller") or {}).items():
         if isinstance(rules, dict):
             profiles.setdefault(str(name), {}).update({a: bool(rules[a]) for a in ACTIONS if a in rules})
             profiles[str(name)].update(FLOOR)
     current = cfg.get("profil") if cfg.get("profil") in profiles else "normal"
-    return {"profile": current, "profiles": profiles, "actions": list(ACTIONS), "needs_approval": profiles[current]}
+    out = {"profile": current, "profiles": profiles, "actions": list(ACTIONS), "needs_approval": profiles[current]}
+    if err:                                                   # fail-closed: izin dosyası bozuksa sessizce 'normal' olma, SIKI uygula + uyar
+        out.update(profile="sıkı", needs_approval=profiles["sıkı"], warning=f"{err}; sıkı profil uygulanıyor. Dosyayı düzelt.")
+    return out
 
 
 def set_profile(name: str) -> dict:
     if name not in permissions()["profiles"]:
         raise ValueError(f"bilinmeyen profil: {name}")
-    cfg = _yaml(PERM_FILE)
+    cfg, _err = _perm_cfg()                                   # bozuk dosya yeni, geçerli bir dosyayla değiştirilir
     cfg["profil"] = name
     PERM_FILE.parent.mkdir(parents=True, exist_ok=True)
     PERM_FILE.write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False), encoding="utf-8")
@@ -71,8 +93,11 @@ def set_profile(name: str) -> dict:
 
 
 def needs_approval(action: str) -> bool:
-    """Seçili profilde bu eylem onay ister mi? Bilinmeyen eylem için güvenli varsayım: evet."""
-    return bool(permissions()["needs_approval"].get(action, True))
+    """Seçili profilde bu eylem onay ister mi? Bilinmeyen eylem için güvenli varsayım: evet; profil okunamazsa da evet."""
+    try:
+        return bool(permissions()["needs_approval"].get(action, True))
+    except Exception:                                         # noqa: BLE001 — fail-closed (D-26)
+        return True
 
 
 # ------------------------------------------------------------------ bulut süzgeci
@@ -400,7 +425,29 @@ def _safe_member(m: str) -> bool:
     if not m or m.endswith("/") or ":" in m or m.startswith(("/", "\\")):
         return False
     parts = m.replace("\\", "/").split("/")
+    if parts[0].lower() in RESTORE_BLOCKED or any(p.lower() == ".git" for p in parts):
+        return False                                          # kod (_system) ve git kancaları geri yüklemeyle yazılamaz (D-24)
     return ".." not in parts and "" not in parts and not Path(m).is_absolute()
+
+
+RESTORE_BLOCKED = {"_system", ".git", ".venv"}
+
+
+def _restore_target(root: Path, m: str) -> Path | None:
+    """Üyenin yazılacağı yol: çözümlenince kasada kalmalı ve yol üzerinde sembolik bağ/kavşak olmamalı (D-24)."""
+    t = root / m
+    try:
+        rr = root.resolve()
+        if rr not in t.resolve().parents:
+            return None
+        q = t
+        while q != root and q != q.parent:
+            if q.is_symlink():
+                return None
+            q = q.parent
+    except (OSError, ValueError):
+        return None
+    return t
 
 
 def restore(name: str, confirm: bool = False) -> dict:
@@ -412,7 +459,7 @@ def restore(name: str, confirm: bool = False) -> dict:
         return {"ok": False, "message": f"yalnız 'vault-' ile başlayan kasa yedekleri geri yüklenir: {z.name}"}
     root = VAULT
     with zipfile.ZipFile(z) as zf:
-        members = [m for m in zf.namelist() if _safe_member(m)]
+        members = [m for m in zf.namelist() if _safe_member(m) and _restore_target(root, m) is not None]
         if not confirm:
             return {"ok": True, "dry_run": True, "files": len(members), "message": "Yapılmadı. Uygulamak için --confirm ekle."}
         existing = [(root / m, m) for m in members if (root / m).is_file()]

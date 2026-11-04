@@ -125,3 +125,48 @@ def ingest_items(kaynak: str, rows: list[dict], con, dry_run: bool = False, refr
 
 def clean(text: str | None) -> str:
     return redact(text or "").strip()
+
+
+def sync_items(kaynak: str, rows: list[dict], con, dry_run: bool = False) -> dict:
+    """Uygulama kaynaklı (ClipBoardLine, Nashi) kayıtları tekrarsız yazar. Her satırın meta'sında `hash` (tüm alanlar) ve
+    isteğe bağlı `chash` (yalnız içerik) bulunur:
+      kimlik var + hash aynı → dokunma;  kimlik var + hash farklı → kaydı GÜNCELLE (FTS tetikleyicisiyle);
+      kimlik yok + aynı chash başka kimlikte var → tekrar, yazma;  aksi → yeni.
+    Döner: _summary + {guncellenen, tekrar}."""
+    have: dict[str, str | None] = {}
+    chashes: set[str] = set()
+    for rid, meta in con.execute("SELECT id, meta FROM items WHERE source = ?", (kaynak,)):
+        try:
+            m = json.loads(meta) if meta else {}
+        except ValueError:
+            m = {}
+        have[rid] = m.get("hash")
+        if m.get("chash"):
+            chashes.add(m["chash"])
+    new = upd = dup = 0
+    for r in rows:
+        meta = r.get("meta") or {}
+        h, ch = meta.get("hash"), meta.get("chash")
+        if r["id"] in have:
+            if have[r["id"]] != h:
+                upd += 1
+                if not dry_run:
+                    con.execute("UPDATE items SET date_ms = ?, kind = ?, title = ?, url = ?, body = ?, meta = ? WHERE source = ? AND id = ?",
+                                (r.get("date_ms"), r.get("kind"), r.get("title"), r.get("url"), r.get("body"),
+                                 json.dumps(meta, ensure_ascii=False), kaynak, r["id"]))
+                have[r["id"]] = h
+            continue
+        if ch and ch in chashes:
+            dup += 1
+            continue
+        new += 1
+        have[r["id"]] = h
+        if ch:
+            chashes.add(ch)
+        if not dry_run:
+            maildb.insert_item(con, r)
+    if not dry_run:
+        con.commit()
+    out = _summary(kaynak, rows, [r.get("title") for r in rows], new)
+    out.update(guncellenen=upd, tekrar=dup)
+    return out

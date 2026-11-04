@@ -27,6 +27,27 @@ HEADER = 'Gece koşusu yalnız sen istediğinde başlar (otomatik saat yok). Asi
 TASK_RE = re.compile(r"^- \[ \] (.+?)(?:\s+@(\S.*))?$")
 
 
+def allowed_dirs() -> list[Path]:
+    """Gece işinin çalışabileceği klasörler: config `night_allowed_dirs`; yoksa kasa ve ~/Workspace (D-05). Başka klasör reddedilir."""
+    cfg = _settings().get("night_allowed_dirs")
+    roots = [Path(x).expanduser() for x in cfg] if cfg else [vault_ops.VAULT, Path.home() / "Workspace"]
+    out = []
+    for r in roots:
+        try:
+            out.append(r.resolve())
+        except OSError:
+            pass
+    return out
+
+
+def dir_allowed(cwd: Path) -> bool:
+    try:
+        c = cwd.resolve()
+    except OSError:
+        return False
+    return any(c == r or r in c.parents for r in allowed_dirs())
+
+
 def _read(p: Path) -> str:
     from .content import extract
     try:
@@ -100,6 +121,7 @@ def ensure_note() -> Path:
 def night_add(task: str, where: str = "") -> str:
     """'geceye ekle: ...' — listeye madde ekler (çalıştırmaz)."""
     task = " ".join(task.split()).strip(" .:-")
+    where = " ".join(str(where).split())                      # tek satır: araya `\n- [ ] ... @klasör` enjekte edilemez (D-08)
     if not task:
         return "Hata: ne yapılacağını yaz (ör. 'geceye ekle: tekstil raporunun taslağını yaz @C:/Users/.../tekstil')."
     if vault_ops.SENSITIVE_RE.search(task):
@@ -162,6 +184,9 @@ def night_run(claude: str | None = None, dry: bool = False) -> str:
         cwd = Path(where).expanduser() if where else vault_ops.VAULT
         if not cwd.is_dir():
             _mark(line_no, False, f"klasör yok: {where}")
+            continue
+        if not dir_allowed(cwd):                              # izinli klasör dışı (ev klasörü, Başlangıç ...) hiç çalışmaz (D-05)
+            _mark(line_no, False, f"klasör izinli değil (config night_allowed_dirs): {where}")
             continue
         state.update(current=task, started=datetime.now().isoformat(timespec="seconds"))
         NIGHT_STATE.parent.mkdir(parents=True, exist_ok=True)

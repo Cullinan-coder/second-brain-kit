@@ -20,7 +20,7 @@ mcp:
   command: npx
   args:
   - -y
-  - '@modelcontextprotocol/server-memory'
+  - '@modelcontextprotocol/server-memory@2.0.1'
   env: {}
   install: npm view @modelcontextprotocol/server-memory version
   docs_url: https://github.com/modelcontextprotocol/servers/tree/main/src/memory

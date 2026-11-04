@@ -87,11 +87,24 @@ def _git(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", str(VAULT), *args], capture_output=True, text=True, encoding="utf-8", timeout=60)
 
 
+LAST_COMMIT_ERROR = ""      # son commit hatası (index.lock vb.); boşsa sorun yok
+
+
 def commit(paths: list[str], message: str) -> str:
-    """Yalnız verilen yolları commit'ler (kullanıcının yarım işleri karışmaz). Commit kimliğini döndürür; git yoksa ''."""
+    """Yalnız verilen yolları commit'ler (kullanıcının yarım işleri karışmaz). Commit kimliğini döndürür; git yoksa ''.
+    Hata sessiz kalmaz (D-21): stderr günlüğe ve LAST_COMMIT_ERROR'a yazılır."""
+    global LAST_COMMIT_ERROR
+    LAST_COMMIT_ERROR = ""
     _git("add", "-A", "--", *paths)
     r = _git("commit", "-m", f"asistan: {message}", "--", *paths)
     if r.returncode != 0:
+        err = " ".join(((r.stderr or "") + " " + (r.stdout or "")).split())[:300]
+        if "nothing to commit" not in err and "nothing added" not in err:
+            LAST_COMMIT_ERROR = err or f"git commit {r.returncode}"
+            try:
+                log("sistem", "commit hatası", ",".join(paths)[:200], LAST_COMMIT_ERROR, "")
+            except OSError:
+                pass
         return ""
     return _git("rev-parse", "--short", "HEAD").stdout.strip()
 
@@ -138,7 +151,8 @@ def update(query: str, status: str | None = None, append: str | None = None, act
             changes.append(f"durum {fm.get('status')} → {st}")
             fm["status"] = st
     if append and append.strip():
-        line = f"- {today:%Y-%m-%d}: {append.strip()}"
+        append = " ".join(append.split())[:300]               # tek satır: `\n- [ ] ... @klasör` ile gece işi / başlık enjekte edilemez (D-08)
+        line = f"- {today:%Y-%m-%d}: {append}"
         if "## Asistan notları" in body:
             body = body.rstrip() + "\n" + line + "\n"
         else:
@@ -171,20 +185,39 @@ def archive(query: str, reason: str = "", actor: str = "asistan") -> str:
     return f"Arşivlendi: {rel} → {_rel(dest)}" + (f" [commit {sha}]" if sha else "")
 
 
+NOT_UNDOABLE = {"geri al", "komut", "ekran", "kamera", "onay", "commit hatası"}
+
+
 def undo_last(actor: str = "asistan") -> str:
-    """En son asistan commit'ini geri alır (git revert; geçmiş silinmez)."""
-    r = _git("log", "--format=%h %s", "-n", "200")
-    for line in r.stdout.splitlines():
-        sha, _, msg = line.partition(" ")
-        if msg.startswith("asistan: ") and not msg.startswith("asistan: geri alındı"):
-            rv = _git("revert", "--no-commit", sha)
-            if rv.returncode != 0:
-                _git("revert", "--abort")
-                return f"Hata: {sha} geri alınamadı (sonradan elle değişmiş olabilir): {rv.stderr.strip()[:200]}"
-            _git("commit", "-m", f"asistan: geri alındı — {msg[9:]}")
-            log(actor, "geri al", "", msg[9:], sha)
-            return f"Geri alındı: {msg[9:]}"
-    return "Geri alınacak asistan değişikliği yok."
+    """Asistanın SON değişikliğini geri alır (git revert; geçmiş silinmez). Hangi commit olduğunu asistan günlüğündeki son girdi
+    belirler (D-21): commit edilememişse başka bir (eski) değişikliğe dokunmaz, nedenini söyler."""
+    entries: list[dict] = []
+    if LOG.exists():
+        for line in LOG.read_text(encoding="utf-8").splitlines():
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    undone = {e.get("commit") for e in entries if e.get("action") == "geri al"}
+    last = next((e for e in reversed(entries) if e.get("actor") == "asistan" and e.get("action") not in NOT_UNDOABLE
+                 and e.get("commit") not in undone), None)
+    if last is None:
+        return "Geri alınacak asistan değişikliği yok."
+    sha = str(last.get("commit") or "")
+    if not sha:
+        why = f" ({LAST_COMMIT_ERROR})" if LAST_COMMIT_ERROR else ""
+        return (f"Son değişiklik ({last.get('action')}: {str(last.get('detail', ''))[:80]}) commit edilemediği için geri alınamaz{why}. "
+                "Git'te değişikliği elle kontrol et.")
+    subj = _git("log", "--format=%s", "-n", "1", sha).stdout.strip()
+    if not subj.startswith("asistan: "):
+        return f"Hata: {sha} bir asistan değişikliği olarak bulunamadı; geri alınmadı."
+    rv = _git("revert", "--no-commit", sha)
+    if rv.returncode != 0:
+        _git("revert", "--abort")
+        return f"Hata: {sha} geri alınamadı (sonradan elle değişmiş olabilir): {rv.stderr.strip()[:200]}"
+    _git("commit", "-m", f"asistan: geri alındı — {subj[9:]}")
+    log(actor, "geri al", "", subj[9:], sha)
+    return f"Geri alındı: {subj[9:]}"
 
 
 def add_rule(text: str, actor: str = "asistan") -> str:

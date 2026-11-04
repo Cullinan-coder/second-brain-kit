@@ -160,6 +160,28 @@ sb models [--apply APPLY] [--bench BENCH] [--n N] [--pull PULL] [--rm RM] [--yes
 
 **Örnek:** `sb models`
 
+### sb apps
+
+**Ne yapar:** hazır uygulamaları (ClipBoardLine, Nashi) yönetir: listele, durum, kur, başlat, başlangıç kipi, sürüm denetimi, beyne senkron. Ayrıntı: [Uygulamalar: ClipBoardLine ve Nashi](22-uygulamalar.md).
+
+```
+sb apps [--force] [--background] [--dry-run] {list,status,install,start,autostart,update,sync} [id] [{login,startup,off}]
+```
+
+| Değer | Anlamı |
+|---|---|
+| `action` | `list` katalog, `status` durum, `install` resmî sürümü indirip kur, `start` aç, `autostart` başlangıç kipi, `update` yeni sürüm var mı, `sync` beyne oku |
+| `id` | `clipboardline` ya da `nashi` (`status` ve `sync` için `all` de olur) |
+| `mode` | `autostart` için: `login` bilgisayar açılınca, `startup` Second Brain «Çalışmaya başla» ile, `off` başlamasın |
+
+| Seçenek | Anlamı |
+|---|---|
+| `--force` | `install`: kuruluysa da yeniden kur |
+| `--background` | `start`: arka planda başlat (Nashi tepsiye gider) |
+| `--dry-run` | `sync`: yazmadan say |
+
+**Örnek:** `sb apps install nashi` · `sb apps autostart clipboardline startup` · `sb apps sync all --dry-run`
+
 ### sb usage
 
 **Ne yapar:** model kullanımı ve maliyet özeti (bütçeyle birlikte).

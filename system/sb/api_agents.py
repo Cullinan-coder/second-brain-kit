@@ -30,7 +30,7 @@ def _run(ctx: Ctx) -> dict:
     return _bad(agents.run, _s(ctx, "id"), _s(ctx, "input"), bool(ctx.data.get("web")))
 
 
-@route("POST", "/api/v2/agents/code")
+@route("POST", "/api/v2/agents/code", local_only=True)      # telefon çerezi gece işi ekleyemez (D-05)
 def _code(ctx: Ctx) -> dict:
     return _bad(agents.code_bridge, _s(ctx, "task"), _s(ctx, "where"))
 

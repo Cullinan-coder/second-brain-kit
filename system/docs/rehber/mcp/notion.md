@@ -37,7 +37,7 @@ Gizli değerler (`notion_token`) **yalnız işletim sisteminin şifre kasasına*
 Arka planda çalışan komut (gizli değerler `<alan>` yer tutucusuyla, gerçek değer şifre kasasından alınır):
 
 ```
-claude mcp add notion --scope user -e NOTION_TOKEN=<notion_token> -- npx -y @notionhq/notion-mcp-server
+claude mcp add notion --scope user -e NOTION_TOKEN=<notion_token> -- npx -y @notionhq/notion-mcp-server@2.6.1
 ```
 
 
