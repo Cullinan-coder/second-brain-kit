@@ -437,6 +437,9 @@ def classify_command(cmd: str) -> str:
             return "onayli"
         if head == "git" and any(a.lower().startswith(GIT_BAD_OPTS) for a in args[1:]):
             return "onayli"                                     # --no-index (rastgele dosya okuma), --output, --ext-diff ...
+        if head == "git" and args[0].lower() == "diff" and any(not a.startswith("-") for a in args[1:]):
+            return "onayli"                                     # komut ev klasöründe çalışır; depo dışında `git diff A B` kendiliğinden
+                                                                # --no-index olur ve iki dosyayı okur (cat yol kısıtını atlar). Yol/sürüm alan diff onaylı
     if head in READERS:
         paths = _reader_paths(args)
         if not paths or len(paths) != 1 or not _readable_path(paths[0]):

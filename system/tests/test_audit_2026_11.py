@@ -55,6 +55,10 @@ D01_ATTACKS = [
     r"Get-Date | Select-String -Path C:\Users\kullanici\.config\gh\hosts.yml -Pattern .",
     r"git diff --no-index C:\Users\kullanici\.config\gh\hosts.yml NUL",
     r"git diff --output=x.txt",
+    r"git diff C:\Users\kullanici\SecondBrain\_system\config\accounts.yaml NUL",   # depo dışında örtük --no-index
+    r"git diff ../../AppData/Roaming/x.json NUL",
+    r"git diff --stat C:/Users/kullanici/Desktop/a.txt C:/Users/kullanici/Desktop/b.txt",
+    r"git diff -- C:\Users\kullanici\Desktop\a.txt NUL",
     r"cat Workspace\x,C:\Users\kullanici\.config\gh\hosts.yml",
     "cat Workspace/x /etc/passwd",
     r"Get-Content Workspace/a, ../../.ssh/id_rsa",
@@ -80,7 +84,8 @@ def test_d01_simple_calls_stay_free(cmdenv):
     for cmd in ("git status", "get-process", "ls", "cat SecondBrain/Dashboard.md", "type Workspace/projects/a/README.md",
                 "git log --oneline -5", "python --version", "node --version", "uv --version", "ollama list", "ipconfig",
                 "Get-ChildItem -Path C:\\Users | Sort-Object Name | Select-Object -First 5", "Get-Date -Format 'yyyy-MM-dd HH:mm'",
-                "Get-Process | Sort-Object CPU -Descending | Select-Object -First 5", "winget list"):
+                "Get-Process | Sort-Object CPU -Descending | Select-Object -First 5", "winget list",
+                "git diff", "git diff --stat", "git diff --cached --name-only"):
         assert cmdenv(cmd) == "serbest", cmd
 
 

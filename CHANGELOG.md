@@ -2,6 +2,13 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## Yayımlanmamış
+
+- **Komut sınıflandırıcı:** dosya yolu ya da sürüm alan `git diff` artık onaylı. `run_command` ev klasöründe çalışır; depo dışında `git diff A B` kendiliğinden
+  `--no-index` kipine geçip iki dosyanın içeriğini gösteriyordu, `--no-index` yazılmadığı için onaysız (`serbest`) sayılıyor ve `cat` yol kısıtını atlıyordu.
+  Bağımsız değişkensiz `git diff`, `git diff --stat` gibi çağrılar serbest kalır. `sb security-test` listesine 4 yeni atlatma eklendi.
+- README: `engine.py --verify` kullanımı düzeltildi (`<dosya> <sha256>` alır, kurulu kopyayı doğrulamaz).
+
 ## 0.12.0 — 2026-11-04
 
 ### Güvenlik (denetim 2026-11, ikinci tur: D-10, D-13, D-18, D-20, D-22, D-23, D-25, D-27, D-28, D-29)

@@ -167,7 +167,7 @@ Komut masaüstüne **Second Brain Setup** (Windows `.exe`, Mac `.app`) indirir v
 `Second-Brain-Setup.exe` / `Second-Brain-Setup-macOS.zip` indir.
 
 - **Kurulum dosyası imzasız.** Windows SmartScreen "Windows bilgisayarınızı korudu" der: **Ek bilgi → Yine de çalıştır**. macOS "açılamıyor" der: sağ tık → Aç.
-- Tek komutlu kurucu indirdiği Setup dosyasının SHA-256'sını sürümdeki `SHA256SUMS` ile **kendisi doğrular**; uyuşmazsa ya da özet yoksa dosyayı siler ve durur. Elle indirdiysen aynı karşılaştırmayı sürüm sayfasındaki `SHA256SUMS` ile yap. Kurulu kopyayı doğrulamak için: `python setup/engine.py --verify`.
+- Tek komutlu kurucu indirdiği Setup dosyasının SHA-256'sını sürümdeki `SHA256SUMS` ile **kendisi doğrular**; uyuşmazsa ya da özet yoksa dosyayı siler ve durur. Elle indirdiysen aynı karşılaştırmayı sürüm sayfasındaki `SHA256SUMS` ile yap. Bir dosyayı elle doğrulamak için: `python setup/engine.py --verify <dosya> <sha256>` (kurulu kopyanın tamamını doğrulayan bir komut henüz yok).
 - **Komut satırı yolu** (sihirbazsız, repo klasöründe): `powershell -ExecutionPolicy Bypass -File install.ps1` ya da `bash install.sh`. Sessiz kurulum için `SB_SECRET_<ALAN>` ortam değişkenleri kullanılır.
 - **`sb` komutu:** kurulum terminale `sb` komutunu ekler (Windows `%USERPROFILE%\.secondbrain\bin\sb.cmd`, kullanıcı PATH'ine; macOS `~/.local/bin/sb`). Kurulumdan sonra **yeni açılan** bir terminalde hangi klasörde olursan ol `sb doctor`, `sb apps status` yazman yeter. Bu README'deki tüm `sb …` komutları bu kısayolu varsayar.
 - **Denemek için:** sihirbazı gerçek sisteme dokunmadan açmak istersen `SB_SETUP_SANDBOX=<klasör>` ile ya da `--sandbox` bayrağıyla başlat. Sağ üstte "DENEME KİPİ" yazar; anahtarlar dosyaya, komutlar "[deneme] atlandı" olur.
