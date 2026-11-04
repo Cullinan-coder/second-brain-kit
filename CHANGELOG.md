@@ -2,6 +2,11 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.11.1 — 2026-11-04
+
+- Nashi kurulumu Başlat menüsüne kısayol ekliyor (taşınabilir zip'te kısayol yoktu, uygulama aramada bulunamıyordu).
+- `sb/apps.py` macOS'ta `%LOCALAPPDATA%\...` biçimli katalog yollarını doğru çözüyor; macOS testleri yeşil.
+
 ## 0.11.0 — 2026-11-04 (ClipBoardLine ve Nashi: hazır uygulamalar)
 - **Hazır uygulamalar:** iki açık kaynak (MIT) uygulama OLDUĞU GİBİ kurulup beyne bağlanır; yeniden yazılmadı. **ClipBoardLine** (kopya geçmişi, Windows
   Electron, ~520 MB; macOS zip) ve **Nashi** (dosya dönüştürücü, Windows taşınabilir zip ~91 MB; macOS zip). Resmî GitHub sürümü indirilir, sürümdeki

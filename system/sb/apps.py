@@ -557,8 +557,30 @@ def _install_method(app_id: str, s: dict, f: Path, p: str) -> dict:
         dest.parent.mkdir(parents=True, exist_ok=True)
         os.replace(stage, dest)
         shutil.rmtree(old, ignore_errors=True)
-        return {"ok": True, "installed": exe.exists(), "message": f"{name} {s['version']} kuruldu: {dest}"}
+        lnk = start_menu_shortcut(name, exe)                                 # taşınabilir zip'in kısayolu yok: Başlat'ta bulunsun
+        msg = f"{name} {s['version']} kuruldu: {dest}" + (f" · Başlat menüsü kısayolu: {lnk}" if lnk else "")
+        return {"ok": True, "installed": exe.exists(), "shortcut": str(lnk) if lnk else None, "message": msg}
     raise AppsError(f"Bilinmeyen kurulum yöntemi: {s['method']}")
+
+
+def _start_menu_dir() -> Path:
+    return Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming"))) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+
+
+def start_menu_shortcut(name: str, exe: Path) -> Path | None:
+    """Windows Başlat menüsüne <ad>.lnk yazar (WScript.Shell). Başarısızlık kurulumu bozmaz: None döner."""
+    if sys.platform != "win32":
+        return None
+    lnk = _start_menu_dir() / f"{name}.lnk"
+    q = lambda v: str(v).replace("'", "''")
+    ps = (f"$s=New-Object -ComObject WScript.Shell; $l=$s.CreateShortcut('{q(lnk)}'); $l.TargetPath='{q(exe)}'; "
+          f"$l.WorkingDirectory='{q(exe.parent)}'; $l.IconLocation='{q(exe)}'; $l.Save()")
+    try:
+        lnk.parent.mkdir(parents=True, exist_ok=True)
+        rc, _ = _run(["powershell", "-NoProfile", "-NonInteractive", "-Command", ps], 30)
+    except (OSError, AppsError):
+        return None
+    return lnk if rc == 0 and lnk.exists() else None
 
 
 def _install_mac_zip(app_id: str, s: dict, f: Path) -> dict:

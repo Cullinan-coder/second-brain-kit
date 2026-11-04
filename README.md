@@ -8,7 +8,7 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.11.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.11.1** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
@@ -116,6 +116,7 @@ sb apps sync all                  # kütüphanelerini şimdi beyne al
 sb apps update                    # yeni sürüm var mı
 ```
 - SHA-256 uyuşmazsa indirilen dosya silinir ve kurulum durur.
+- Nashi taşınabilir zip olduğu için kurulum Başlat menüsüne **Nashi** kısayolu ekler; ClipBoardLine kendi kurucusuyla zaten ekler.
 - Second Brain bu uygulamaların dosyalarına **hiç yazmaz**; kütüphanelerini salt okunur kopyalayarak okur.
 - **Başlangıç:** kurulumda her uygulama için sorulur, varsayılan "bilgisayar açılınca". Bu, Windows'ta `HKCU\…\Run` girdisidir ve `sb apps autostart <id> off` ile kaldırılır.
 - **ClipBoardLine'ın kendi ayarı:** metin ve görsel toplama ClipBoardLine'da varsayılan **kapalıdır** (yalnız bağlantılar açık). Hepsinin beyne girmesi için ClipBoardLine → Settings → Sources'ta metin ve görsel toplamayı aç.

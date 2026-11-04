@@ -54,7 +54,10 @@ def env(monkeypatch, tmp_path):
         return Resp(served[url])
     monkeypatch.setattr(apps, "_open", fake_open)
     monkeypatch.setattr(apps, "NSIS_WAIT", 0)
-    return type("Env", (), {"reg": reg, "procs": procs, "spawned": spawned, "served": served, "opened": opened, "tmp": tmp_path})
+    shortcuts: list = []
+    monkeypatch.setattr(apps, "start_menu_shortcut", lambda name, exe: shortcuts.append((name, exe)) or None)
+    return type("Env", (), {"reg": reg, "procs": procs, "spawned": spawned, "served": served, "opened": opened,
+                            "tmp": tmp_path, "shortcuts": shortcuts})
 
 
 def serve_nashi(env, payload: bytes | None = None, sha: str | None = None):
@@ -167,6 +170,7 @@ def test_install_nashi_flattens_verifies_and_writes_run_key(env):
     assert seen[-1] == 100 and seen == sorted(seen)
     assert apps.load_state()["nashi"]["version"] == "0.7.14"
     assert env.reg["SecondBrain-Nashi"] == f'"{exe}" --background'                       # varsayılan kip: bilgisayar açılınca
+    assert env.shortcuts == [("Nashi", exe)]                                              # taşınabilir zip: Başlat menüsü kısayolu
     assert not (apps.downloads_dir() / "Nashi-Windows-x64.zip").exists()                  # indirilen paket silindi
     assert all(u.startswith(("https://github.com/orkunisitmak/", "https://api.github.com/")) for u in env.opened)
     assert apps.install("nashi")["message"].startswith("Nashi zaten kurulu")             # ikinci kez: indirme yok
@@ -446,3 +450,24 @@ def test_detect_version_for_manually_installed_app(env, monkeypatch):
 def test_clipboardline_install_dir_matches_electron_builder_package_name():
     s = apps.spec("clipboardline", "win")
     assert s["exe"].endswith(r"Programs\clipboardline-desktop\ClipBoardLine.exe") and s["install_dir"].endswith("clipboardline-desktop")
+
+
+def test_start_menu_shortcut_writes_lnk_under_appdata(monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+    monkeypatch.setattr(apps.sys, "platform", "win32")
+    calls = []
+
+    def fake_run(cmd, timeout=600):
+        calls.append(cmd)
+        (tmp_path / "Roaming" / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Nashi.lnk").write_bytes(b"L")
+        return 0, ""
+    monkeypatch.setattr(apps, "_run", fake_run)
+    exe = tmp_path / "Programs" / "Nashi" / "Nashi.exe"
+    lnk = apps.start_menu_shortcut("Nashi", exe)
+    assert lnk == tmp_path / "Roaming" / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Nashi.lnk"
+    assert calls and "WScript.Shell" in calls[0][-1] and str(exe) in calls[0][-1]
+    monkeypatch.setattr(apps, "_run", lambda cmd, timeout=600: (1, "hata"))
+    (tmp_path / "Roaming" / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Nashi.lnk").unlink()
+    assert apps.start_menu_shortcut("Nashi", exe) is None                                # başarısızlık kurulumu bozmaz
+    monkeypatch.setattr(apps.sys, "platform", "darwin")
+    assert apps.start_menu_shortcut("Nashi", exe) is None
