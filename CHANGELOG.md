@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.9 — 2026-11-04
+- Aynı anda oluşan iki çökme raporu (Windows saat çözünürlüğü) birbirinin üstüne yazılıyordu; artık ayrı dosya olur (`sb logs`, hata panosu).
+
 ## 0.9.8 — 2026-11-04
 - Kurulum motoru yol ayırıcısından bağımsız: `C:\...\uv.exe` ve OneDrive yolu macOS'ta da tanınır. macOS CI testleri kendi otomatik başlatma klasörünü bekler.
 

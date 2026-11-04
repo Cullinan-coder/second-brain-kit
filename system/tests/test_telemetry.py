@@ -120,3 +120,20 @@ def test_whatsnew(tmp_data, monkeypatch, tmp_path):
     (tmp_data / "seen_version").unlink()
     first = telemetry.whatsnew()
     assert "0.3.1" in first and "0.3.0" not in first
+
+
+def test_crash_reports_never_overwrite_each_other(monkeypatch):
+    """Aynı mikro saniyede (Windows saat çözünürlüğü) iki çökme iki ayrı rapor olmalı."""
+    from datetime import datetime as real
+    from sb import telemetry
+
+    class Frozen(real):
+        @classmethod
+        def now(cls, tz=None):
+            return real(2026, 11, 4, 12, 0, 0, 123456)
+    monkeypatch.setattr(telemetry, "datetime", Frozen)
+    try:
+        raise ValueError("x")
+    except ValueError as e:
+        a, b = telemetry.crash(e, "daily"), telemetry.crash(e, "daily")
+    assert a != b and a.exists() and b.exists()

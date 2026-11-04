@@ -141,7 +141,12 @@ def crash(exc: BaseException, context: str = "") -> Path | None:
     try:
         d = _crash_dir()
         d.mkdir(parents=True, exist_ok=True)
-        path = d / f"{datetime.now():%Y%m%d-%H%M%S-%f}.txt"
+        stamp = f"{datetime.now():%Y%m%d-%H%M%S-%f}"
+        path = d / f"{stamp}.txt"
+        n = 1
+        while path.exists():                                     # Windows saat çözünürlüğü ~15 ms: aynı anda iki çökme birbirini ezmesin
+            path = d / f"{stamp}-{n}.txt"
+            n += 1
         path.write_text(body, encoding="utf-8")
         for old in sorted(d.glob("*.txt"))[:-50]:                # klasör şişmesin
             old.unlink(missing_ok=True)
