@@ -249,8 +249,11 @@ def test_app_entry_broken_venv(app_entry, tmp_path, monkeypatch):
 # ------------------------------------------------------------------ CI ve betikler
 def test_release_workflow():
     yaml = pytest.importorskip("yaml")
-    wf = yaml.safe_load(_kitfile("release.yml").read_text(encoding="utf-8")) if (SYSTEM / "kit" / "release.yml").exists() else \
-        yaml.safe_load((SYSTEM.parent / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8"))
+    cands = [SYSTEM / "kit" / "release.yml", SYSTEM.parent / ".github" / "workflows" / "release.yml"]
+    path = next((c for c in cands if c.exists()), None)
+    if path is None:
+        pytest.skip("yayın akışı dosyası bu kopyada yok (kurulmuş kasada bulunmaz)")
+    wf = yaml.safe_load(path.read_text(encoding="utf-8"))
     on = wf.get("on", wf.get(True))                                                              # PyYAML `on` anahtarını True okur
     assert "v*" in on["push"]["tags"]
     job = wf["jobs"]["build"]

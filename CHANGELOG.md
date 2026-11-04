@@ -2,6 +2,12 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.7 — 2026-11-04
+- **macOS:** zamanlayıcı kurulumu paketli Setup.app içinde çalışmıyordu (betik, uygulamanın kendi çalıştırılabilir dosyasıyla çalıştırılıyordu); artık hedef kasanın Python'uyla.
+- **Kurulum paneli sunucusu:** reddedilen isteklerde (yanlış jeton, çok büyük ya da geçersiz yükleme) Windows'ta zaman zaman "bağlantı koptu" görünüyordu;
+  gövde boşaltılıp yanıt iletilir. Testler 5 ardışık koşuda kararlı.
+- Testler kurulmuş kopyada (CI, arkadaşların makinesi) kendi dosya yerleşimine ve saat dilimine bağlı değil.
+
 ## 0.9.6 — 2026-11-04 (kurulum sihirbazı canlı denemeden çıkan düzeltmeler)
 - **Deneme kipi:** `SB_SETUP_SANDBOX=<klasör>` ya da `--sandbox` — şifreler, zamanlanmış görevler, kısayollar, otomatik başlatma, MCP, Ollama ve Google
   girişi gerçek sisteme dokunmadan ayrı klasöre yazılır; sihirbaz baştan sona gerçek kurulumla denenebilir.

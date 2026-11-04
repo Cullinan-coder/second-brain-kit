@@ -1333,7 +1333,7 @@ class Engine:
         if WIN and (sysd / "tools" / "schedule.ps1").exists():
             _run_stream(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(sysd / "tools" / "schedule.ps1")], self.log)
         elif MAC and (sysd / "tools" / "schedule_macos.py").exists():
-            _run_stream([sys.executable, str(sysd / "tools" / "schedule_macos.py")], self.log)
+            _run_stream(self._py() + [str(sysd / "tools" / "schedule_macos.py")], self.log)      # paketli Setup'ta sys.executable uygulamanın kendisi
         else:
             self.log("  otomatik zamanlayıcı yok (cron ile `sb daily` / `sb weekly` kur)")
             return True

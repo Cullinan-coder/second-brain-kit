@@ -90,6 +90,18 @@ MAX_BODY = 1 << 20
 STATIC_EXT = {".html", ".css", ".js", ".json", ".svg", ".png", ".ico", ".woff2", ".txt"}
 
 
+class _CountingReader:
+    """rfile sarmalayıcı: ne kadar gövde okunduğunu sayar (reddedilen yüklemede kalanı boşaltmak için)."""
+
+    def __init__(self, raw):
+        self.raw, self.count = raw, 0
+
+    def read(self, n: int = -1) -> bytes:
+        data = self.raw.read(n)
+        self.count += len(data)
+        return data
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "SetupPanel"
     protocol_version = "HTTP/1.1"
@@ -115,6 +127,32 @@ class Handler(BaseHTTPRequestHandler):
 
     def _json(self, code: int, obj) -> None:
         self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"))
+
+    def _reject(self, code: int, obj) -> None:
+        """Erken ret: gövde okunmadan bağlantı kapanırsa Windows istemcisi ConnectionAborted görür → önce gövdeyi boşalt."""
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = 0
+        self._drain(n)
+        self._json(code, obj)
+
+    def _drain(self, n: int, cap: int = 8 << 20) -> None:
+        """Okunmayacak gövdeyi boşalt (≤ cap); daha büyükse bağlantıyı kapat. Windows okunmamış veriyle kapanan bağlantıda yanıtı iletmez."""
+        if n <= 0:
+            return
+        if n > cap:
+            self.close_connection = True
+            return
+        try:
+            left = n
+            while left > 0:
+                chunk = self.rfile.read(min(left, 1 << 16))
+                if not chunk:
+                    break
+                left -= len(chunk)
+        except OSError:
+            self.close_connection = True
 
     def _host_ok(self) -> bool:
         host = (self.headers.get("Host") or "").rsplit(":", 1)[0].strip("[]")
@@ -151,12 +189,12 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = parse_qs(u.query)
         if not self._host_ok():
-            return self._json(403, {"error": "yasak"})
+            return self._reject(403, {"error": "yasak"})
         api = u.path.startswith("/api/")
         if api and not self.headers.get("X-Setup-Token"):     # API'de jeton yalnız başlıktan (URL'ye sızmasın)
-            return self._json(403, {"error": "jeton gerekli"})
+            return self._reject(403, {"error": "jeton gerekli"})
         if api and not self._token_ok(q):                      # arayüz dosyaları (html/css/js) sır içermez; jeton yalnız API'de
-            return self._json(403, {"error": "jeton gerekli"})
+            return self._reject(403, {"error": "jeton gerekli"})
         try:
             if api:
                 return self._api(method, u.path, q)
@@ -276,7 +314,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.close_connection = True
                 raise ValueError("Content-Length gerekli")
             if int(n) > MAX_BODY:
-                self.close_connection = True
+                self._drain(int(n))
                 return self._json(413, {"error": "dosya çok büyük"})
             return self._json(200, A.save_client_secret(e, self.rfile.read(int(n))))
         if route == ("GET", "/api/summary"):
@@ -312,13 +350,14 @@ class Handler(BaseHTTPRequestHandler):
             if not n.isdigit():
                 self.close_connection = True
                 raise ValueError("Content-Length gerekli")
-            if int(n) > IM.MAX_UPLOAD:                         # gövdeyi okumadan reddet
-                self.close_connection = True
+            if int(n) > IM.MAX_UPLOAD:                         # reddet; makul boyuttaki gövde boşaltılır, devasa olan bağlantıyı keser
+                self._drain(int(n))
                 return self._json(413, {"error": "dosya çok büyük"})
+            counted = _CountingReader(self.rfile)
             try:
-                return self._json(200, IM.upload(e, (q.get("source") or [""])[0], (q.get("name") or [""])[0], self.rfile, int(n)))
+                return self._json(200, IM.upload(e, (q.get("source") or [""])[0], (q.get("name") or [""])[0], counted, int(n)))
             except ValueError:
-                self.close_connection = True                   # okunmamış gövde bağlantıyı bozmasın
+                self._drain(int(n) - counted.count)            # okunmamış gövde kalmasın (Windows bağlantıyı sıfırlar)
                 raise
         if route == ("POST", "/api/import/preview"):
             return self._json(200, IM.preview(e, self._body()))

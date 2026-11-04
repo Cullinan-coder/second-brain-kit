@@ -238,7 +238,7 @@ def test_deneme_kipi_tam_akis(sbx, tmp_path, monkeypatch):
     assert all(s["status"] in ("done", "skipped") for s in p["steps"]), p["steps"]
     assert (vault / "_system" / "config" / "profile.yaml").is_file()
     prof = (vault / "_system" / "config" / "profile.yaml").read_text(encoding="utf-8")
-    assert "Ayşe" in prof and "Etc/UTC" not in prof          # profil adımı alanları apply'da kaybolmadı
+    assert "Ayşe" in prof and "timezone:" in prof            # profil adımı alanları apply'da kaybolmadı (CI saat dilimi UTC olabilir)
     assert (vault / "_system" / "config" / "features.yaml").is_file()
     assert (vault / "_system" / "sb").is_dir() and (vault / "_system" / ".venv").is_dir()      # kod kopyalandı + uv sync (taklit)
     if shutil.which("git"):
@@ -371,7 +371,10 @@ def test_madde2_deneme_kasasinda_profil_kisisel_degil(sbx):
     call, wait, box, real, eng = sbx
     import yaml
     src = yaml.safe_load((SYSTEM / "config" / "profile.yaml").read_text(encoding="utf-8")) or {}
-    secret_vals = [str(v) for k, v in src.items() if k in ("bio", "github_user", "workspace") and v]
+    ex = SYSTEM / "config" / "profile.example.yaml"
+    example = (yaml.safe_load(ex.read_text(encoding="utf-8")) or {}) if ex.exists() else {}
+    # yalnız örnek dosyadan FARKLI (kişisel) değerler sızmamalı; kurulu bir kopyada profil zaten örnektir
+    secret_vals = [str(v) for k, v in src.items() if k in ("bio", "github_user", "workspace") and v and example.get(k) != v]
     assert call("POST", "/api/apply", {"selection": {"modules": {}, "items": {}}, "preset": "minimal", "fields": {"name": "Ayşe"}})[0] == 202
     assert not wait()["error"]
     prof = (box / "SecondBrain" / "_system" / "config" / "profile.yaml").read_text(encoding="utf-8")
