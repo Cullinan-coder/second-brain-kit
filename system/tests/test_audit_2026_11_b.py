@@ -273,6 +273,9 @@ def test_doctor_shows_backup_age_and_fails_after_14_days(gitvault):
 
 
 # ================================================================== D-13 yayın zinciri
+_needs_kit = pytest.mark.skipif(not (KIT / "release.yml").exists(), reason="kit/ kaynağı bu kopyada yok (kurulu kopyada dosyalar repo kökünde)")
+
+
 def _workflow_files():
     out = [KIT / "release.yml", KIT / "ci.yml"]
     return [p for p in out if p.exists()]
@@ -288,6 +291,7 @@ def test_d13_actions_pinned_to_commit_sha_with_tag_comment():
             assert re.search(r"#\s*v\d+\.\d+\.\d+", rest), f"{p.name}: yanında sürüm etiketi yok: {ref}"
 
 
+@_needs_kit
 def test_d13_release_builds_from_lock_and_publishes_sha256sums():
     yaml = pytest.importorskip("yaml")
     wf = yaml.safe_load((KIT / "release.yml").read_text(encoding="utf-8"))
@@ -301,6 +305,7 @@ def test_d13_release_builds_from_lock_and_publishes_sha256sums():
     assert "release-files/*" in steps                                              # SHA256SUMS dosyası da sürüme eklenir
 
 
+@_needs_kit
 def test_d13_ci_uses_frozen_lock():
     text = (KIT / "ci.yml").read_text(encoding="utf-8")
     assert text.count("uv run --frozen") >= 3 and not re.search(r"uv run (?!--)", text.replace("uv run --no-project", ""))
@@ -319,6 +324,7 @@ def _extract_sh_func(name):
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash yok")
+@_needs_kit
 def test_d13_install_sh_verifies_setup_hash(tmp_path):
     import hashlib
     fn = tmp_path / "fn.sh"
@@ -337,6 +343,7 @@ def test_d13_install_sh_verifies_setup_hash(tmp_path):
     assert run(z).returncode == 1 and not z.exists()
 
 
+@_needs_kit
 def test_d13_install_scripts_download_sums_and_stop_on_mismatch():
     sh = (KIT / "install.sh").read_text(encoding="utf-8")
     ps = (KIT / "install.ps1").read_text(encoding="utf-8")
@@ -345,6 +352,7 @@ def test_d13_install_scripts_download_sums_and_stop_on_mismatch():
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell yok")
+@_needs_kit
 def test_d13_install_ps1_verifies_setup_hash(tmp_path):
     import hashlib
     ps = (KIT / "install.ps1").read_text(encoding="utf-8")
