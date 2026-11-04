@@ -91,7 +91,7 @@ def test_api_sozlesmesi_uclari_kullaniliyor():
     for ep in ("/api/catalog", "/api/presets", "/api/combine", "/api/requirements", "/api/wizard", "/api/profile/basic", "/api/account/google",
                "/api/account/imap", "/api/accounts", "/api/secret", "/api/secrets", "/api/ollama", "/api/models/pull", "/api/voice/setup", "/api/mcp",
                "/api/mcp/install", "/api/mcp/custom", "/api/import/upload", "/api/import/preview", "/api/import/run", "/api/imports", "/api/phone",
-               "/api/autostart", "/api/apply", "/api/progress"):
+               "/api/autostart", "/api/apply", "/api/progress", "/api/summary", "/api/path/check", "/api/account/school"):
         assert ep in js, ep
 
 
@@ -114,7 +114,7 @@ def test_pencere_pywebview_varsa():
     calls, stopped = [], []
     wv = types.SimpleNamespace(create_window=lambda *a, **k: calls.append((a, k)), start=lambda: calls.append("start"))
     assert app.run_window("http://127.0.0.1:1/?t=x", lambda: stopped.append(1), wv) == "window"
-    assert calls[0][0][0] == "Second Brain Kurulum" and calls[0][1] == {"width": 1100, "height": 760}
+    assert calls[0][0][0] == "Second Brain Kurulum" and {k: v for k, v in calls[0][1].items() if k != "js_api"} == {"width": 1100, "height": 760} and hasattr(calls[0][1]["js_api"], "pick_folder")
     assert calls[-1] == "start" and stopped == [1]
 
 
@@ -154,3 +154,30 @@ def test_kurulum_betikleri_paneli_cagirir():
     ps, sh = (kit / "install.ps1").read_text(encoding="utf-8"), (kit / "install.sh").read_text(encoding="utf-8")
     for s in (ps, sh):
         assert "setup/app.py" in s and "install.py" in s and "--cli" in s and "astral.sh/uv" in s
+
+
+# ------------------------------------------------------------------ canlı deneme bulguları (2026-11-04): arayüz davranışları
+def test_bulgular_arayuz_parcalari_var():
+    js = _js()
+    tr = _i18n()["tr"]
+    assert "Önceki ekran" == tr["g.prev"] and "Sonraki ekran" == tr["g.next"]        # madde 5: alt Geri/İleri ile karışmaz
+    assert "t('g.prev')" in js and "t('g.next')" in js and "t('wiz.prev'), () => { i--" not in js
+    assert "function paintTop" in js and "top.install" in js and "Kurulum %{p}" == tr["top.install"]     # madde 6
+    assert "data.imported" in js and "state.read" in js                                                  # madde 7
+    assert "mcp.rec" in js and "'second-brain'" in js and "S.mcpFb" in js and "mcp.done" in js            # madde 8-9
+    assert "keys.optional" in js and "isLocal()" in js and "tam_yerel" in js                              # madde 10
+    assert "accountNotes" in js and "schoolBox" in js and "/api/account/school" in js                      # madde 11
+    assert "SERVICE_KEYS" in js                                                                           # madde 12
+    assert "oll.have" in js                                                                               # madde 14
+    assert "catName(" in js                                                                               # madde 19
+    assert "errorCard" in js and "err.retry" in js and "resume: !!resume" in js and "error_info" in js    # madde 21
+    assert "/api/summary" in js and "sum.empty" in tr and "stepState" in js                               # madde 16
+    assert "/api/path/check" in js and "profile.vault.short" in js                                        # madde 4
+    for k in ("g.cs.ok",):                                                                                # madde 15: "yüklendi ✓" bir kez
+        assert js.count("t('g.cs.ok')") == 1
+
+
+def test_madde18_dar_pencere_duzeni():
+    css = (UI / "setup.css").read_text(encoding="utf-8")
+    assert "max-width:900px" in css and "minmax(0,1fr)" in css and "overflow-x:hidden" in css
+    assert ".sandbox-bar{overflow-wrap:anywhere}" in css

@@ -121,9 +121,25 @@ def history(eng) -> dict:
         return {"imports": []}
 
 
-def _record(eng, source: str, file: str, ok: bool, note: str) -> None:
+_COUNT_RES = (re.compile(r"(?:yaz[ıi]lan|aktar[ıi]lan|eklenen|yeni|okunan)\s*:?\s*(\d+)", re.I),
+              re.compile(r"(\d+)\s+(?:mesaj|kay[ıi]t|not|öğe|satır|yeni|dosya)", re.I))
+
+
+def parse_count(lines) -> int | None:
+    """Bağlayıcı çıktısından 'N mesaj/kayıt/...' sayısı (son eşleşme; yoksa None)."""
+    best = None
+    for ln in lines:
+        for rx in _COUNT_RES:
+            m = rx.search(str(ln))
+            if m:
+                best = int(m.group(1))
+    return best
+
+
+def _record(eng, source: str, file: str, ok: bool, note: str, count: int | None = None) -> None:
     items = history(eng)["imports"]
-    items.append({"source": source, "file": file, "ok": ok, "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "note": note[:200]})
+    items.append({"source": source, "file": file, "ok": ok, "at": time.strftime("%Y-%m-%dT%H:%M:%S"), "note": note[:200],
+                  **({"count": count} if count is not None else {})})
     eng.data.mkdir(parents=True, exist_ok=True)
     _history_file(eng).write_text(json.dumps(items[-200:], ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -136,8 +152,13 @@ def run(eng, b: dict, wait: bool = False) -> bool:
         raise ValueError("Bu kaynağın içe aktarıcısı henüz yok")
 
     def work(pct):
-        rc = E._run_stream(cmd, eng.log)
-        _record(eng, m["id"], p.name, rc == 0, f"çıkış kodu {rc}")
+        out: list[str] = []
+
+        def lg(line):
+            out.append(str(line))
+            eng.log(line)
+        rc = E._run_stream(cmd, lg)
+        _record(eng, m["id"], p.name, rc == 0, f"çıkış kodu {rc}", parse_count(out) if rc == 0 else None)
         if rc:
             raise RuntimeError(f"içe aktarma başarısız (kod {rc})")
     return eng.run_job("import:" + m["id"], f"İçe aktarılıyor: {m['id']}", work, wait)

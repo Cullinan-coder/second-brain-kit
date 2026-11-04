@@ -7,7 +7,18 @@ const R = {};
 
 /* ================= ortak parçalar ================= */
 function spinner() { return h('p', { class: 'muted', text: t('common.loading') }); }
-function unavailableBox() { return h('p', { class: 'muted', text: t('err.unavailable') }); }
+/* r verilirse sunucunun döndürdüğü hata metni gösterilir; genel "kullanılamıyor" yalnız gerçek 404'te ya da yanıt yokken */
+function unavailableBox(r) { return h('p', { class: 'muted', text: r ? unavailable(r) : t('err.unavailable') }); }
+const API_IDS = ['openai', 'anthropic', 'gemini', 'openrouter', 'groq', 'deepseek', 'mistral'];
+function acctLabel(id) { const k = 'acct.' + id; const v = t(k); return v === k ? id : v; }
+function splitAccounts(list) {
+  const acc = [], api = [];
+  arr(list).forEach((id) => (API_IDS.includes(id) ? api : acc).push(id));
+  return { acc, api };
+}
+/* alan anahtarı -> şifre kasası adı (sunucu: api-*, imap-*, mcp-*, svc-*, telegram-bot) */
+const SECRET_RING = { openai_key: 'api-openai', anthropic_key: 'api-anthropic', gemini_key: 'api-gemini', openrouter_key: 'api-openrouter', groq_key: 'api-groq', deepseek_key: 'api-deepseek', mistral_key: 'api-mistral', telegram_token: 'telegram-bot' };
+function ringName(fieldKey) { return SECRET_RING[fieldKey] || (/^(api|imap|mcp|svc)-/.test(fieldKey) ? fieldKey : 'svc-' + String(fieldKey).replace(/_/g, '-')); }
 function normSecrets(d) {
   const out = {};
   const m = d && (d.secrets !== undefined ? d.secrets : d);
@@ -24,7 +35,7 @@ function secretRow(key, label, have, hint) {
   const save = btn(t('keys.save'), async () => {
     if (!input.value) { msg(out, t('keys.empty'), 'warn'); return; }
     msg(out, t('hes.testing'));
-    const r = await api('/api/secret', { key, value: input.value });
+    const r = await api('/api/secret', { key, value: input.value, test: key.startsWith('api-') });
     wipeSecrets();
     if (!r.ok) { msg(out, unavailable(r), 'bad'); return; }
     const d = r.data || {};
@@ -85,7 +96,7 @@ function reqKinds(req) {
   const out = [];
   if (!req) return out;
   if (typeof req === 'string') return req.trim() && req.trim() !== '—' ? [{ kind: 'other', text: req }] : [];
-  if (arr(req.accounts).length) out.push({ kind: 'acct', text: arr(req.accounts).map(idOf).join(', ') });
+  if (arr(req.accounts).length) out.push({ kind: 'acct', text: arr(req.accounts).map(idOf).map(acctLabel).join(', ') });
   if (arr(req.secrets).length) out.push({ kind: 'key', text: arr(req.secrets).map(idOf).join(', ') });
   const hw = req.hardware || {};
   const g = Object.keys(hw).filter((k) => /gpu|vram/i.test(k) && hw[k]);
@@ -127,7 +138,7 @@ function buildTree(box) {
       const kinds = it.requires ? reqKinds(it.requires) : mk;
       row.el = h('label', { class: 'item' }, row.cb, h('span', { class: 'item-text' }, h('b', { text: it.name }),
         it.desc ? h('small', { class: 'muted', text: it.desc }) : null,
-        h('span', { class: 'badges' }, it.cat ? h('span', { class: 'badge', text: String(it.cat) }) : null, kinds.map(badgeEl))));
+        h('span', { class: 'badges' }, it.cat ? h('span', { class: 'badge', text: catName(it.cat) }) : null, kinds.map(badgeEl))));
       row.hay = (it.name + ' ' + it.desc + ' ' + it.cat).toLowerCase();
       ref.rows.push(row);
       ref.body.append(row.el);
@@ -222,12 +233,46 @@ R.features = (box) => {
 
 /* ================= 4 · Kişisel bilgiler ================= */
 R.profile = (box) => {
-  if (!S.profile.timezone) S.profile.timezone = guard(() => Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
-  const fields = [['name', 'profile.name', true], ['full_name', 'profile.full_name'], ['vault', 'profile.vault'], ['timezone', 'profile.timezone'], ['org', 'profile.org'], ['role', 'profile.role']];
-  fields.forEach(([k, label, req]) => {
-    const input = h('input', { type: 'text', id: 'pf-' + k, value: S.profile[k] || '', autocomplete: 'off', placeholder: k === 'vault' ? t('profile.vault.ph') : '', oninput: (e) => { S.profile[k] = e.target.value; saveWizardSoon(); } });
+  fillProfileDefaults();
+  const text = (k, label, req) => {
+    const input = h('input', { type: 'text', id: 'pf-' + k, value: S.profile[k] || '', autocomplete: 'off', oninput: (e) => { S.profile[k] = e.target.value; saveWizardSoon(); } });
     box.append(h('div', { class: 'field' }, h('label', { for: 'pf-' + k, text: t(label) + (req ? ' *' : '') }), h('div', {}, input), h('span')));
-  });
+    return input;
+  };
+  text('name', 'profile.name', true);
+  text('full_name', 'profile.full_name');
+  /* kasa klasörü: varsayılan yol gerçek değer olarak önceden dolu; pywebview varsa Gözat… */
+  /* uzun yol / OneDrive uyarısı: yazarken (gecikmeli) ve adım açılınca sunucudan denetlenir; kısa yol önerilir */
+  const warnBox = h('div', { class: 'pathwarn', 'aria-live': 'polite' });
+  let pwTimer = null;
+  const drawWarn = () => {
+    clear(warnBox);
+    arr(S.pathWarn).forEach((w) => warnBox.append(h('div', { class: 'row tight' }, h('span', { class: 'warn', text: '⚠ ' + w.message }),
+      w.suggest ? btn(t('profile.vault.short'), () => { vault.value = w.suggest; S.profile.vault = w.suggest; saveWizardSoon(); checkPath(); }) : null)));
+  };
+  const checkPath = async () => {
+    const r = await api('/api/path/check', { vault: vault.value.trim() || (S.defaults && S.defaults.vault) || '' });
+    S.pathWarn = r.ok && r.data ? arr(r.data.warnings) : [];
+    drawWarn();
+  };
+  const vault = h('input', { type: 'text', id: 'pf-vault', value: S.profile.vault || '', autocomplete: 'off', oninput: (e) => { S.profile.vault = e.target.value; saveWizardSoon(); clearTimeout(pwTimer); pwTimer = setTimeout(checkPath, 400); } });
+  const browse = btn(t('profile.vault.browse'), async () => {
+    const p = await window.pywebview.api.pick_folder(vault.value);
+    if (p) { vault.value = p; S.profile.vault = p; saveWizardSoon(); checkPath(); }
+  }, 'ghost', { id: 'pf-browse', hidden: !canBrowse() });
+  window.addEventListener('pywebviewready', () => { browse.hidden = !canBrowse(); });
+  box.append(h('div', { class: 'field' }, h('label', { for: 'pf-vault', text: t('profile.vault') }),
+    h('div', { class: 'row tight' }, vault, browse), h('small', { class: 'muted', text: t('profile.vault.hint') })), warnBox);
+  checkPath();
+  /* saat dilimi: aranabilir seçim (input + datalist), sistem varsayılanı önceden seçili */
+  const tz = h('input', { type: 'text', id: 'pf-timezone', value: S.profile.timezone || '', autocomplete: 'off', list: 'tz-list', oninput: (e) => { S.profile.timezone = e.target.value; saveWizardSoon(); } });
+  const dl = h('datalist', { id: 'tz-list' });
+  const fillTz = () => { clear(dl); arr(S.tzs && S.tzs.list).forEach((z) => dl.append(h('option', { value: z.id, label: z.label }))); };
+  fillTz();
+  if (!S.tzs) api('/api/timezones').then((r) => { if (r.ok && r.data) { S.tzs = r.data; fillTz(); if (!tz.value) { tz.value = r.data.default; S.profile.timezone = r.data.default; } } });
+  box.append(h('div', { class: 'field' }, h('label', { for: 'pf-timezone', text: t('profile.timezone') }), h('div', {}, tz, dl), h('small', { class: 'muted', text: t('profile.tz.hint') })));
+  text('org', 'profile.org');
+  text('role', 'profile.role');
   box.append(h('p', { class: 'muted', text: t('profile.note') }));
 };
 async function saveProfile() {
@@ -237,6 +282,10 @@ async function saveProfile() {
   if (S.profile.role.trim()) body.role = S.profile.role.trim();
   const r = await api('/api/profile/basic', body);
   if (!r.ok && r.status !== 404) { showBanner(unavailable(r), 'warn'); return false; }
+  const f = r.ok && r.data && r.data.fields;
+  if (f) { if (f.vault) S.profile.vault = f.vault; if (f.timezone) S.profile.timezone = f.timezone; }   // sunucunun normalleştirdiği değerler
+  const pw = r.ok && r.data ? arr(r.data.warnings) : [];
+  if (pw.length) showBanner('⚠ ' + pw.map((x) => x.message).join(' '), 'warn');
   return true;
 }
 
@@ -244,7 +293,38 @@ async function saveProfile() {
 const IMAP_PRESETS = { gmail: ['imap.gmail.com', 993], outlook: ['outlook.office365.com', 993], icloud: ['imap.mail.me.com', 993], yandex: ['imap.yandex.com', 993], custom: ['', 993] };
 const SCOPES = ['gmail', 'calendar', 'contacts', 'drive'];
 const SERVICE_GUIDES = { spotify: 4, telegram: 4, tailscale: 4, github: 3 };
-const SERVICE_SECRETS = { spotify: [['spotify_client_id', 'svc.spotify.id'], ['spotify_client_secret', 'svc.spotify.secret']], telegram: [['telegram_token', 'svc.telegram.token']], github: [['github_pat', 'svc.github.pat']], tailscale: [] };
+const SERVICE_SECRETS = { spotify: [['svc-spotify-client-id', 'svc.spotify.id'], ['svc-spotify-client-secret', 'svc.spotify.secret']], telegram: [['telegram-bot', 'svc.telegram.token']], github: [['svc-github-pat', 'svc.github.pat']], tailscale: [] };
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const ACC_HOW = { google: 'acc.how.google', imap: 'acc.how.imap', school: 'acc.how.school', github: 'acc.how.service', spotify: 'acc.how.service',
+  telegram: 'acc.how.service', tailscale: 'acc.how.service', linkedin: 'acc.how.data', whatsapp: 'acc.how.data', icloud: 'acc.how.imapnamed', outlook: 'acc.how.imapnamed' };
+/* "Seçimin için gereken hesaplar": her birinin NEREDE bağlanacağını söyler (formu olmayan hesaplar dahil) */
+function accountNotes(ids) {
+  return h('ul', { class: 'plain acc-how' }, ids.map((id) => {
+    const key = ACC_HOW[id];
+    const li = h('li', {}, h('b', { text: acctLabel(id) }), ' — ', h('span', { class: 'muted', text: key ? t(key) : t('acc.how.other') }));
+    if (key === 'acc.how.imapnamed') {
+      li.append(' ', btn(t('acc.how.imapbtn'), () => {
+        const sel = $('im-preset');
+        if (sel) { sel.value = id; sel.dispatchEvent(new Event('change')); sel.scrollIntoView({ block: 'center' }); sel.focus(); }
+      }));
+    }
+    return li;
+  }));
+}
+function schoolBox(secrets) {
+  const url = h('input', { type: 'text', id: 'sc-url', autocomplete: 'off', placeholder: 'obs.okul.edu.tr' });
+  const user = h('input', { type: 'text', id: 'sc-user', autocomplete: 'off' });
+  const out = h('p', { class: 'msg muted', 'aria-live': 'polite' });
+  api('/api/accounts').then((r) => { const s = r.ok && r.data && r.data.school; if (s) { url.value = s.url || ''; user.value = s.user || ''; } });
+  const row = (k, label, el) => h('div', { class: 'field' }, h('label', { for: 'sc-' + k, text: t(label) }), h('div', {}, el), h('span'));
+  return h('details', { class: 'howto', open: arr(S.reqs && S.reqs.accounts).includes('school') }, h('summary', { text: t('school.h') }),
+    h('p', { class: 'muted', text: t('school.d') }), row('url', 'school.url', url), row('user', 'school.user', user),
+    h('div', { class: 'row' }, btn(t('school.save'), async () => {
+      const r = await api('/api/account/school', { url: url.value.trim(), user: user.value.trim() });
+      msg(out, r.ok ? '✓ ' + ((r.data && r.data.message) || t('school.saved')) : unavailable(r), r.ok ? 'ok' : 'bad');
+    }, 'primary')), out,
+    secretRow('svc-school-password', t('school.password'), !!(secrets && secrets['svc-school-password'])));
+}
 
 function googleGuide() {
   const N = 7;
@@ -254,28 +334,54 @@ function googleGuide() {
     clear(card);
     card.append(h('div', { class: 'gframe' }, h('span', { class: 'gnum', text: String(i) }),
       h('div', {}, h('p', { class: 'muted', text: t('g.screen', { n: i, m: N }) }), h('h4', { text: t('g.' + i + '.t') }), h('p', { text: t('g.' + i + '.x') }))),
-    h('div', { class: 'row' }, btn(t('wiz.prev'), () => { i--; draw(); }, 'ghost', { disabled: i <= 1 }),
-      btn(t('wiz.next'), () => { i++; draw(); }, 'primary', { disabled: i >= N })));
+    h('div', { class: 'row' }, btn(t('g.prev'), () => { i--; draw(); }, 'ghost', { disabled: i <= 1 }),
+      btn(t('g.next'), () => { i++; draw(); }, 'primary', { disabled: i >= N })));
   };
   draw();
   return card;
 }
 function googleConnect() {
   const alias = h('input', { type: 'text', id: 'g-alias', value: 'ana', autocomplete: 'off' });
+  const email = h('input', { type: 'email', id: 'g-email', autocomplete: 'off', placeholder: 'ad@gmail.com' });
   const on = (s) => S.sel.modules[s] !== false;
   const boxes = SCOPES.map((s) => { const cb = h('input', { type: 'checkbox', id: 'gs-' + s }); cb.checked = on(s) || s === 'gmail'; return cb; });
   const out = h('p', { class: 'msg muted', 'aria-live': 'polite' });
+  const csOut = h('p', { class: 'msg muted', 'aria-live': 'polite' });
+  const csBadge = h('span', { class: 'badge' });
+  const csFile = h('input', { type: 'file', accept: '.json,application/json', class: 'sr-only', id: 'g-cs', 'aria-label': t('g.cs.pick') });
+  let have = false;
   const go = btn(t('g.connect'), async () => {
+    const mail = email.value.trim();
+    if (!EMAIL_RE.test(mail)) { msg(out, t('g.email.bad'), 'warn'); email.focus(); return; }
     go.disabled = true; msg(out, t('g.connecting'));
     const scopes = SCOPES.filter((s, k) => boxes[k].checked);
-    const r = await api('/api/account/google', { alias: alias.value.trim() || 'ana', scopes });
-    go.disabled = false;
+    const r = await api('/api/account/google', { alias: alias.value.trim() || 'ana', email: mail, scopes });
+    go.disabled = !have;
     if (!r.ok) { msg(out, unavailable(r), 'bad'); return; }
     const d = r.data || {};
-    msg(out, d.ok === false ? '✗ ' + (d.error || d.message || t('err.generic')) : '✓ ' + t('g.connected', { email: d.email || '' }), d.ok === false ? 'bad' : 'ok');
+    msg(out, d.ok === false ? '✗ ' + (d.error || d.message || t('err.generic')) : '✓ ' + t('g.connected', { email: d.email || mail }) + (d.sandbox && d.message ? ' · ' + d.message : ''), d.ok === false ? 'bad' : 'ok');
     document.dispatchEvent(new CustomEvent('sb-accounts'));
-  }, 'primary');
+  }, 'primary', { disabled: true });
+  const paint = () => {
+    csBadge.className = 'badge ' + (have ? 'ok' : '');
+    csBadge.textContent = have ? t('g.cs.ok') : t('g.cs.none');
+    go.disabled = !have;
+    if (!have) msg(out, t('g.cs.need'), 'warn'); else if (out.textContent === t('g.cs.need')) msg(out, '');
+  };
+  api('/api/accounts').then((r) => { have = !!(r.ok && r.data && r.data.client_secret); paint(); });
+  csFile.addEventListener('change', async () => {
+    const f = csFile.files[0];
+    csFile.value = '';
+    if (!f) return;
+    msg(csOut, t('g.cs.uploading'));
+    const r = await uploadClientSecret(f);
+    if (!r.ok) { msg(csOut, unavailable(r), 'bad'); return; }
+    have = true; msg(csOut, ''); paint();
+  });
   return h('div', { class: 'panelbox' }, h('h4', { text: t('g.connect.h') }), h('p', { class: 'muted', text: t('g.connect.d') }),
+    h('h5', { text: t('g.cs.h') }), h('p', { class: 'muted', text: t('g.cs.d') }),
+    h('div', { class: 'row tight' }, btn(t('g.cs.pick'), () => csFile.click()), csBadge, csFile), csOut,
+    h('div', { class: 'field' }, h('label', { for: 'g-email', text: t('g.email') + ' *' }), h('div', {}, email), h('span')),
     h('div', { class: 'field' }, h('label', { for: 'g-alias', text: t('acc.alias') }), h('div', {}, alias), h('span')),
     h('div', { class: 'row' }, SCOPES.map((s, k) => h('label', { class: 'check inline' }, boxes[k], h('span', { text: t('scope.' + s) })))),
     h('div', { class: 'row' }, go), out);
@@ -316,18 +422,25 @@ function serviceGuides(secrets) {
   }));
 }
 R.accounts = (box) => {
-  if (S.reqs && S.reqs.accounts.length) box.append(h('p', { class: 'hintline', text: t('acc.needed', { list: S.reqs.accounts.join(', ') }) }));
+  if (S.reqs) {
+    const sp = splitAccounts(S.reqs.accounts);
+    if (sp.acc.length) box.append(h('p', { class: 'hintline', text: t('acc.needed', { list: sp.acc.map(acctLabel).join(', ') }) }), accountNotes(sp.acc));
+    if (sp.api.length) box.append(h('p', { class: 'hintline muted', text: isLocal() ? t('keys.optional', { list: sp.api.map(acctLabel).join(', ') }) : t('acc.apihint', { list: sp.api.map(acctLabel).join(', ') }) }));
+  }
   const list = h('div', { class: 'acc-list' });
   const load = async () => {
     clear(list); list.append(spinner());
     const r = await api('/api/accounts');
     clear(list);
-    if (!r.ok || !r.data) { list.append(unavailableBox()); return; }
-    const rows = arr(r.data.accounts !== undefined ? r.data.accounts : r.data);
+    if (!r.ok || !r.data) { list.append(unavailableBox(r)); return; }
+    const d = r.data;
+    const rows = arr(d.accounts).concat(
+      arr(d.google).map((a) => ({ alias: a.alias, kind: t('acc.kind.google'), email: a.email, state: a.authorized ? t('acc.authorized') : t('acc.unauthorized') })),
+      arr(d.imap).map((a) => ({ alias: a.alias, kind: t('acc.kind.imap'), email: a.email, state: a.has_password ? '' : t('acc.unauthorized') })));
     if (!rows.length) { list.append(h('p', { class: 'muted', text: t('acc.none') })); return; }
     rows.forEach((a) => {
       const alias = a.alias || a.name || '';
-      list.append(h('div', { class: 'acc' }, h('b', { text: alias }), h('span', { class: 'muted', text: [a.kind || a.type || a.provider, a.email || a.user].filter(Boolean).join(' · ') }),
+      list.append(h('div', { class: 'acc' }, h('b', { text: alias }), h('span', { class: 'muted', text: [a.kind || a.type || a.provider, a.email || a.user, a.state].filter(Boolean).join(' · ') }),
         btn(t('acc.remove'), async () => {
           if (!window.confirm(t('acc.confirm', { alias }))) return;
           const rr = await api('/api/account/remove', { alias });
@@ -344,22 +457,27 @@ R.accounts = (box) => {
   box.append(h('h3', { text: t('imap.title') }), imapForm(load));
   const svc = h('div', {});
   box.append(h('h3', { text: t('svc.title') }), svc);
-  loadSecrets().then((s) => svc.append(serviceGuides(s)));
+  loadSecrets().then((s) => svc.append(schoolBox(s), serviceGuides(s)));
 };
 
 /* ================= 6 · API anahtarları ================= */
 const API_KEYS = [['openai', 'OpenAI'], ['anthropic', 'Anthropic'], ['gemini', 'Gemini'], ['openrouter', 'OpenRouter'], ['groq', 'Groq'], ['deepseek', 'DeepSeek'], ['mistral', 'Mistral']];
+const SERVICE_KEYS = new Set(Object.values(SERVICE_SECRETS).flat().map((x) => x[0]));   // Spotify/Telegram/GitHub: yalnız Hesaplar adımında
 R.keys = (box) => {
   box.append(h('p', { class: 'muted', text: t('hes.intro') }));
+  const need = splitAccounts(S.reqs && S.reqs.accounts).api;
+  const local = isLocal();
+  if (local) box.append(h('p', { class: 'hintline', text: t('keys.local') }));
+  if (need.length) box.append(h('p', { class: 'hintline', text: local ? t('keys.optional', { list: need.map(acctLabel).join(', ') }) : t('keys.needed', { list: need.map(acctLabel).join(', ') }) }));
   const wrap = h('div', {});
   box.append(wrap, h('p', { class: 'muted', text: t('keys.test.note') }));
   loadSecrets().then((s) => {
     const have = (k) => !!(s && s[k]);
-    API_KEYS.forEach(([id, label]) => wrap.append(secretRow('api-' + id, label, have('api-' + id))));
-    const extra = arr(S.reqs && S.reqs.fields).filter((f) => f.secret && !String(f.key).startsWith('api-') && !API_KEYS.some(([id]) => 'api-' + id === f.key));
+    API_KEYS.forEach(([id, label]) => wrap.append(secretRow('api-' + id, label, have('api-' + id), local ? t('keys.optional.short') : '')));
+    const extra = arr(S.reqs && S.reqs.fields).filter((f) => f.secret && !['imap_password', 'vault_key'].includes(f.key) && !ringName(f.key).startsWith('api-') && !SERVICE_KEYS.has(ringName(f.key)));
     if (extra.length) {
       wrap.append(h('h3', { text: t('keys.extra') }));
-      extra.forEach((f) => wrap.append(secretRow(f.key, L(f.label) || f.key, have(f.key), L(f.help))));
+      extra.forEach((f) => wrap.append(secretRow(ringName(f.key), L(f.label) || f.key, have(ringName(f.key)), L(f.help))));
     }
     if (!s) wrap.prepend(h('p', { class: 'muted', text: t('keys.nostatus') }));
   });
@@ -401,7 +519,7 @@ R.models = (box) => {
     clear(oll); oll.append(h('h4', { text: t('oll.title') }), spinner());
     const r = await api('/api/ollama');
     clear(oll); oll.append(h('h4', { text: t('oll.title') }));
-    if (!r.ok || !r.data) { oll.append(unavailableBox()); return; }
+    if (!r.ok || !r.data) { oll.append(unavailableBox(r)); return; }
     const d = r.data;
     const installed = d.installed !== undefined ? !!d.installed : !!d.ok;
     oll.append(h('p', { class: installed ? 'ok' : 'warn', text: installed ? t('oll.installed') : t('oll.missing') }));
@@ -423,7 +541,9 @@ R.models = (box) => {
     };
     oll.append(h('div', { class: 'row' }, name, btn(t('oll.pull'), () => pull(name.value.trim()), 'primary')));
     const names = rec ? [rec.model, rec.vision_model].filter(Boolean) : [];
-    if (names.length) oll.append(h('div', { class: 'row' }, h('span', { class: 'muted', text: t('oll.suggested') }), names.map((n) => btn(n, () => pull(n)))));
+    const have = (n) => models.some((m) => m === n || m === n + ':latest' || n === m + ':latest');
+    if (names.length) oll.append(h('div', { class: 'row' }, h('span', { class: 'muted', text: t('oll.suggested') }),
+      names.map((n) => (have(n) ? h('span', { class: 'badge ok', text: n + ' · ' + t('oll.have') }) : btn(n, () => pull(n))))));
   };
   hw.load().then((r) => { rec = r; drawOllama(); });
   box.append(oll, out, job.el);
@@ -453,9 +573,10 @@ R.mcp = (box) => {
       const c = r.data.catalog || r.data.mcps;
       if (Array.isArray(c) && c.length) cat = c.map(normMcp);
       installed = arr(r.data.installed).map(idOf);
-    } else if (!cat.length) { list.append(unavailableBox()); return; }
+    } else if (!cat.length) { list.append(unavailableBox(r)); return; }
     const need = S.reqs ? S.reqs.mcps : [];
-    cat.sort((a, b) => (need.includes(b.id) ? 1 : 0) - (need.includes(a.id) ? 1 : 0));
+    const rank = (m) => (m.id === 'second-brain' ? 2 : 0) + (need.includes(m.id) ? 1 : 0);      // kendi MCP'miz en üstte
+    cat.sort((a, b) => rank(b) - rank(a));
     cat.forEach((m) => list.append(mcpCard(m, installed.includes(m.id) || installed.includes(m.name), need.includes(m.id), out, job, load)));
   };
   box.append(h('p', { class: 'muted', text: t('mcp.intro') }), list, out, job.el, customMcp(out, load));
@@ -463,31 +584,47 @@ R.mcp = (box) => {
 };
 function mcpCard(m, installed, needed, out, job, reload) {
   const inputs = m.env.map((e) => h('input', { type: e.secret ? 'password' : 'text', id: 'mcp-' + m.id + '-' + e.key, autocomplete: 'off', placeholder: e.key }));
-  const doc = m.docs_url && /^https?:\/\//.test(m.docs_url) ? h('a', { href: m.docs_url, target: '_blank', rel: 'noopener noreferrer', text: t('mcp.docs') }) : null;
+  const doc = m.docs_url && /^https?:\/\//.test(m.docs_url) ? h('a', { href: m.docs_url, target: '_blank', rel: 'noopener noreferrer', text: t('mcp.docs') })
+    : (m.docs_url ? h('small', { class: 'muted', text: t('mcp.localdoc', { path: m.docs_url }) }) : null);
+  const fb = h('p', { class: 'msg muted', 'aria-live': 'polite' });
+  const kept = S.mcpFb[m.id];
+  if (kept) msg(fb, kept.text, kept.kind);
+  const setFb = (text, kind) => { S.mcpFb[m.id] = { text, kind }; msg(fb, text, kind); };
   const actions = [];
   if (installed) {
     actions.push(btn(t('mcp.remove'), async () => {
       if (!window.confirm(t('mcp.confirm', { name: m.name }))) return;
       const r = await api('/api/mcp/remove', { name: m.id });
-      msg(out, r.ok ? t('mcp.removed') : unavailable(r), r.ok ? 'ok' : 'bad');
+      const d = r.data || {};
+      const ok = r.ok && d.ok !== false;
+      msg(out, ok ? t('mcp.removed') : (r.ok ? (d.message || t('err.generic')) : unavailable(r)), ok ? 'ok' : 'bad');
+      setFb(ok ? '✓ ' + t('mcp.removed') : '✗ ' + (r.ok ? (d.message || t('err.generic')) : unavailable(r)), ok ? 'ok' : 'bad');
       reload();
     }, 'ghost'));
   } else if (m.install) {
-    actions.push(btn(t('mcp.install'), async () => {
+    actions.push(btn(t('mcp.install'), async (ev) => {
+      const b = ev.currentTarget;
       const env = {};
       m.env.forEach((e, k) => { if (inputs[k].value) env[e.key] = inputs[k].value; });
+      b.disabled = true; setFb(t('mcp.installing', { name: m.name }), 'muted');
       const r = await api('/api/mcp/install', { id: m.id, env });
       wipeSecrets();
-      msg(out, r.ok ? t('mcp.installing', { name: m.name }) : unavailable(r), r.ok ? 'muted' : 'bad');
-      if (r.ok) startWatch(reload);
+      b.disabled = false;
+      const d = r.data || {};
+      const ok = r.ok && d.ok !== false;                       // sunucu 200 + {ok:false, message} da dönebilir (claude yok, ön koşul)
+      const why = r.ok ? (d.message || t('err.generic')) : unavailable(r);
+      msg(out, ok ? '✓ ' + (d.message || t('mcp.installing', { name: m.name })) : why, ok ? 'ok' : 'bad');
+      setFb(ok ? '✓ ' + t('mcp.done', { name: m.name }) : '✗ ' + why, ok ? 'ok' : 'bad');
+      if (ok) reload();                                        // kart yeniden çizilir: rozet "kurulu", düğme "Kaldır"
     }, 'primary'));
   } else {
     actions.push(h('span', { class: 'muted', text: t('mcp.docsonly') }));
   }
-  return h('div', { class: 'card static' }, h('b', { text: m.name }), needed ? h('span', { class: 'badge ok', text: t('mcp.needed') }) : null,
+  return h('div', { class: 'card static' }, h('b', { text: m.name }), m.id === 'second-brain' ? h('span', { class: 'badge ok', text: t('mcp.rec') }) : null,
+    needed ? h('span', { class: 'badge ok', text: t('mcp.needed') }) : null,
     installed ? h('span', { class: 'badge ok', text: t('mcp.installed') }) : null, h('small', { text: m.desc }),
     !installed && m.install ? m.env.map((e, k) => h('label', { class: 'miniField' }, h('span', { text: e.label }), inputs[k])) : null,
-    m.note ? h('small', { class: 'muted', text: m.note }) : null, h('div', { class: 'row tight' }, actions, doc));
+    m.note ? h('small', { class: 'muted', text: m.note }) : null, h('div', { class: 'row tight' }, actions, doc), fb);
 }
 function customMcp(out, reload) {
   const f = {
@@ -503,8 +640,10 @@ function customMcp(out, reload) {
       f.env.value.split('\n').forEach((ln) => { const i = ln.indexOf('='); if (i > 0) env[ln.slice(0, i).trim()] = ln.slice(i + 1).trim(); });
       const r = await api('/api/mcp/custom', { name: f.name.value.trim(), command: f.command.value.trim(), args: f.args.value.split(/\s+/).filter(Boolean), env });
       wipeSecrets();
-      msg(out, r.ok ? t('mcp.custom.ok') : unavailable(r), r.ok ? 'ok' : 'bad');
-      if (r.ok) reload();
+      const d = r.data || {};
+      const ok = r.ok && d.ok !== false;
+      msg(out, ok ? t('mcp.custom.ok') : (r.ok ? (d.message || t('err.generic')) : unavailable(r)), ok ? 'ok' : 'bad');
+      if (ok) reload();
     }, 'primary')));
 }
 
@@ -522,7 +661,7 @@ function previewView(d) {
   return box;
 }
 function sourceCard(s, after) {
-  const state = { file: null, name: '' };
+  const state = { file: null, name: '', read: null };
   const status = h('p', { class: 'msg muted', 'aria-live': 'polite' });
   const prog = h('div', { class: 'progress sm indeterminate', hidden: true }, h('div', { class: 'fill' }));
   const prev = h('div', {});
@@ -532,14 +671,31 @@ function sourceCard(s, after) {
     const r = await api('/api/import/run', { source: s.id, file: state.name });
     if (!r.ok) { run.disabled = false; msg(status, unavailable(r), 'bad'); return; }
     msg(status, t('data.running'));
-    startWatch((d) => { run.disabled = false; const bad = arr(d && d.steps).some((x) => nstat(x.status) === 'hata'); msg(status, bad ? t('err.generic') : t('data.done'), bad ? 'bad' : 'ok'); after(); });
+    startWatch(async (d) => {
+      run.disabled = false;
+      const bad = arr(d && d.steps).some((x) => nstat(x.status) === 'hata');
+      if (bad) { msg(status, (d && d.error) || t('err.generic'), 'bad'); after(); return; }
+      clear(prev);                                             // önizleme metni ("dry-run: hiçbir şey yazılmadı") gerçek sonuçla değişir
+      const hr = await api('/api/imports');
+      const last = arr(hr.ok && hr.data && hr.data.imports).filter((x) => x.source === s.id).pop();
+      const n = last && last.count != null ? last.count : state.read;
+      msg(status, n != null ? t('data.imported', { n }) : t('data.done'), 'ok');
+      after();
+    });
   }, 'primary', { disabled: true });
   const prevBtn = btn(t('data.preview'), async () => {
     clear(prev); msg(status, t('common.loading'));
     const r = await api('/api/import/preview', { source: s.id, file: state.name });
     if (!r.ok) { msg(status, unavailable(r), 'bad'); return; }
+    const d = r.data || {};
+    if (d.ok === false) {                                      // içe aktarıcı yok ya da kuru çalıştırma başarısız
+      msg(status, d.message || t('err.generic'), 'bad');
+      if (d.summary) prev.append(previewView(d));
+      return;
+    }
+    state.read = d.read != null ? d.read : null;
     msg(status, t('data.previewed'), 'ok');
-    prev.append(previewView(r.data));
+    prev.append(previewView(d));
     run.disabled = false;
   }, 'ghost', { disabled: true });
   const take = async (file) => {
@@ -579,9 +735,9 @@ R.data = (box) => {
     clear(hist); hist.append(h('h4', { text: t('data.history') }));
     const r = await api('/api/imports');
     const rows = r.ok && r.data ? arr(r.data.imports !== undefined ? r.data.imports : r.data) : null;
-    if (rows == null) { hist.append(unavailableBox()); return; }
+    if (rows == null) { hist.append(unavailableBox(r)); return; }
     if (!rows.length) { hist.append(h('p', { class: 'muted', text: t('data.history.none') })); return; }
-    hist.append(h('ul', { class: 'plain' }, rows.slice(0, 40).map((x) => h('li', { text: typeof x === 'string' ? x : [x.source, x.file || x.name, x.status || x.when || x.date, x.count != null ? t('data.count', { n: x.count }) : ''].filter(Boolean).join(' · ') }))));
+    hist.append(h('ul', { class: 'plain' }, rows.slice(0, 40).map((x) => h('li', { text: typeof x === 'string' ? x : [x.source, x.file || x.name, x.at || x.status || x.when || x.date, x.ok === true ? t('data.hist.ok') : (x.ok === false ? t('data.hist.fail') : ''), x.count != null ? t('data.count', { n: x.count }) : ''].filter(Boolean).join(' · ') }))));
   };
   const draw = () => {
     clear(wrap);
@@ -603,15 +759,16 @@ R.phone = (box) => {
     clear(view); view.append(spinner());
     const r = await api('/api/phone');
     clear(view);
-    if (!r.ok || !r.data) { view.append(unavailableBox()); return; }
+    if (!r.ok || !r.data) { view.append(unavailableBox(r)); return; }
     const d = r.data;
-    const tsOk = d.tailscale && typeof d.tailscale === 'object' ? d.tailscale : { installed: d.tailscale_installed, connected: d.tailscale_connected };
+    const tsOk = d.tailscale && typeof d.tailscale === 'object' ? d.tailscale : { installed: d.installed !== undefined ? d.installed : d.tailscale_installed, connected: d.connected !== undefined ? d.connected : d.tailscale_connected };
     view.append(h('ul', { class: 'plain' },
       h('li', {}, t('phone.installed') + ': ', h('b', { class: tsOk.installed ? 'ok' : 'warn', text: tsOk.installed ? t('common.yes') : t('common.no') })),
       h('li', {}, t('phone.connected') + ': ', h('b', { class: tsOk.connected ? 'ok' : 'warn', text: tsOk.connected ? t('common.yes') : t('common.no') }))));
     if (d.address) view.append(h('p', {}, t('phone.address') + ': ', h('code', { text: String(d.address) })));
-    if (d.pair_code || d.code) view.append(h('p', {}, t('phone.code') + ': ', h('code', { class: 'big', text: String(d.pair_code || d.code) })));
-    if (!d.address && !d.pair_code && !d.code) view.append(h('p', { class: 'muted', text: t('phone.noserver') }));
+    const pin = d.pairing_code || d.pair_code || d.code;
+    if (pin) view.append(h('p', {}, t('phone.code') + ': ', h('code', { class: 'big', text: String(pin) })));
+    if (!d.address && !pin) view.append(h('p', { class: 'muted', text: t('phone.noserver') }));
   };
   box.append(h('p', { class: 'muted', text: t('phone.intro') }), view, btn(t('phone.refresh'), load));
   box.append(h('details', { class: 'howto' }, h('summary', { text: t('wiz.tailscale.name') }),
@@ -629,6 +786,11 @@ R.startup = (box) => {
   on.addEventListener('change', sync); mini.addEventListener('change', sync);
   mini.disabled = !on.checked;
   api('/api/autostart').then((r) => {
+    if (r.ok && r.data && r.data.supported === false) {
+      on.checked = false; on.disabled = true; mini.disabled = true; S.auto.on = false;
+      box.append(h('p', { class: 'warn', text: t('auto.unsupported') }));
+      return;
+    }
     if (!r.ok || !r.data || MODE !== 'settings') return;
     on.checked = !!r.data.on; mini.checked = r.data.minimized !== false; sync();
   });
@@ -648,27 +810,74 @@ async function applyAutostart() {
 }
 
 /* ================= 12 · Özet → Kur ================= */
+/* adım durumu: atlandı / bakılmadı / bir şey eklenmedi (adım açıldı ama boş) / tamam */
+function stepState(id, sm) {
+  if (S.skipped[id]) return 'skipped';
+  if (!S.visited[id]) return 'todo';
+  if (sm) {
+    const a = sm.accounts || {};
+    const empty = { accounts: !(arr(a.google).length + arr(a.imap).length) && !a.school, keys: !arr(sm.secrets).length, mcp: !arr(sm.mcps).length,
+      data: !arr(sm.imports).length, models: !arr(sm.models).length };
+    if (empty[id]) return 'empty';
+  }
+  return 'done';
+}
+function summaryDetails(sm, rec) {
+  const dl = h('dl', { class: 'kv sumdetail' });
+  const none = t('sum.none');
+  const row = (k, v) => dl.append(h('dt', { text: t(k) }), h('dd', { text: v || none }));
+  const a = sm.accounts || {};
+  const acc = arr(a.google).map((x) => 'Google: ' + x.alias + (x.email ? ' (' + x.email + ')' : ''))
+    .concat(arr(a.imap).map((x) => 'IMAP: ' + x.alias + (x.email ? ' (' + x.email + ')' : '')), a.school ? ['Okul: ' + (a.school.url || a.school.user || '')] : []);
+  row('sum.vault', sm.vault + (sm.sandbox ? ' (' + t('sum.sandbox') + ')' : ''));
+  row('sum.tz', S.profile.timezone || sm.timezone);
+  row('sum.accounts', acc.join(' · '));
+  row('sum.secrets', arr(sm.secrets).length ? t('sum.secrets.n', { n: sm.secrets.length }) + ': ' + sm.secrets.join(', ') : '');
+  const have = arr(sm.models);
+  const want = rec ? [rec.model, S.sel.modules.vision ? rec.vision_model : ''].filter((n) => n && !have.some((m) => m === n || m === n + ':latest')) : [];
+  row('sum.models', [have.length ? t('sum.models.have') + ': ' + have.join(', ') : '', want.length ? t('sum.models.todo') + ': ' + want.join(', ') : ''].filter(Boolean).join(' · '));
+  row('sum.mcps', arr(sm.mcps).join(', '));
+  row('sum.imports', arr(sm.imports).map((x) => x.source + (x.count != null ? ' (' + t('data.count', { n: x.count }) + ')' : '')).join(', '));
+  row('sum.auto', S.auto.on ? t('common.yes') + (S.auto.minimized ? ' · ' + t('sum.auto.min') : '') : t('common.no'));
+  const sk = STEPS.slice(0, 11).filter((id) => S.skipped[id]).map((id) => t('step.' + id + '.t'));
+  row('sum.skippedsteps', sk.join(', '));
+  return dl;
+}
 R.summary = (box) => {
   const c = counts();
-  const body = h('div', {});
-  const rows = STEPS.slice(0, 11).map((id, i) => {
-    const st = S.skipped[id] ? 'skipped' : (S.visited[id] ? 'done' : 'todo');
-    return h('li', { 'data-st': st }, h('button', { type: 'button', class: 'link', text: t('step.' + id + '.t'), onclick: () => goStep(i) }),
-      h('span', { class: 'muted', text: ' — ' + t('sum.' + st) }));
-  });
+  const detail = h('div', { class: 'panelbox' }, spinner());
+  const list = h('ul', { class: 'plain sumlist' });
+  let sm = null;
+  const drawRows = () => {
+    clear(list);
+    STEPS.slice(0, 11).forEach((id, i) => {
+      const st = stepState(id, sm);
+      list.append(h('li', { 'data-st': st }, h('button', { type: 'button', class: 'link', text: t('step.' + id + '.t'), onclick: () => goStep(i) }),
+        h('span', { class: 'muted', text: ' — ' + t('sum.' + st) })));
+    });
+  };
+  drawRows();
   box.append(h('div', { class: 'hw' }, [['sum.modules', c.mods + '/' + c.modTotal], ['sum.items', c.items + '/' + c.total], ['sum.name', S.profile.name || '—'],
     ['sum.auto', S.auto.on ? t('common.yes') : t('common.no')]].map(([k, v]) => h('div', {}, h('b', { text: t(k) }), String(v)))));
-  box.append(h('h3', { text: t('sum.steps') }), h('ul', { class: 'plain sumlist' }, rows));
+  box.append(h('h3', { text: t('sum.detail') }), detail, h('h3', { text: t('sum.steps') }), list);
+  Promise.all([api('/api/summary'), api('/api/hardware')]).then(([sr, hr]) => {
+    clear(detail);
+    if (!sr.ok || !sr.data) { detail.append(unavailableBox(sr)); return; }
+    sm = sr.data;
+    detail.append(summaryDetails(sm, hr.ok && hr.data ? hr.data.recommend : null));
+    drawRows();
+  });
   if (STEPS.slice(0, 11).some((id) => S.skipped[id])) box.append(h('p', { class: 'muted', text: t('sum.later') }));
   const job = jobPanel();
   const fin = h('div', { class: 'panelbox', hidden: true });
+  const errBox = h('div', { hidden: true });
   const out = h('p', { class: 'msg muted', 'aria-live': 'polite' });
-  const go = btn(t('sum.install'), async () => {
-    go.disabled = true;
+  const install = async (resume) => {
+    go.disabled = true; errBox.hidden = true; clear(errBox);
     await saveProfile();
     await applyAutostart();
     const sel = selectionPayload();
-    const r = await api('/api/apply', { selection: { axes: { ...S.axes }, ...sel }, preset: S.axes.meslek || '', ...sel, fields: {} });
+    const r = await api('/api/apply', { selection: { axes: { ...S.axes }, ...sel }, preset: S.axes.meslek || '', ...sel, fields: {}, resume: !!resume });
     wipeSecrets();
     if (!r.ok && r.status !== 409) { go.disabled = false; msg(out, unavailable(r), 'bad'); return; }
     msg(out, t('kur.applying'));
@@ -677,7 +886,13 @@ R.summary = (box) => {
       const stp = arr(d && d.steps).map((s) => nstat(s.status));
       const failed = stp.includes('hata') || !!(d && d.error);
       go.disabled = false;
-      if (failed) { msg(out, t('sum.failed'), 'bad'); return; }
+      if (failed) {
+        msg(out, t('sum.failed'), 'bad');
+        errBox.append(errorCard(d, () => install(true), btn(t('err.toprofile'), () => goStep(STEPS.indexOf('profile')))));
+        errBox.hidden = false;
+        errBox.scrollIntoView({ block: 'nearest' });
+        return;
+      }
       msg(out, t('sum.finished'), 'ok');
       clear(fin);
       fin.append(h('h4', { text: t('sum.done.h') }), h('p', { text: t('sum.done.d') }),
@@ -685,8 +900,9 @@ R.summary = (box) => {
       fin.hidden = false;
       startTour();
     });
-  }, 'primary big', { id: 'btn-install' });
-  box.append(h('div', { class: 'row' }, go), out, job.el, fin, body);
+  };
+  const go = btn(t('sum.install'), () => install(false), 'primary big', { id: 'btn-install' });
+  box.append(h('div', { class: 'row' }, go), out, errBox, job.el, fin);
 };
 
 /* ================= sihirbaz kabuğu ================= */
@@ -734,7 +950,11 @@ async function goStep(n) {
 async function nextStep(skip) {
   const id = STEPS[S.step];
   if (skip) S.skipped[id] = true;
-  else { delete S.skipped[id]; S.visited[id] = true; if (id === 'profile' && !(await saveProfile())) return; }
+  else {
+    if (id === 'profile' && !S.profile.name.trim()) { showBanner(t('profile.name.req'), 'warn'); return; }
+    delete S.skipped[id]; S.visited[id] = true;
+    if (id === 'profile') { showBanner(''); if (!(await saveProfile())) { delete S.visited[id]; return; } }
+  }
   if (skip) S.visited[id] = true;
   goStep(S.step + 1);
 }
@@ -749,8 +969,7 @@ async function renderWizard() {
     nav.append(h('li', { 'data-st': i === S.step ? 'current' : st }, h('button', { type: 'button', class: 'link', 'aria-current': i === S.step ? 'step' : false, onclick: () => goStep(i) },
       h('span', { class: 'dot', text: st === 'done' ? '✓' : (st === 'skipped' ? '–' : String(i + 1)) }), h('span', { text: t('step.' + sid + '.t') }))));
   });
-  const pct = Math.round((S.step / (STEPS.length - 1)) * 100);
-  $('fill').style.width = pct + '%'; $('pct').textContent = pct + '%'; $('bar').setAttribute('aria-valuenow', String(pct));
+  paintTop();
   $('stepcount').textContent = t('wiz.step', { n: S.step + 1, m: STEPS.length });
   const body = $('step-body');
   clear(body);

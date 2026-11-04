@@ -22,12 +22,32 @@ def _load_server():
     return server
 
 
+class JsApi:
+    """pywebview js_api: sayfada `window.pywebview.api.pick_folder()` — yerel klasör seçici (tarayıcıda yok → "Gözat" düğmesi gizlenir)."""
+
+    def __init__(self):
+        self._window = None
+
+    def pick_folder(self, start: str = "") -> str:
+        w = self._window
+        if w is None:
+            return ""
+        import webview
+        kind = getattr(getattr(webview, "FileDialog", None), "FOLDER", None) or getattr(webview, "FOLDER_DIALOG", None)
+        try:
+            res = w.create_file_dialog(kind, directory=start or "")
+        except Exception:                                     # noqa: BLE001
+            return ""
+        return str(res[0]) if res else ""
+
+
 def run_window(url: str, stop, webview=None, browser=webbrowser, sleep=time.sleep) -> str:
     """Pencereyi/tarayıcıyı açar; kapanınca sunucuyu durdurur. Döner: "window" ya da "browser"."""
     mode = "browser"
     try:
         if webview is not None:
-            webview.create_window(TITLE, url, width=SIZE[0], height=SIZE[1])
+            api = JsApi()
+            api._window = webview.create_window(TITLE, url, width=SIZE[0], height=SIZE[1], js_api=api)
             mode = "window"
             webview.start()                       # pencere kapanana dek bloklar
         else:
@@ -43,8 +63,12 @@ def run_window(url: str, stop, webview=None, browser=webbrowser, sleep=time.slee
 
 
 def main(argv: list[str] | None = None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description="Second Brain kurulum paneli")
+    ap.add_argument("--sandbox", help="deneme kipi klasörü (ya da SB_SETUP_SANDBOX): gerçek sisteme dokunulmaz")
+    a = ap.parse_args(argv)
     server = _load_server()
-    srv = server.make_server(port=0).start()
+    srv = server.make_server(port=0, **({"sandbox": a.sandbox} if a.sandbox else {})).start()
     url, stop = srv.url, srv.stop
     try:
         import webview                            # pywebview (isteğe bağlı)

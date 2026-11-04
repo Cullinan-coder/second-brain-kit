@@ -23,10 +23,14 @@ EXE_NAMES = ("Second Brain.exe", "SecondBrain.exe")
 
 
 def startup_dir() -> Path:
+    if E.sandbox_dir():                                       # deneme kipi: gerçek Başlangıç klasörüne yazma
+        return E.sandbox_dir() / "Startup"
     return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
 
 
 def launch_agents_dir() -> Path:
+    if E.sandbox_dir():
+        return E.sandbox_dir() / "LaunchAgents"
     return Path.home() / "Library" / "LaunchAgents"
 
 
@@ -48,8 +52,8 @@ def launch_command(eng, minimized: bool, plat: str) -> tuple[str, list[str], str
     if plat == "win32":
         py = root / ".venv" / "Scripts" / "pythonw.exe"
         if not py.is_file():
-            alt = Path(sys.executable).with_name("pythonw.exe")
-            py = alt if alt.is_file() else py
+            alt = Path(sys.executable).with_name("pythonw.exe")      # deneme kipinde çalışan kurulumun python'una BAĞLANMA
+            py = alt if (alt.is_file() and not E.sandbox_dir()) else py
     else:
         py = root / ".venv" / "bin" / "python"
     return str(py), ["-m", "app.desktop", *flag], str(root)

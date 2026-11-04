@@ -27,6 +27,12 @@ def _private_state(monkeypatch, tmp_path):
     """Testler gerçek ~/.secondbrain kayıtlarına (kullanım, performans, çökme, önbellek) yazmasın."""
     from sb import brain, config, gcal_api, router, telemetry, usage
     (tmp_path / "data").mkdir(exist_ok=True)
+    # Testler kullanıcının kendi ayarına (config/features.yaml, config/izinler.yaml) bağlı olmasın: kurulu bir kopyada
+    # "Öğrenci" seçimi bilgisayar kontrolünü kapatınca testler rastgele kırılıyordu.
+    from sb import features, privacy
+    monkeypatch.setattr(features, "CONFIG", tmp_path / "features.yaml")
+    features._choices.cache_clear()
+    monkeypatch.setattr(privacy, "PERM_FILE", tmp_path / "izinler.yaml")
 
     def _no_real_calendar(*a, **k):                                 # CI'da giriş yok: testler gerçek Google'a gitmesin
         raise RuntimeError("testte gerçek Google Takvim yok — sahte takvim ver")

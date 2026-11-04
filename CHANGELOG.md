@@ -2,6 +2,15 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.6 — 2026-11-04 (kurulum sihirbazı canlı denemeden çıkan düzeltmeler)
+- **Deneme kipi:** `SB_SETUP_SANDBOX=<klasör>` ya da `--sandbox` — şifreler, zamanlanmış görevler, kısayollar, otomatik başlatma, MCP, Ollama ve Google
+  girişi gerçek sisteme dokunmadan ayrı klasöre yazılır; sihirbaz baştan sona gerçek kurulumla denenebilir.
+- **Kişisel bilgiler:** boş kasa klasörü varsayılana gider, saat dilimi listeden seçilir ("Gmt+3", "Türkiye" de anlaşılır), uzun/OneDrive yolu uyarısı.
+- **Hesaplar:** Google için e-posta ve `client_secret.json` yükleme; okul hesabı formu; hesaplar ve API anahtarları ayrı, okunur adlarla.
+- **Kurulum:** kurulum kasanın kendi koduyla çalışır (çalışan kuruluma dokunmaz), kişisel ayar dosyaları kopyalanmaz, `.venv` doğru klasörde;
+  hatada ne yapılacağı ve "Yeniden dene". Ayrıntılı özet ekranı, IMAP hataları Türkçe, MCP/model/içe aktarma geri bildirimleri.
+- **Testler:** kullanıcının özellik ayarına ve izin profiline bağlı değil (kurulu kopyada "Öğrenci" seçimi testleri kırıyordu); ayarlar testte geçici klasöre yönlenir.
+
 ## 0.9.5 — 2026-11-04
 - Paketleme testleri kurulmuş kasada (derleme dosyaları yokken) atlanır. Setup.exe ve .app 0.9.4'te ilk kez derlendi ve açıldı.
 

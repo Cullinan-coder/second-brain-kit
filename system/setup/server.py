@@ -46,12 +46,14 @@ try:
     from . import engine as E
     from . import imports as IM
     from . import mcp as M
+    from . import timez as TZ
 except ImportError:                                           # python setup/server.py gibi doğrudan çalıştırma
     import accounts as A  # type: ignore
     import autostart as AS  # type: ignore
     import engine as E  # type: ignore
     import imports as IM  # type: ignore
     import mcp as M  # type: ignore
+    import timez as TZ  # type: ignore
 
 
 def _merge_selection(sel: dict, s: dict) -> dict:
@@ -66,15 +68,13 @@ def _merge_selection(sel: dict, s: dict) -> dict:
 def _profile_basic(e, b: dict) -> dict:
     import os
     name, vault = str(b.get("name") or "").strip(), str(b.get("vault") or "").strip()
-    if not name or not vault:
-        raise ValueError("ad ve kasa klasörü gerekli")
-    tz = str(b.get("timezone") or "Europe/Istanbul").strip()
-    try:
-        from zoneinfo import ZoneInfo
-        ZoneInfo(tz)
-    except Exception:                                         # noqa: BLE001
-        raise ValueError(f"geçersiz saat dilimi: {tz}")
-    vp = Path(os.path.expanduser(vault)).resolve()
+    if not name:
+        raise ValueError("ad gerekli")
+    tz = TZ.normalize(b.get("timezone"))                      # "Gmt+3", "Türkiye", boş → IANA kimliği / sistem varsayılanı
+    if not vault or vault.lower() in ("varsayilan", "varsayılan", "default"):
+        vp = E.default_vault().resolve()                      # boş / "varsayılan" → ~/SecondBrain (deneme kipinde deneme kökü altı)
+    else:
+        vp = Path(os.path.expanduser(vault)).resolve()
     if vp.is_file():
         raise ValueError("kasa bir dosya olamaz")
     f = {"name": name, "full_name": str(b.get("full_name") or "").strip(), "vault": str(vp), "timezone": tz}
@@ -83,7 +83,7 @@ def _profile_basic(e, b: dict) -> dict:
             f[k] = str(b[k]).strip()[:120]
     e.selection["fields"].update({k: v for k, v in f.items() if v})
     e.vault = vp
-    return {"ok": True, "fields": f}
+    return {"ok": True, "fields": f, "warnings": E.path_warnings(vp)}
 
 UI = Path(__file__).resolve().parent / "ui"
 MAX_BODY = 1 << 20
@@ -202,9 +202,17 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"hardware": hw, "recommend": E.recommend(hw)})
         if route == ("POST", "/api/apply"):
             b = self._body()
-            sel = {"preset": b.get("preset"), "modules": b.get("modules"), "fields": b.get("fields")}
-            if isinstance(b.get("selection"), dict):
-                sel = _merge_selection(sel, b["selection"])
+            fields = dict(e.selection.get("fields") or {})        # kişisel bilgiler adımında kaydedilen alanlar korunur
+            fields.update(b.get("fields") if isinstance(b.get("fields"), dict) else {})
+            if isinstance(b.get("selection"), dict):             # 1.0 sihirbazı: meslek kimliği E.PRESETS'te yoksa "tam"; modüller yalnız çekirdek
+                pr = b.get("preset") if b.get("preset") in E.PRESETS else "tam"
+                sel = _merge_selection({"preset": pr, "modules": None, "fields": fields}, b["selection"])
+            else:
+                sel = {"preset": b.get("preset"), "modules": b.get("modules"), "fields": fields}
+            if not sel["fields"].get("vault"):
+                sel["fields"]["vault"] = str(e.vault or E.default_vault())
+            if not sel["fields"].get("name"):
+                sel["fields"]["name"] = E.default_name()
             if not e.apply(sel, resume=bool(b.get("resume"))):
                 return self._json(409, {"error": "başka bir iş sürüyor"})
             return self._json(202, {"started": True})
@@ -249,12 +257,32 @@ class Handler(BaseHTTPRequestHandler):
         if route == ("POST", "/api/wizard"):
             b = self._body()
             return self._json(200, e.save_wizard(b.get("step", 1), b.get("data") or {}))
+        if route == ("POST", "/api/path/check"):
+            return self._json(200, {"warnings": E.path_warnings(Path(str(self._body().get("vault") or "")).expanduser())})
         if route == ("POST", "/api/profile/basic"):
             return self._json(200, _profile_basic(e, self._body()))
         if route == ("POST", "/api/account/google"):
             return self._json(200, A.add_google(e, self._body()))
         if route == ("POST", "/api/account/imap"):
             return self._json(200, A.add_imap(e, self._body()))
+        if route == ("GET", "/api/timezones"):
+            return self._json(200, TZ.listing())
+        if route == ("GET", "/api/defaults"):
+            return self._json(200, {"vault": str(E.default_vault()), "sandbox": str(E.sandbox_dir() or ""), "name": E.default_name(),
+                                    "timezone": TZ.system_default(), "warnings": E.path_warnings(E.default_vault())})
+        if route == ("POST", "/api/upload/client-secret"):
+            n = self.headers.get("Content-Length") or ""
+            if not n.isdigit() or int(n) == 0:
+                self.close_connection = True
+                raise ValueError("Content-Length gerekli")
+            if int(n) > MAX_BODY:
+                self.close_connection = True
+                return self._json(413, {"error": "dosya çok büyük"})
+            return self._json(200, A.save_client_secret(e, self.rfile.read(int(n))))
+        if route == ("GET", "/api/summary"):
+            return self._json(200, e.summary())
+        if route == ("POST", "/api/account/school"):
+            return self._json(200, A.set_school(e, self._body()))
         if route == ("GET", "/api/accounts"):
             return self._json(200, A.list_accounts(e))
         if route == ("POST", "/api/account/remove"):
@@ -333,12 +361,19 @@ class SetupServer(ThreadingHTTPServer):
         self.server_close()
 
 
-def make_server(engine: E.Engine | None = None, port: int = 0) -> SetupServer:
+def make_server(engine: E.Engine | None = None, port: int = 0, sandbox: str | None = None) -> SetupServer:
+    """sandbox: deneme klasörü (SB_SETUP_SANDBOX ile aynı) — verilirse motor oluşmadan önce ortama yazılır."""
+    if sandbox:
+        import os
+        os.environ["SB_SETUP_SANDBOX"] = str(Path(sandbox).expanduser().resolve())
     return SetupServer(engine, port)
 
 
 if __name__ == "__main__":
-    srv = make_server()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sandbox", help="deneme kipi klasörü (gerçek sisteme dokunulmaz)")
+    srv = make_server(sandbox=ap.parse_args().sandbox)
     print(srv.url, flush=True)
     try:
         srv.serve_forever()

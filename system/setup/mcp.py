@@ -30,6 +30,9 @@ def _uv() -> str:
 
 
 def desktop_config_path() -> Path:
+    sb = E.sandbox_dir()
+    if sb:                                                    # deneme kipi: gerçek Claude Desktop yapılandırmasına dokunma
+        return sb / "claude_desktop_config.json"
     if E.WIN:
         return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "Claude" / "claude_desktop_config.json"
     if E.MAC:
@@ -40,7 +43,7 @@ def desktop_config_path() -> Path:
 def installed() -> list[dict]:
     """[{name, source: claude-code|claude-desktop, command, status}] — ortam değişkeni DEĞERLERİ asla döndürülmez."""
     out: list[dict] = []
-    if shutil.which("claude"):
+    if E.which_cmd("claude") and not E.sandbox_dir():
         rc, txt = E._run_capture(["claude", "mcp", "list"], 60)
         if rc == 0:
             for ln in txt.splitlines():
@@ -64,7 +67,7 @@ def overview(lang: str = "tr") -> dict:
     for m in cat:
         m["installed"] = m["id"] in names
         m["installable"] = m["install"] is not None
-    return {"catalog": cat, "installed": inst, "claude_cli": bool(shutil.which("claude"))}
+    return {"catalog": cat, "installed": inst, "claude_cli": bool(E.which_cmd("claude"))}
 
 
 def _runner(cmd: str, args: list[str]) -> tuple[str, list[str]]:
@@ -74,13 +77,28 @@ def _runner(cmd: str, args: list[str]) -> tuple[str, list[str]]:
     return cmd, args
 
 
+def _desktop_write(name: str, command: str, args: list[str], env: dict[str, str]) -> None:
+    """Deneme kipi: kaydı yalnız deneme klasöründeki Claude Desktop yapılandırma kopyasına yaz (sır değerleri yazılmaz)."""
+    p = desktop_config_path()
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cfg = {}
+    cfg.setdefault("mcpServers", {})[name] = {"command": command, "args": list(args), "env": {k: "***" for k in env}}
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def _add(name: str, command: str, args: list[str], env: dict[str, str], log) -> int:
     cmd, args = _runner(command, args)
     full = ["claude", "mcp", "add", name, "--scope", "user"]
     for k, v in env.items():
         full += ["-e", f"{k}={v}"]
     full += ["--", cmd, *args]
-    return E._run_stream(full, log)
+    rc = E._run_stream(full, log)
+    if rc == 0 and E.sandbox_dir():
+        _desktop_write(name, cmd, args, env)
+    return rc
 
 
 def install(eng, b: dict) -> dict:
@@ -92,7 +110,7 @@ def install(eng, b: dict) -> dict:
     mc = m["mcp"]
     if mc.get("install") is None:
         return {"ok": False, "message": "Bu MCP elle bağlanır; belge bağlantısına bak.", "docs_url": mc.get("docs_url")}
-    if not shutil.which("claude"):
+    if not E.which_cmd("claude"):
         return {"ok": False, "message": "claude komutu bulunamadı (Claude Code kurulu değil)"}
     given = b.get("env") if isinstance(b.get("env"), dict) else {}
     fields = {f["key"]: f for f in (m.get("requires") or {}).get("fields") or []}
@@ -120,13 +138,16 @@ def install(eng, b: dict) -> dict:
     def lg(line):
         log.append(E.redact(str(line), eng._secrets))
         eng.log(line)
+    sub = lambda s: REF_RE.sub(lambda mm: vals.get(mm.group(1), ""), str(s))     # noqa: E731
     if mid == "second-brain":                                 # kaynak komut <python> yer tutucusu içerir: kasadaki ortamı kullan
         cmd, args = _uv(), ["run", "--directory", str(eng.code_root()), "python", "-m", "sb.mcp_server"]
     else:
         pre = shlex.split(mc["install"], posix=not E.WIN) if not mc["install"].startswith("claude ") else []
+        if pre and E.sandbox_dir():
+            lg("[deneme] atlandı: ön koşul denetimi " + " ".join(pre)[:80])
+            pre = []
         if pre and E._run_stream(pre, lg):                    # ön koşul (npm view / docker pull / uvx --help)
             return {"ok": False, "message": f"Ön koşul başarısız: {pre[0]} kurulu mu? ({' '.join(pre)[:80]})", "log": log[-20:]}
-        sub = lambda s: REF_RE.sub(lambda mm: vals.get(mm.group(1), ""), str(s))     # noqa: E731
         cmd, args = mc["command"], [sub(a) for a in mc.get("args") or []]
     env = {k: sub(v) for k, v in (mc.get("env") or {}).items()} if mid != "second-brain" else {}
     E._run_capture(["claude", "mcp", "remove", mid, "-s", "user"], 30)
@@ -145,7 +166,7 @@ def custom(eng, b: dict) -> dict:
         raise ValueError("args metin listesi olmalı")
     if not isinstance(env, dict) or not all(ENV_RE.match(str(k)) and isinstance(v, str) for k, v in env.items()):
         raise ValueError("env: {ORTAM_ADI: değer}")
-    if not shutil.which("claude"):
+    if not E.which_cmd("claude"):
         return {"ok": False, "message": "claude komutu bulunamadı (Claude Code kurulu değil)"}
     A._remember(eng, *env.values())                           # değerlerin hepsi sır sayılır
     log: list[str] = []
@@ -157,7 +178,15 @@ def remove(eng, b: dict) -> dict:
     name = str(b.get("name") or "")
     if not NAME_RE.match(name):
         raise ValueError("geçersiz ad")
-    if not shutil.which("claude"):
+    if not E.which_cmd("claude"):
         return {"ok": False, "message": "claude komutu bulunamadı"}
     rc, out = E._run_capture(["claude", "mcp", "remove", name, "-s", "user"], 30)
+    if rc == 0 and E.sandbox_dir():
+        p = desktop_config_path()
+        try:
+            cfg = json.loads(p.read_text(encoding="utf-8"))
+            (cfg.get("mcpServers") or {}).pop(name, None)
+            p.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
+        except (OSError, ValueError):
+            pass
     return {"ok": rc == 0, "message": "MCP kaldırıldı" if rc == 0 else E.redact(out.strip()[-200:], eng._secrets)}

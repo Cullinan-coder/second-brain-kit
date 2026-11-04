@@ -29,8 +29,9 @@ IMAP_PRESETS = {
     "yandex": {"host": "imap.yandex.com", "port": 993, "hint": "Yandex: ayarlarda IMAP'i aç, uygulama şifresi üret."},
 }
 SB_PRESETS = {"outlook", "icloud"}                             # sb.imap.resolve yalnız bunları tanır
-SECRET_NAME_RE = re.compile(r"^(api-[a-z0-9_-]{1,40}|imap-[a-z0-9_-]{1,30}|mcp-[a-z0-9_-]{1,80}|telegram-bot)$")
-KNOWN_SECRETS = ["api-openai", "api-anthropic", "api-gemini", "api-openrouter", "api-groq", "api-deepseek", "api-mistral", "telegram-bot"]
+SECRET_NAME_RE = re.compile(r"^(api-[a-z0-9_-]{1,40}|imap-[a-z0-9_-]{1,30}|mcp-[a-z0-9_-]{1,80}|svc-[a-z0-9_-]{1,60}|telegram-bot)$")
+KNOWN_SECRETS = ["svc-school-password", "api-openai", "api-anthropic", "api-gemini", "api-openrouter", "api-groq", "api-deepseek", "api-mistral", "telegram-bot",
+                 "svc-spotify-client-id", "svc-spotify-client-secret", "svc-github-pat"]
 KEY_TESTS = {
     "openai": ("https://api.openai.com/v1/models", "bearer"), "openrouter": ("https://openrouter.ai/api/v1/models", "bearer"),
     "groq": ("https://api.groq.com/openai/v1/models", "bearer"), "deepseek": ("https://api.deepseek.com/v1/models", "bearer"),
@@ -49,9 +50,7 @@ def _uv() -> str:
 
 # ------------------------------------------------------------------ ortak
 def _config(eng) -> Path:
-    if not eng.vault:
-        raise ValueError("Önce kasa klasörünü belirle (kimlik adımı)")
-    c = eng.vault / "_system" / "config"
+    c = eng.ensure_vault() / "_system" / "config"            # kasa seçilmediyse varsayılan konum
     c.mkdir(parents=True, exist_ok=True)
     return c
 
@@ -103,7 +102,7 @@ def add_google(eng, b: dict) -> dict:
         raise ValueError("Google e-posta adresi gerekli (email alanı ya da kimlik adımındaki Gmail)")
     secrets_dir = eng.data / "secrets"
     cs = secrets_dir / "client_secret.json"
-    if b.get("client_secret"):
+    if b.get("client_secret") and isinstance(b["client_secret"], str):
         src = Path(str(b["client_secret"])).expanduser()
         if src.is_file() and not cs.exists():
             try:
@@ -120,6 +119,10 @@ def add_google(eng, b: dict) -> dict:
     prev = acc["google"].get(alias)
     acc["google"][alias] = {"email": email, "scopes": list(scopes), "source": f"gmail-{alias}"}
     _write_accounts(eng, acc)
+    if getattr(eng, "sandbox", None):                         # deneme kipi: OAuth akışı başlatılmaz
+        _kr().set_password(E.KEYRING_SERVICE, f"google:{alias}", "deneme-jetonu")
+        eng.log(f"[deneme] atlandı: Google OAuth ({alias}, {email})")
+        return {"ok": True, "email": email, "sandbox": True, "message": "deneme: bağlandı (Google girişi başlatılmadı)"}
     rc, out = E._run_capture(eng.sb_cmd("login", alias), 300)                 # tarayıcı açılır, kullanıcı izin verir
     token = None
     try:
@@ -176,12 +179,53 @@ def _has(name: str) -> bool:
         return False
 
 
+def client_secret_path(eng) -> Path:
+    return eng.data / "secrets" / "client_secret.json"
+
+
+def save_client_secret(eng, raw: bytes) -> dict:
+    """Google Cloud'dan inen client_secret.json: geçerli OAuth istemcisi (installed/web) ise DATA/secrets/ altına yazılır."""
+    try:
+        d = json.loads(raw.decode("utf-8-sig"))
+    except Exception:                                         # noqa: BLE001
+        raise ValueError("Dosya geçerli bir JSON değil")
+    if not isinstance(d, dict) or not ({"installed", "web"} & set(d)):
+        raise ValueError("Bu dosya bir OAuth istemcisi (client_secret.json) değil: 'installed' ya da 'web' anahtarı yok")
+    p = client_secret_path(eng)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".json.tmp")
+    tmp.write_bytes(raw)
+    tmp.replace(p)
+    return {"ok": True, "uploaded": True, "message": "client_secret.json yüklendi"}
+
+
+def set_school(eng, b: dict) -> dict:
+    """Okul (ÖBS/LMS) girişi: adres + kullanıcı adı accounts.yaml `school`a, şifre `svc-school-password` olarak keyring'e (POST /api/secret).
+    Her ikisi de boşsa kayıt kaldırılır."""
+    url, user = str(b.get("url") or "").strip(), str(b.get("user") or "").strip()
+    if url and not re.match(r"^(https?://)?[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?(:\d{1,5})?(/\S*)?$", url):
+        raise ValueError("okul adresi geçersiz (örn. obs.okul.edu.tr)")
+    if len(user) > 120 or "\n" in user:
+        raise ValueError("kullanıcı adı geçersiz")
+    acc = _read_accounts(eng)
+    if url or user:
+        acc["school"] = {"url": url, "user": user}
+    else:
+        acc.pop("school", None)
+    _write_accounts(eng, acc)
+    return {"ok": True, "message": "Okul bilgileri kaydedildi (şifre ayrı, şifre kasasına)" if (url or user) else "Okul bilgileri kaldırıldı",
+            "has_password": _has("svc-school-password")}
+
+
 def list_accounts(eng) -> dict:
     acc = _read_accounts(eng)
-    return {"google": [{"alias": a, "email": v.get("email"), "scopes": v.get("scopes") or [], "authorized": _has(f"google:{a}")}
+    sch = acc.get("school") if isinstance(acc.get("school"), dict) else None
+    return {"client_secret": client_secret_path(eng).is_file(),
+            "school": ({"url": sch.get("url", ""), "user": sch.get("user", ""), "has_password": _has("svc-school-password")} if sch else None),
+            **{"google": [{"alias": a, "email": v.get("email"), "scopes": v.get("scopes") or [], "authorized": _has(f"google:{a}")}
                        for a, v in acc["google"].items()],
             "imap": [{"alias": a, "email": v.get("email"), "host": v.get("host"), "port": v.get("port", 993), "has_password": _has(f"imap-{a}")}
-                     for a, v in acc["imap"].items()]}
+                     for a, v in acc["imap"].items()]}}
 
 
 def remove_account(eng, b: dict) -> dict:
@@ -274,6 +318,9 @@ def _install_cmds() -> list[list[str]]:
 
 def ollama_install(eng, wait: bool = False) -> bool:
     def work(pct):
+        if getattr(eng, "sandbox", None):
+            eng.log("[deneme] atlandı: Ollama kurulumu")
+            return
         for cmd in _install_cmds():
             if E._run_stream(cmd, eng.log):
                 raise RuntimeError("Ollama kurulumu başarısız (ollama.com'dan elle kurabilirsin)")

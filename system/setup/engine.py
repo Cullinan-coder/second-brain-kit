@@ -31,8 +31,114 @@ GB = 1024 ** 3
 TASK_NAMES = ("SecondBrain-Daily", "SecondBrain-Weekly", "SecondBrain-Chat")
 
 
+# ------------------------------------------------------------------ deneme kipi (SB_SETUP_SANDBOX=<klasör>)
+SANDBOX_SKIPPED: list[str] = []                                # atlanan yan etkili komutlar (test ve günlük için)
+_sandbox_sink = None                                           # günlük işlevi (Engine.log) — _run_capture günlük almaz
+
+
+def sandbox_dir() -> Path | None:
+    """Deneme kipi klasörü (yoksa None). Kasa, veri, şifre kasası, Başlangıç/Claude yapılandırması hep bunun altına gider."""
+    v = os.environ.get("SB_SETUP_SANDBOX")
+    return Path(os.path.expanduser(v)).resolve() if v else None
+
+
 def data_dir() -> Path:
+    sb = sandbox_dir()
+    if sb:
+        return sb / "data"
     return Path(os.environ.get("SB_DATA") or Path.home() / ".secondbrain")
+
+
+def default_vault() -> Path:
+    """Kasa klasörü boş bırakılınca kullanılan konum: ~/SecondBrain (deneme kipinde <deneme>/SecondBrain)."""
+    sb = sandbox_dir()
+    return (sb / "SecondBrain") if sb else Path.home() / "SecondBrain"
+
+
+def default_name() -> str:
+    return os.environ.get("USERNAME") or os.environ.get("USER") or "Kullanıcı"
+
+
+class JsonKeyring:
+    """Deneme kipinin şifre kasası: gerçek keyring yerine <deneme>/keyring.json (düz dosya; yalnız deneme için)."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self._lock = threading.Lock()
+
+    def _load(self) -> dict:
+        try:
+            return json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception:                                      # noqa: BLE001
+            return {}
+
+    def _save(self, d: dict) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    def get_password(self, service, name):
+        return self._load().get(f"{service}/{name}")
+
+    def set_password(self, service, name, value):
+        with self._lock:
+            d = self._load()
+            d[f"{service}/{name}"] = value
+            self._save(d)
+
+    def delete_password(self, service, name):
+        with self._lock:
+            d = self._load()
+            if d.pop(f"{service}/{name}", None) is None:
+                raise KeyError(name)
+            self._save(d)
+
+
+def which_cmd(name: str) -> str | None:
+    """shutil.which; deneme kipinde claude/ollama kurulu sayılır (komutlar zaten çalıştırılmaz)."""
+    if sandbox_dir() and name in ("claude", "ollama"):
+        return name
+    return shutil.which(name)
+
+
+def _cmd_text(cmd) -> str:
+    out, mask = [], False
+    for x in map(str, cmd):
+        out.append("***" if mask else x)
+        mask = x == "-e"                                       # claude mcp add -e KEY=değer: değeri yazma
+    return " ".join(out)[:300]
+
+
+def _sandbox_skip(cmd) -> bool:
+    """Deneme kipinde gerçek sistemi değiştiren komutlar (zamanlanmış görev, kısayol, claude mcp, ollama, winget, büyük indirme)."""
+    if not sandbox_dir() or not cmd:
+        return False
+    c = [str(x) for x in cmd]
+    exe = Path(c[0]).name.lower().removesuffix(".exe")
+    j = " ".join(c).lower()
+    if exe in ("schtasks", "launchctl", "winget", "docker", "brew", "apt", "apt-get"):
+        return True
+    if exe in ("powershell", "pwsh") and any(k in j for k in ("scheduledtask", "createshortcut", "ollamasetup", "invoke-webrequest", "schedule.ps1")):
+        return True
+    if exe == "claude" and c[1:3] in (["mcp", "add"], ["mcp", "remove"]):
+        return True
+    if exe == "ollama" and len(c) > 1 and c[1] in ("pull", "rm", "run", "create", "serve", "push", "cp"):
+        return True
+    if exe in ("sh", "bash") and any(k in j for k in ("ollama.com", "ollama-darwin")):
+        return True
+    if "install_cli.py" in j or "--extra" in c or ("voice" in c and "--setup" in c) or ("models" in c and "--apply" in c):
+        return True
+    if "sb" in c and (c[-1] == "update" or (len(c) > 1 and c[-2] == "login")):
+        return True
+    return False
+
+
+def _skipped(cmd, log=None) -> None:
+    line = "[deneme] atlandı: " + _cmd_text(cmd)
+    SANDBOX_SKIPPED.append(line)
+    if log:
+        log(line)
+    elif _sandbox_sink:
+        _sandbox_sink(line)
 
 
 def bundle_dir() -> Path | None:
@@ -77,6 +183,9 @@ def bundled_launcher() -> Path | None:
 
 def apps_dir() -> Path:
     """macOS uygulama klasörü (kullanıcıya özel, yönetici gerektirmez); `SB_APPS_DIR` ile değiştirilebilir."""
+    sb = sandbox_dir()
+    if sb:
+        return sb / "Applications"
     return Path(os.environ.get("SB_APPS_DIR") or Path.home() / "Applications")
 
 
@@ -261,7 +370,13 @@ def strip_secrets(obj, secrets: list[str] | None = None):
     return obj
 
 
+_SB_KR: dict = {}
+
+
 def _keyring():
+    sb = sandbox_dir()
+    if sb:                                                     # deneme kipi: gerçek şifre kasasına hiç dokunma
+        return _SB_KR.setdefault(str(sb), JsonKeyring(sb / "keyring.json"))
     try:
         import keyring
         return keyring
@@ -298,20 +413,51 @@ def install_uv(data: Path) -> str:
 
 
 def _run_capture(cmd: list[str], timeout: int = 15, cwd: Path | None = None) -> tuple[int, str]:
+    if _sandbox_skip(cmd):
+        _skipped(cmd)
+        return 0, ""
+    return _exec_capture(cmd, timeout, cwd)
+
+
+def _run_stream(cmd: list[str], log, cwd: Path | None = None) -> int:
+    """Komutu çalıştırır, çıktıyı satır satır günlüğe yazar (günlük sırları maskeler)."""
+    if _sandbox_skip(cmd):
+        _skipped(cmd, log)
+        return 0
+    return _exec_stream(cmd, log, cwd)
+
+
+def proc_env(cmd, cwd: Path | None = None) -> dict:
+    """Alt süreç ortamı. `uv` komutlarında sanal ortam HER ZAMAN `<proje>/.venv` olur (proje = `--directory` ya da cwd): dışarıdan gelen
+    UV_PROJECT_ENVIRONMENT / VIRTUAL_ENV (ör. paneli çalıştıran uv'nin ortamı) kasa köküne ya da çalışan kuruluma sızmasın."""
+    env = dict(os.environ)
+    c = [str(x) for x in cmd]
+    if c and Path(c[0]).name.lower().removesuffix(".exe") == "uv":
+        for k in ("UV_PROJECT_ENVIRONMENT", "VIRTUAL_ENV", "UV_ACTIVE", "CONDA_PREFIX"):
+            env.pop(k, None)
+        proj = None
+        if "--directory" in c and c.index("--directory") + 1 < len(c):
+            proj = c[c.index("--directory") + 1]
+        base = Path(cwd) if cwd else Path.cwd()
+        proj_dir = (base / proj) if proj else base
+        env["UV_PROJECT_ENVIRONMENT"] = str(proj_dir / ".venv")
+    return env
+
+
+def _exec_capture(cmd: list[str], timeout: int = 15, cwd: Path | None = None) -> tuple[int, str]:
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd, encoding="utf-8", errors="replace",
-                           creationflags=_NOWIN)
+                           creationflags=_NOWIN, env=proc_env(cmd, cwd))
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except Exception as e:
         return 127, str(e)
 
 
-def _run_stream(cmd: list[str], log, cwd: Path | None = None) -> int:
-    """Komutu çalıştırır, çıktıyı satır satır günlüğe yazar (günlük sırları maskeler)."""
+def _exec_stream(cmd: list[str], log, cwd: Path | None = None) -> int:
     log("$ " + " ".join(cmd))
     try:
         p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-                             creationflags=_NOWIN)
+                             creationflags=_NOWIN, env=proc_env(cmd, cwd))
     except Exception as e:
         log(f"  başlatılamadı: {e}")
         return 127
@@ -447,18 +593,38 @@ def copy_missing(src: Path, dst: Path) -> int:
     return n
 
 
+CODE_ITEMS = ("sb", "app", "plugins", "tools", "tests", "skills", "integrations", "setup", "pyproject.toml", "uv.lock", ".python-version",
+              "VERSION", "features.yaml")
+_NO_COPY = shutil.ignore_patterns("__pycache__", "*.pyc", ".venv", "*.example.bak")
+
+
+def internal_doc(name: str) -> bool:
+    """Kullanıcıya gitmeyen iç belgeler: şartnameler, iş planı, deneme bulguları."""
+    return name == "v1-plan.md" or "sartname" in name or "bulgulari" in name
+
+
 def sync_code(src: Path, dst: Path) -> None:
-    for item in ("sb", "app", "plugins", "tools", "tests", "docs", "skills", "integrations", "setup", "pyproject.toml", "uv.lock", ".python-version",
-                 "VERSION", "features.yaml"):
+    """Yalnız KOD kopyalanır (sb, app, plugins, tools, tests, skills, integrations, setup, pyproject, uv.lock, VERSION, features.yaml,
+    docs/*.md kullanıcı belgeleri) + `config/*.example.yaml`. `config/*.yaml` (örnek olmayan = kişisel ayarlar), `data`, `.venv`,
+    `__pycache__` ASLA kopyalanmaz; hedefte var olan dosyalara (kişisel ayarlar dahil) dokunulmaz."""
+    src, dst = Path(src), Path(dst)
+    if src.resolve() == dst.resolve():
+        raise RuntimeError(f"Kaynak ve hedef aynı klasör: {dst} (çalışan kuruluma yazılmaz)")
+    for item in CODE_ITEMS:
         s, d = src / item, dst / item
         if s.is_dir():
-            shutil.copytree(s, d, dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            shutil.copytree(s, d, dirs_exist_ok=True, ignore=_NO_COPY)
         elif s.exists():
+            d.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(s, d)
+    if (src / "docs").is_dir():
+        (dst / "docs").mkdir(parents=True, exist_ok=True)
+        for p in (src / "docs").iterdir():
+            if p.is_file() and p.suffix in (".md", ".json") and not internal_doc(p.name):
+                shutil.copy2(p, dst / "docs" / p.name)
     (dst / "config").mkdir(parents=True, exist_ok=True)
-    for ex in (src / "config").glob("*"):
-        if ex.name.endswith(".example.yaml") or not (dst / "config" / ex.name).exists():
-            shutil.copy2(ex, dst / "config" / ex.name)
+    for ex in (src / "config").glob("*.example.yaml"):
+        shutil.copy2(ex, dst / "config" / ex.name)
 
 
 def _yaml():
@@ -595,6 +761,67 @@ def requirements_for(body: dict, lang: str | None = "tr") -> dict:
             "apps": r["apps"], "hardware": r["hardware"]}
 
 
+# ------------------------------------------------------------------ yol denetimi ve hata ipuçları
+WIN_MAX_PATH = 260
+LONGEST_PKG_PATH = 150                                         # .venv içindeki en uzun paket dosyası yolu (yaklaşık)
+VENV_SUFFIX = "\\_system\\.venv\\Lib\\site-packages\\"
+
+
+def short_vault_suggestion() -> str:
+    return str(Path.home() / "SecondBrain")
+
+
+def path_warnings(vault) -> list[dict]:
+    """Kasa yolu için uyarılar: Windows 260 karakter sınırı (uv sync "os error 3") ve OneDrive/eşitlenen klasör.
+    [{code: long_path|onedrive, message, suggest}] — kasa yolunu engellemez, kullanıcıyı bilgilendirir."""
+    out: list[dict] = []
+    v = str(vault or "")
+    if not v:
+        return out
+    if WIN and len(v) + len(VENV_SUFFIX) + LONGEST_PKG_PATH > WIN_MAX_PATH:
+        sug = short_vault_suggestion()
+        out.append({"code": "long_path", "suggest": sug,
+                    "message": f"Kasa yolu uzun ({len(v)} karakter): Windows 260 karakter sınırı Python paketlerinin kurulumunu bozabilir. "
+                               f"Daha kısa bir klasör seç, örneğin {sug}"})
+    if any(part.lower().startswith("onedrive") for part in Path(v).parts):
+        out.append({"code": "onedrive", "suggest": short_vault_suggestion(),
+                    "message": "Kasa OneDrive klasörünün içinde: eşitleme dosyaları kilitleyebilir ve kurulumu yavaşlatır/bozar. "
+                               f"OneDrive dışında bir klasör öner: {short_vault_suggestion()}"})
+    return out
+
+
+_HINTS = {
+    "vault": "Kasa klasörüne yazılamıyor olabilir. Klasörün var olduğundan ve yazma iznin olduğundan emin ol, gerekirse başka bir klasör seç; sonra «Yeniden dene».",
+    "config": "Ayar dosyaları yazılamadı. Kasa klasörünün yazılabilir olduğunu ve diskte yer olduğunu kontrol et; sonra «Yeniden dene».",
+    "secrets": "Şifre kasasına (keyring) yazılamadı. İşletim sisteminin şifre kasası açık mı bak; sorun sürerse sırları kurulumdan sonra uygulamadan gir; sonra «Yeniden dene».",
+    "deps": "Python ortamı kurulamadı. İnternet bağlantını ve disk alanını kontrol et; sorun sürerse günlüğün son satırlarına bak. Düzelttikten sonra «Yeniden dene».",
+    "claude": "Claude Code bağlantısı kurulamadı. Claude Code kurulu mu bak; bu adımı sonra uygulamadan da yapabilirsin. «Yeniden dene» ile tekrar dene.",
+    "model": "Yerel model indirilemedi. Ollama çalışıyor mu ve internet var mı bak; model indirme sonra da yapılabilir. «Yeniden dene».",
+    "schedule": "Zamanlayıcı kurulamadı (izin gerekebilir). Sonra elle de kurulabilir; şimdilik «Yeniden dene».",
+    "git": "Kasa git deposu oluşturulamadı. git kurulu mu bak; zorunlu değil. «Yeniden dene».",
+    "doctor": "Kontrol çalıştırılamadı. Python ortamı kurulduysa «Yeniden dene».",
+    "shortcuts": "Kısayol oluşturulamadı. Masaüstü/Başlat klasörüne yazma iznini kontrol et; «Yeniden dene».",
+}
+
+
+def step_hint(step_id: str, text: str, vault=None) -> str:
+    """Bir adım hata verince kullanıcıya NE OLDUĞU ve NASIL DÜZELTİLECEĞİ (Türkçe, tek paragraf)."""
+    low = str(text or "").lower()
+    if step_id == "deps":
+        long_err = any(k in low for k in ("os error 3", "failed to persist", "path too long", "too long", "çok uzun"))
+        wl = {w["code"] for w in path_warnings(vault)}
+        if long_err or "long_path" in wl:
+            return (f"Kasa yolu Windows'un 260 karakter sınırına takılmış olabilir. Kişisel bilgiler adımına dönüp kasayı kısa bir yola al "
+                    f"(ör. {short_vault_suggestion()}), sonra «Yeniden dene».")
+        if "onedrive" in wl:
+            return "Kasa OneDrive içinde; eşitleme dosyaları kilitliyor olabilir. Kasayı OneDrive dışına al (Kişisel bilgiler adımı), sonra «Yeniden dene»."
+        if any(k in low for k in ("network", "dns", "resolve", "timed out", "connection", "bağlan")):
+            return "İnternete ulaşılamadı. Bağlantını kontrol et (VPN/proxy kapalıysa dene), sonra «Yeniden dene»."
+        if "başlatılamadı" in low or "no such file" in low or "winerror 2" in low:
+            return "`uv` bulunamadı. uv'yi kur (astral.sh/uv) ya da kurulum paketini yeniden indir; sonra «Yeniden dene»."
+    return _HINTS.get(step_id, "Günlüğün son satırlarına bak, sorunu düzelt ve «Yeniden dene».")
+
+
 # ------------------------------------------------------------------ motor
 STEPS = [("vault", "Kasa ve kod"), ("config", "Ayarlar"), ("secrets", "Sırlar (şifre kasası)"), ("deps", "Python ortamı"),
          ("claude", "Claude Code bağlantısı"), ("model", "Yerel model"), ("schedule", "Zamanlayıcı"), ("git", "Kasa git deposu"),
@@ -613,6 +840,28 @@ def _trash():
         return None
 
 
+def imap_error_message(e: BaseException, host: str = "", port: int = 993) -> str:
+    """İstisna adı yerine anlaşılır Türkçe: ne oldu + ne yapmalı."""
+    import socket
+    import ssl
+    where = f"{host}:{port}" if host else "sunucu"
+    if isinstance(e, ssl.SSLError):
+        return f"Güvenli bağlantı kurulamadı ({where}). IMAP için genellikle port 993 (SSL) kullanılır; sunucu ve portu kontrol et."
+    if isinstance(e, socket.gaierror):
+        return f"Sunucu bulunamadı: {host or 'adres'}. Sunucu adının yazımını ve internet bağlantını kontrol et."
+    if isinstance(e, (socket.timeout, TimeoutError)):
+        return f"Bağlanılamadı: {where} zaman aşımına uğradı. Sunucu/port yanlış olabilir ya da bir güvenlik duvarı engelliyor."
+    if isinstance(e, ConnectionRefusedError):
+        return f"Bağlanılamadı: {where} bağlantıyı reddetti. Sunucu adı ve port (genelde 993) doğru mu?"
+    if isinstance(e, OSError):
+        return f"Bağlanılamadı: {where}. İnternet bağlantını, sunucu adını ve portu kontrol et."
+    txt = str(e).lower()
+    if "imap4" in type(e).__module__.lower() or "imaplib" in type(e).__module__ or "authentication" in txt or "login" in txt or "credentials" in txt:
+        return ("Kimlik reddedildi: kullanıcı adı ya da şifre yanlış. Gmail, iCloud ve Outlook'ta normal şifre değil UYGULAMA ŞİFRESİ gerekir "
+                "(önce 2 adımlı doğrulamayı aç, sonra hesap ayarlarından uygulama şifresi üret).")
+    return "IMAP girişi başarısız oldu. Sunucu, port ve şifreyi kontrol et."
+
+
 def _imap_login(host: str, user: str, pw: str, port: int = 993) -> tuple[bool, str]:
     import imaplib
     try:
@@ -621,7 +870,7 @@ def _imap_login(host: str, user: str, pw: str, port: int = 993) -> tuple[bool, s
         m.logout()
         return True, "IMAP girişi başarılı"
     except Exception as e:
-        return False, f"IMAP girişi başarısız: {type(e).__name__}"
+        return False, imap_error_message(e, host, port)
 
 
 def parse_doctor(text: str) -> dict:
@@ -645,18 +894,30 @@ def latest_tag(ls_remote_out: str) -> str | None:
 
 class Engine:
     def __init__(self, vault: str | Path | None = None, data: Path | None = None):
+        global _sandbox_sink
         self.data = Path(data) if data else data_dir()
+        self.sandbox = sandbox_dir()
         self.vault = Path(os.path.expanduser(str(vault))).resolve() if vault else None
         self.lines: deque[str] = deque(maxlen=200)
         self.steps = [{"id": i, "title": t, "status": "pending"} for i, t in STEPS]
         self.running = False
         self.error = ""
+        self.error_info: dict | None = None                    # son hata kartı: {step,title,message,hint,retry}
         self.job = ""
         self._pct: int | None = None                           # yardımcı işlerde (indirme, içe aktarma) elle yüzde
         self.selection: dict = {"preset": "tam", "modules": preset_modules("tam"), "fields": {}}
         self._secrets: list[str] = []
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
+        if self.sandbox:
+            _sandbox_sink = self.log
+            self.log("[deneme] DENEME KİPİ — gerçek sisteme dokunulmuyor: " + str(self.sandbox))
+
+    def ensure_vault(self) -> Path:
+        """Kasa seçilmediyse varsayılan konumu kullan (kişisel bilgiler adımı atlanmış olabilir)."""
+        if not self.vault:
+            self.vault = default_vault().resolve()
+        return self.vault
 
     # -- günlük ve ilerleme
     def log(self, msg: str) -> None:
@@ -668,7 +929,8 @@ class Engine:
             done = sum(1 for s in self.steps if s["status"] in ("done", "skipped"))
             pct = self._pct if self._pct is not None else round(100 * done / len(self.steps))
             return {"running": self.running, "job": self.job, "percent": pct,
-                    "steps": [dict(s) for s in self.steps], "log": list(self.lines), "error": self.error}
+                    "steps": [dict(s) for s in self.steps], "log": list(self.lines), "error": self.error,
+                    "error_info": dict(self.error_info) if self.error_info else None}
 
     # -- yardımcı işler (model indirme, ollama kurulumu, içe aktarma, ses kurulumu): tek iş kilidi, /api/progress'te izlenir
     def run_job(self, job: str, title: str, fn, wait: bool = False) -> bool:
@@ -839,6 +1101,7 @@ class Engine:
             if self.running:
                 return False
             self.running, self.error, self.job = True, "", "apply"
+            self.error_info = None
         try:
             if resume and not sel and self.state().get("selection"):
                 st = self.state()["selection"]
@@ -859,6 +1122,11 @@ class Engine:
 
     def _run_steps(self, done: list[str]) -> None:
         try:
+            try:
+                for w in path_warnings(self.ensure_vault()):        # apply öncesi aynı denetim: uyar (engelleme)
+                    self.log("UYARI: " + w["message"])
+            except Exception:                                    # noqa: BLE001
+                pass
             for step in self.steps:
                 if step["id"] in done:
                     continue
@@ -869,7 +1137,10 @@ class Engine:
                 except Exception as e:
                     step["status"] = "error"
                     self.error = redact(f"{step['title']}: {e}", self._secrets)
+                    self.error_info = {"step": step["id"], "title": step["title"], "message": redact(str(e), self._secrets),
+                                       "hint": step_hint(step["id"], str(e), self.vault), "retry": True}
                     self.log("HATA: " + self.error)
+                    self.log("NE YAPMALI: " + self.error_info["hint"])
                     return
                 step["status"] = "skipped" if skipped else "done"
                 done.append(step["id"])
@@ -879,14 +1150,36 @@ class Engine:
             self.running = False
 
     def _system(self) -> Path:
-        if not self.vault:
-            raise RuntimeError("Kasa klasörü belirtilmedi")
-        return self.vault / "_system"
+        return self.ensure_vault() / "_system"
+
+    def prepare_code(self) -> None:
+        """Hedef kasanın `_system`inde kod yoksa kit'ten (ya da deneme kipinde geliştirme kopyasından) kopyalar; var olana dokunmaz.
+        Kurulum tamamlanmadan çalışan komutlar (içe aktarma, Google girişi, MCP) böylece HEDEF kodu kullanır."""
+        t = self._system()
+        if (t / "sb").is_dir():
+            return
+        kit = kit_dir()
+        src = (kit / "system") if kit else (ROOT if self.sandbox and (ROOT / "sb").is_dir() else None)
+        if not src or not (src / "sb").is_dir():
+            return
+        v = t.parent.resolve()
+        for guard_dir in {src.resolve(), (kit or src).resolve()}:
+            if v == guard_dir or guard_dir in v.parents:
+                raise RuntimeError(f"Kasa kodun/kurulum paketinin içinde olamaz: {v}")
+        v.mkdir(parents=True, exist_ok=True)
+        sync_code(src, t)
+        if kit and (kit / "setup").is_dir():
+            shutil.copytree(kit / "setup", t / "setup", dirs_exist_ok=True, ignore=_NO_COPY)
 
     def code_root(self) -> Path:
-        """sb kodunun çalışacağı klasör: kurulu kasa _system, yoksa kit/system, yoksa bu kodun kendisi."""
-        if self.vault and (self.vault / "_system" / "sb").is_dir():
-            return self.vault / "_system"
+        """sb kodunun çalışacağı klasör: HEDEF kasanın `_system`i (kod henüz yoksa kopyalanır). Deneme kipinde HER ZAMAN deneme kasasının
+        `_system`i — çalışan kurulumun yolu hiçbir komutta geçmez. Hedef belli değilse (kasa seçilmedi) kit/system, yoksa bu kodun kendisi."""
+        if self.sandbox or self.vault:
+            t = self._system()
+            if not (t / "sb").is_dir():
+                self.prepare_code()
+            if self.sandbox or (t / "sb").is_dir():
+                return t
         k = kit_dir()
         return (k / "system") if k else (code_dir() or ROOT)
 
@@ -902,6 +1195,15 @@ class Engine:
 
     def _step_vault(self):
         kit = kit_dir()
+        if not kit and self.sandbox and (ROOT / "sb").is_dir():     # deneme kipi: kitsiz geliştirme kurulumu — kodu deneme kasasına kopyala
+            v = self.ensure_vault()
+            if v == ROOT or ROOT in v.parents:
+                raise RuntimeError(f"Deneme kasası kodun içinde olamaz: {v}")
+            v.mkdir(parents=True, exist_ok=True)
+            sync_code(ROOT, self._system())
+            self.data.mkdir(parents=True, exist_ok=True)
+            self.log(f"  [deneme] kod kasaya kopyalandı: {self._system()}")
+            return None
         if not kit:
             self.log("  kit yok (panel kasadan çalışıyor): atlandı")
             return True
@@ -956,10 +1258,25 @@ class Engine:
                 shutil.copy2(Path(os.path.expanduser(cs)), dst)
         self.log("  profil, hesaplar ve özellik seçimi yazıldı")
 
+    def stored_secret_names(self) -> list[str]:
+        """Şifre kasasında dolu olan Second Brain sırlarının ADLARI (değerleri değil)."""
+        try:
+            try:
+                from . import accounts as A
+            except ImportError:                               # engine.py doğrudan çalıştırıldı
+                import accounts as A  # type: ignore
+            return [s["key"] for s in A.list_secrets(self)["secrets"] if s["set"]]
+        except Exception:                                     # noqa: BLE001 — keyring yoksa/engelliyse sayma
+            return []
+
     def _step_secrets(self):
         f = self.selection["fields"]
         todo = [(fd, f[fd["key"]]) for fd in FIELDS if fd["kind"] == "secret" and f.get(fd["key"])]
         if not todo:
+            have = self.stored_secret_names()
+            if have:                                          # sihirbazda kaydedilenler: sayı + yalnız ADLAR (değer asla)
+                self.log(f"  {len(have)} sır şifre kasasında: {', '.join(have)}")
+                return None
             self.log("  girilecek sır yok")
             return True
         kr = _keyring()
@@ -977,13 +1294,20 @@ class Engine:
         if not (sysd / "pyproject.toml").exists():
             raise RuntimeError(f"{sysd} içinde pyproject.toml yok (kod kopyalanmadı)")
         uv = install_uv(self.data)
-        if _run_stream([uv, "sync"], self.log, sysd):
-            raise RuntimeError("uv sync başarısız")
+        tail: list[str] = []
+
+        def lg(line):
+            self.log(line)
+            if str(line).strip() and not str(line).startswith("$ "):
+                tail.append(str(line).strip())
+        if _run_stream([uv, "sync", "--directory", str(sysd)], lg, sysd):
+            last = redact(" | ".join(tail[-3:]), self._secrets)[:300]
+            raise RuntimeError("uv sync başarısız" + (f": {last}" if last else ""))
         if (sysd / "tools" / "install_cli.py").exists():
             _run_stream([uv, "run", "--directory", str(sysd), "python", str(sysd / "tools" / "install_cli.py")], self.log)
 
     def _step_claude(self):
-        claude = shutil.which("claude")
+        claude = which_cmd("claude")
         if not self.selection["modules"].get("claude_hooks") or not claude:
             self.log("  Claude Code kapalı ya da kurulu değil: atlandı")
             return True
@@ -992,7 +1316,7 @@ class Engine:
         _run_stream([claude, "mcp", "add", "second-brain", "--scope", "user", "--", uv_bin(), "run", "--directory", str(sysd), "python", "-m", "sb.mcp_server"], self.log)
 
     def _step_model(self):
-        if not PRESETS.get(self.selection["preset"], {}).get("local_model", True) or not shutil.which("ollama"):
+        if not PRESETS.get(self.selection["preset"], {}).get("local_model", True) or not which_cmd("ollama"):
             self.log("  yerel model seçilmedi ya da Ollama yok: atlandı")
             return True
         rec = recommend(hardware())
@@ -1019,8 +1343,15 @@ class Engine:
         if not shutil.which("git") or (v / ".git").exists():
             self.log("  git yok ya da kasa zaten depo: atlandı")
             return True
-        for cmd in (["git", "init", "-b", "main"], ["git", "add", "-A"], ["git", "commit", "-q", "-m", "Second Brain kurulumu"]):
-            _run_stream(cmd, self.log, v)
+        if self.sandbox and not (v / ".gitignore").exists():
+            (v / ".gitignore").write_text(".venv/\n__pycache__/\n*.pyc\n", encoding="utf-8")
+        ident = ["-c", "user.name=Second Brain", "-c", "user.email=sb@localhost"] if self.sandbox else []
+        def lg(line):                                         # satır sonu uyarıları (yüzlerce satır) günlüğü ve hata ipuçlarını boğmasın
+            if "working copy" in str(line) and "will be replaced by" in str(line):
+                return
+            self.log(line)
+        for cmd in (["git", "init", "-b", "main"], ["git", "add", "-A"], ["git", *ident, "commit", "-q", "-m", "Second Brain kurulumu"]):
+            _run_stream(cmd, lg, v)
 
     def _step_doctor(self):
         h = self.health()
@@ -1050,9 +1381,45 @@ class Engine:
             raise RuntimeError("kısayol oluşturulamadı: " + out.strip()[:200])
         self.log(f"  masaüstü + Başlat menüsü kısayolu: {APP_NAME} → {prog}")
 
+    # -- özet ekranı için ayrıntılı durum (sırlar: yalnız ADLAR)
+    def summary(self) -> dict:
+        try:
+            from . import accounts as A
+            from . import imports as IM
+            from . import mcp as M
+        except ImportError:                                   # engine.py doğrudan çalıştırıldı
+            import accounts as A  # type: ignore
+            import imports as IM  # type: ignore
+            import mcp as M  # type: ignore
+        out: dict = {"vault": str(self.vault or default_vault()), "sandbox": str(self.sandbox or ""),
+                     "timezone": (self.selection.get("fields") or {}).get("timezone") or "", "accounts": {"google": [], "imap": [], "school": None},
+                     "secrets": [], "mcps": [], "imports": [], "models": []}
+        try:
+            acc = A._read_accounts(self)
+            out["accounts"] = {"google": [{"alias": a, "email": v.get("email")} for a, v in acc["google"].items()],
+                               "imap": [{"alias": a, "email": v.get("email")} for a, v in acc["imap"].items()],
+                               "school": ({"url": acc["school"].get("url", ""), "user": acc["school"].get("user", "")}
+                                          if isinstance(acc.get("school"), dict) else None)}
+        except Exception:                                     # noqa: BLE001
+            pass
+        out["secrets"] = self.stored_secret_names()
+        try:
+            out["mcps"] = sorted({i["name"] for i in M.installed()})
+        except Exception:                                     # noqa: BLE001
+            pass
+        try:
+            out["imports"] = [x for x in IM.history(self)["imports"] if x.get("ok")]
+        except Exception:                                     # noqa: BLE001
+            pass
+        try:
+            out["models"] = [m["name"] for m in A.ollama_info().get("models", [])]
+        except Exception:                                     # noqa: BLE001
+            pass
+        return out
+
     # -- sağlık
     def health(self) -> dict:
-        sysd = self._system() if self.vault else (code_dir() or ROOT)
+        sysd = self._system() if (self.vault or self.sandbox) else (code_dir() or ROOT)
         if not (sysd / "sb").is_dir():
             return {"ok": False, "rows": [], "summary": "", "message": "sb henüz kurulu değil"}
         rc, out = _run_capture([uv_bin(), "run", "--directory", str(sysd), "python", "-X", "utf8", "-m", "sb", "doctor"], 120)
@@ -1232,8 +1599,8 @@ def main(argv: list[str] | None = None) -> int:
             sel["fields"][k] = os.environ[f"SB_SECRET_{k.upper()}"]
     if a.vault:
         sel["fields"]["vault"] = a.vault
-    sel["fields"].setdefault("vault", str(Path.home() / "SecondBrain"))
-    sel["fields"].setdefault("name", os.environ.get("USERNAME") or os.environ.get("USER") or "Kullanıcı")
+    sel["fields"].setdefault("vault", str(default_vault()))
+    sel["fields"].setdefault("name", default_name())
     eng = Engine()
     eng.apply(sel, resume=a.resume, wait=True)
     print("\n".join(eng.progress()["log"]))

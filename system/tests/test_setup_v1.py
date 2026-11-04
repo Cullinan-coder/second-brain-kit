@@ -18,6 +18,7 @@ from setup import imports as IM  # noqa: E402
 from setup import mcp as M  # noqa: E402
 from setup import server as S  # noqa: E402
 
+_REAL_IMAP_LOGIN = E._imap_login                               # env fixture'ı değiştirmeden önceki gerçek işlev
 SECRET = "sk-TESTSECRET1234567890abcdef"
 PW = "hunter2-gizli-parola"
 
@@ -49,6 +50,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(A, "_post_json", no_net)
     monkeypatch.setattr(E, "_keyring", lambda: kr)
     monkeypatch.setattr(E, "kit_dir", lambda: None)
+    monkeypatch.setenv("SB_APPS_DIR", str(tmp_path / "Apps"))          # gerçek ~/Applications / Masaüstü / Başlat yollarına bakma
     monkeypatch.setattr(E, "_trash", lambda: None)
     monkeypatch.setattr(E.shutil, "which", lambda n: None)
 
@@ -407,6 +409,7 @@ def test_autostart_exe_and_macos(env, monkeypatch):
     prog, args, _ = AS.launch_command(eng, True, "win32")
     assert prog == str(exe) and args == ["--minimized"]
     exe.unlink()
+    monkeypatch.setattr(E, "launcher_exe", lambda data, plat=None: None)     # kurulu uygulama araması taklit (CI'da gerçek .app olabilir)
     r = AS.apply(eng, True, False, plat="darwin")
     import plistlib
     pl = plistlib.loads((tmp / "LaunchAgents" / AS.PLIST).read_bytes())
@@ -447,3 +450,83 @@ def test_requires_token(srv, env):
         assert c.getresponse().status == 403
     finally:
         s.stop()
+
+
+# ------------------------------------------------------------------ canlı deneme bulguları (2026-11-04)
+def test_madde13_imap_hatalari_anlasilir_turkce(monkeypatch):
+    import imaplib
+    import socket
+    import ssl
+    msg = E.imap_error_message
+    m = msg(ConnectionRefusedError(), "imap.x.com", 993)
+    assert "ConnectionRefused" not in m and "Bağlanılamadı" in m and "imap.x.com:993" in m
+    assert "Sunucu bulunamadı" in msg(socket.gaierror(11001, "x"), "yok.example", 993)
+    assert "zaman aşımı" in msg(socket.timeout(), "h", 993)
+    assert "port 993" in msg(ssl.SSLError("x"), "h", 143)
+    a = msg(imaplib.IMAP4.error("[AUTHENTICATIONFAILED] Invalid credentials"), "h", 993)
+    assert "UYGULAMA ŞİFRESİ" in a and "Kimlik reddedildi" in a
+    # gerçek _imap_login: istisna adı kullanıcıya sızmaz
+    class Boom:
+        def __init__(self, *a, **k):
+            raise ConnectionRefusedError()
+    monkeypatch.setattr(imaplib, "IMAP4_SSL", Boom)
+    ok, text = _REAL_IMAP_LOGIN("imap.x.com", "u", "p", 993)
+    assert ok is False and "ConnectionRefusedError" not in text and "Bağlanılamadı" in text
+
+
+def test_madde11_okul_hesabi_sir_yazmaz(srv, env):
+    call, eng = srv
+    _, kr, _, vault, _ = env
+    st, r = call("POST", "/api/account/school", {"url": "https://obs.okul.edu.tr", "user": "2021001"})
+    assert st == 200 and r["ok"] is True
+    assert call("POST", "/api/secret", {"key": "svc-school-password", "value": PW})[0] == 200
+    assert kr.store[("second-brain", "svc-school-password")] == PW
+    y = (vault / "_system" / "config" / "accounts.yaml").read_text(encoding="utf-8")
+    assert "obs.okul.edu.tr" in y and "2021001" in y and PW not in y
+    assert call("GET", "/api/accounts")[1]["school"]["has_password"] is True
+    assert call("POST", "/api/account/school", {"url": "bad host!", "user": "x"})[0] == 400
+
+
+def test_madde12_madde20_ozet_ve_sir_adlari(srv, env):
+    call, eng = srv
+    _, kr, _, vault, _ = env
+    call("POST", "/api/secret", {"key": "telegram-bot", "value": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"})
+    st, sm = call("GET", "/api/summary")
+    assert st == 200 and sm["secrets"] == ["telegram-bot"] and "ABC-DEF" not in json.dumps(sm)
+    assert eng.stored_secret_names() == ["telegram-bot"]
+
+
+def test_madde9_kendi_mcp_belgesi_kullanici_belgesi():
+    m = E.plugins_mod().get("second-brain", "mcp")
+    doc = m["mcp"]["docs_url"]
+    assert doc == "docs/mcp-second-brain.md" and "v1-plan" not in doc
+    assert (SYSTEM / doc).is_file() and not E.internal_doc(Path(doc).name)
+    first = [x for x in E.catalog("tr")["mcps"] if x["id"] == "second-brain"][0]
+    assert first["docs_url"] == doc
+
+
+def test_madde1_code_root_kasa_secilince_hedef_kasa(tmp_path, monkeypatch):
+    """Gerçek kipte de: kurulumdan önce çalışan kurulumun değil, HEDEF kasanın _system'i; kod yoksa kit'ten kopyalanır."""
+    kit = tmp_path / "kit"
+    (kit / "system" / "sb").mkdir(parents=True)
+    (kit / "system" / "sb" / "__init__.py").write_text("", encoding="utf-8")
+    (kit / "system" / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (kit / "system" / "config").mkdir()
+    (kit / "system" / "config" / "profile.example.yaml").write_text("name: x\n", encoding="utf-8")
+    (kit / "system" / "config" / "profile.yaml").write_text("bio: kisisel\n", encoding="utf-8")
+    monkeypatch.setattr(E, "kit_dir", lambda: kit)
+    eng = E.Engine(tmp_path / "hedef", data=tmp_path / "data")
+    root = eng.code_root()
+    assert root == (tmp_path / "hedef" / "_system") and (root / "sb" / "__init__.py").is_file()
+    assert not (root / "config" / "profile.yaml").exists() and (root / "config" / "profile.example.yaml").is_file()
+    cmd = eng.sb_cmd("import", "x")
+    assert str(kit) not in " ".join(cmd) and str(root) in cmd
+    with pytest.raises(RuntimeError):                          # kasa kitin içinde olamaz
+        E.Engine(kit / "system" / "v", data=tmp_path / "d2").prepare_code()
+
+
+def test_madde_ice_aktarma_sayisi_kaydedilir(srv, env, monkeypatch):
+    call, eng = srv
+    assert IM.parse_count(["  42 mesaj yazıldı"]) == 42
+    IM._record(eng, "whatsapp", "a.txt", True, "ok", 42)
+    assert call("GET", "/api/imports")[1]["imports"][-1]["count"] == 42

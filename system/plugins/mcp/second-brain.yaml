@@ -23,7 +23,7 @@ mcp:
   - sb.mcp_server
   env: {}
   install: claude mcp add --scope user second-brain -- <python> -m sb.mcp_server
-  docs_url: docs/v1-plan.md
+  docs_url: docs/mcp-second-brain.md
   remote: false
   note:
     tr: <python> yerine Second Brain'in sanal ortamındaki python yolu yazılır (kurulum bunu otomatik doldurur).

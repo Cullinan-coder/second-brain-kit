@@ -12,9 +12,11 @@ const S = {
   catalog: null, presets: null, axes: { meslek: '', donanim: '', gizlilik: '', yogunluk: '' }, warnings: [], combineBusy: false,
   sel: { modules: {}, items: {} }, memo: {}, reqs: null, reqsKey: '',
   profile: { name: '', full_name: '', vault: '', timezone: '', org: '', role: '' },
+  defaults: null, tzs: null,
   auto: { on: false, minimized: true },
   step: 0, skipped: {}, visited: {}, tree: null, tab: 'features',
   panels: new Set(), watch: false, idle: 0, poll: null, after: null, tour: 0, saveTimer: null, applied: false,
+  topJob: null, mcpFb: {}, pathWarn: [],
 };
 
 const $ = (id) => document.getElementById(id);
@@ -49,7 +51,8 @@ function paras(text, cls) {
 function btn(label, fn, cls, extra) { return h('button', { type: 'button', class: cls || 'ghost', text: label, onclick: fn, ...(extra || {}) }); }
 function msg(el, text, kind) { el.className = 'msg ' + (kind || 'muted'); el.textContent = text || ''; }
 function unavailable(r) {
-  if (r && r.status === 404) return t('err.unavailable');
+  if (r && r.status === 404) return t('err.unavailable');          // yalnız gerçekten 404: uç yok
+  if (r && r.status === 0) return t('err.network');
   const d = r && r.data;
   return (d && (d.error || d.message)) || t('err.generic');
 }
@@ -83,6 +86,59 @@ async function uploadRaw(source, file) {
     return { ok: false, status: 0, data: null };
   }
 }
+
+/* Google client_secret.json: JSON gövde olarak gider, sunucu doğrular ve DATA/secrets/ altına yazar */
+async function uploadClientSecret(file) {
+  try {
+    const r = await fetch('/api/upload/client-secret', { method: 'POST', headers: { 'X-Setup-Token': TOKEN, 'Content-Type': 'application/json' }, body: file });
+    let data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    return { ok: r.ok, status: r.status, data };
+  } catch (e) {
+    return { ok: false, status: 0, data: null };
+  }
+}
+/* sunucu varsayılanları: kasa yolu, deneme kipi, saat dilimi listesi */
+async function loadDefaults() {
+  const [d, z] = await Promise.all([api('/api/defaults'), api('/api/timezones')]);
+  if (d.ok && d.data) S.defaults = d.data;
+  if (z.ok && z.data) S.tzs = z.data;
+  const bar = $('sandbox-bar');
+  if (bar) bar.hidden = !(S.defaults && S.defaults.sandbox);
+  fillProfileDefaults();
+}
+function fillProfileDefaults() {
+  if (!S.profile.vault && S.defaults) S.profile.vault = S.defaults.vault;
+  if (!S.profile.timezone) S.profile.timezone = (S.tzs && S.tzs.default) || (S.defaults && S.defaults.timezone) || '';
+}
+function isLocal() { return S.axes.gizlilik === 'tam_yerel'; }
+/* kategori kimliği -> çevrilmiş ad (katalogdan); bilinmiyorsa ham kod */
+function catName(id) {
+  const c = S.catalog && S.catalog.categories.find((x) => x.id === id);
+  return c && c.name ? c.name : String(id || '');
+}
+/* üst çubuk: sihirbaz adımı (Adım n/12) — kurulum sürerken kurulum yüzdesi (etiketli); iki ayrı yüzde karışmasın */
+function paintTop() {
+  if (MODE !== 'wizard' || !$('fill')) return;
+  const inst = S.topJob != null;
+  const pct = inst ? Math.max(0, Math.min(100, Math.round(S.topJob))) : Math.round((S.step / (STEPS.length - 1)) * 100);
+  $('fill').style.width = pct + '%';
+  $('pct').textContent = inst ? t('top.install', { p: pct }) : t('wiz.step', { n: S.step + 1, m: STEPS.length });
+  $('bar').setAttribute('aria-valuenow', String(pct));
+  $('bar').setAttribute('aria-label', inst ? t('top.install', { p: pct }) : t('wiz.step', { n: S.step + 1, m: STEPS.length }));
+}
+/* kurulum hata kartı: ne oldu + nasıl düzeltilir + Yeniden dene (sürdürme) */
+function errorCard(d, retry, extra) {
+  const ei = (d && d.error_info) || null;
+  const what = (ei && ei.message) || (d && d.error) || t('err.generic');
+  return h('div', { class: 'panelbox errorcard', role: 'alert' },
+    h('h4', { text: t('err.card.h') + (ei && ei.title ? ' — ' + ei.title : '') }),
+    h('p', {}, h('b', { text: t('err.card.what') + ': ' }), what),
+    h('p', {}, h('b', { text: t('err.card.fix') + ': ' }), (ei && ei.hint) || t('err.card.fix.default')),
+    h('p', { class: 'muted', text: t('err.card.resume') }),
+    h('div', { class: 'row' }, btn(t('err.retry'), retry, 'primary'), extra || null));
+}
+function canBrowse() { return !!(window.pywebview && window.pywebview.api && typeof window.pywebview.api.pick_folder === 'function'); }
 
 /* ---- dil / tema / afiş ---- */
 function applyI18n() {
@@ -257,6 +313,8 @@ async function pollOnce() {
   const r = await api('/api/progress');
   if (!r.ok || !r.data) return null;
   const d = r.data;
+  S.topJob = d.running && d.job === 'apply' ? (d.percent || 0) : null;
+  paintTop();
   S.panels.forEach((p) => { if (!p.el.isConnected) S.panels.delete(p); else if (S.watch || d.running) p.update(d); });
   const running = d.running === true || arr(d.steps).some((s) => nstat(s.status) === 'calisiyor');
   S.idle = running ? 0 : S.idle + 1;
@@ -324,6 +382,7 @@ async function boot() {
   document.body.dataset.mode = MODE;
   const ok = await loadCatalog();
   await loadPresets();
+  await loadDefaults();
   if (MODE === 'settings') await startSettings(ok); else await startWizard(ok);
   pollOnce();
 }
