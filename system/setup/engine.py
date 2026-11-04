@@ -432,7 +432,7 @@ def proc_env(cmd, cwd: Path | None = None) -> dict:
     UV_PROJECT_ENVIRONMENT / VIRTUAL_ENV (ör. paneli çalıştıran uv'nin ortamı) kasa köküne ya da çalışan kuruluma sızmasın."""
     env = dict(os.environ)
     c = [str(x) for x in cmd]
-    if c and Path(c[0]).name.lower().removesuffix(".exe") == "uv":
+    if c and re.split(r"[\\/]", c[0])[-1].lower().removesuffix(".exe") == "uv":        # Windows ve macOS yol ayırıcısı
         for k in ("UV_PROJECT_ENVIRONMENT", "VIRTUAL_ENV", "UV_ACTIVE", "CONDA_PREFIX"):
             env.pop(k, None)
         proj = None
@@ -783,7 +783,7 @@ def path_warnings(vault) -> list[dict]:
         out.append({"code": "long_path", "suggest": sug,
                     "message": f"Kasa yolu uzun ({len(v)} karakter): Windows 260 karakter sınırı Python paketlerinin kurulumunu bozabilir. "
                                f"Daha kısa bir klasör seç, örneğin {sug}"})
-    if any(part.lower().startswith("onedrive") for part in Path(v).parts):
+    if any(part.lower().startswith("onedrive") for part in re.split(r"[\\/]", v)):     # Windows yolu macOS'ta da ayrışır
         out.append({"code": "onedrive", "suggest": short_vault_suggestion(),
                     "message": "Kasa OneDrive klasörünün içinde: eşitleme dosyaları kilitleyebilir ve kurulumu yavaşlatır/bozar. "
                                f"OneDrive dışında bir klasör öner: {short_vault_suggestion()}"})

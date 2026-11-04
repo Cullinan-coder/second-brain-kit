@@ -227,7 +227,7 @@ def test_deneme_kipi_tam_akis(sbx, tmp_path, monkeypatch):
     # otomatik başlatma: yalnız deneme klasörüne
     st, r = call("POST", "/api/autostart", {"on": True, "minimized": True})
     assert st == 200 and r["ok"] and r["on"] is True
-    assert any((box / "Startup").iterdir()) or any((box / "LaunchAgents").iterdir())
+    assert any(d.exists() and any(d.iterdir()) for d in (box / "Startup", box / "LaunchAgents"))      # Windows: Startup, macOS: LaunchAgents
 
     # apply (UI'nın gönderdiği biçim): selection + meslek kimliği E.PRESETS'te yok → "tam"
     sel = {"modules": comb["modules"], "items": comb["items"]}
@@ -378,7 +378,8 @@ def test_madde2_deneme_kasasinda_profil_kisisel_degil(sbx):
     assert call("POST", "/api/apply", {"selection": {"modules": {}, "items": {}}, "preset": "minimal", "fields": {"name": "Ayşe"}})[0] == 202
     assert not wait()["error"]
     prof = (box / "SecondBrain" / "_system" / "config" / "profile.yaml").read_text(encoding="utf-8")
-    assert "Ayşe" in prof and not [v for v in secret_vals if v in prof]
+    got = yaml.safe_load(prof) or {}                       # alt metin değil değer karşılaştırması ('ci' gibi kısa değerler her yerde geçer)
+    assert got.get("name") == "Ayşe" and not [k for k in ("bio", "github_user", "workspace") if str(got.get(k) or "") in secret_vals]
     for name in ("mail_rules.yaml", "course_files.yaml", "local_files.yaml", "session_map.yaml", "topic_map.yaml", "sohbet_eslesme.yaml"):
         a, b = SYSTEM / "config" / name, box / "SecondBrain" / "_system" / "config" / name
         if a.exists() and not (SYSTEM / "config" / name.replace(".yaml", ".example.yaml")).exists():

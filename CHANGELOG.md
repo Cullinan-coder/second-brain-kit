@@ -2,6 +2,9 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.9.8 — 2026-11-04
+- Kurulum motoru yol ayırıcısından bağımsız: `C:\...\uv.exe` ve OneDrive yolu macOS'ta da tanınır. macOS CI testleri kendi otomatik başlatma klasörünü bekler.
+
 ## 0.9.7 — 2026-11-04
 - **macOS:** zamanlayıcı kurulumu paketli Setup.app içinde çalışmıyordu (betik, uygulamanın kendi çalıştırılabilir dosyasıyla çalıştırılıyordu); artık hedef kasanın Python'uyla.
 - **Kurulum paneli sunucusu:** reddedilen isteklerde (yanlış jeton, çok büyük ya da geçersiz yükleme) Windows'ta zaman zaman "bağlantı koptu" görünüyordu;
