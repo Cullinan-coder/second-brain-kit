@@ -9,7 +9,7 @@ import pytest
 
 CODE = Path(__file__).resolve().parent.parent
 TOOLS = CODE / "tools"
-FORBIDDEN = ("ayse", "koca", "ornek", "allcraft", "cull" "inan", "kocaayse")
+FORBIDDEN = ("sa" "met", "ko" "ca", "ko" "caeli", "all" "craft", "cull" "inan", "ko" "ca" "sa" "met")
 # Çekilemeyen / kart başına görüntüler (bilerek katalog dışı)
 SKIPPED = re.compile(r"^(google-\d.*|kurulum-.*|kaynak-.*|yukleme-.*|mcp-(?!katalog$).*|modeller-indirme)$")
 
@@ -64,7 +64,7 @@ def test_demo_vault_notes_pass_lint_schema(dv):
 
 
 def test_demo_forbidden_list_matches_task(dv):
-    assert set(dv.FORBIDDEN) >= {"ayse", "koca", "ornek", "allcraft", "cull" "inan", "kocaayse"}
+    assert set(dv.FORBIDDEN) >= set(("sa" "met", "ko" "ca", "ko" "caeli", "all" "craft", "cull" "inan", "ko" "ca" "sa" "met"))
 
 
 def test_demo_refuses_real_assistant_port(dv):

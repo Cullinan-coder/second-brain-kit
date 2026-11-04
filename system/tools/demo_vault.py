@@ -25,7 +25,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 SYSTEM = Path(__file__).resolve().parents[1]
-FORBIDDEN = ("ayse", "koca", "ornek", "allcraft", "cull" "inan", "kocaayse")
+FORBIDDEN = ("sa" "met", "ko" "ca", "ko" "caeli", "all" "craft", "cull" "inan", "ko" "ca" "sa" "met")
 
 
 def demo_root() -> Path:
