@@ -1717,3 +1717,13 @@ def test_remote_cannot_approve_command_or_whatsapp():
     pid = chat.add_proposal(s, "komut", "x", "dir", lambda: ran.append(1)).split()  # öneri metni döner
     pid = next(iter(s.proposals))
     assert "yalnız bilgisayardan" in chat.decide(s, pid, True) and not ran
+
+
+def test_cloud_filter_system_rules_topic_not_forcing_local():
+    """Asistan kuralında sır KONUSU ("kart numarası forma girilmez") sohbeti yerele zorlamaz; sır DEĞERİ ve kullanıcı mesajındaki konu zorlar."""
+    from sb import router
+    rule = "- Resmi kimlik, vergi, banka/kart numarası gibi değerleri forma asistan girmez; listeyi hazırlar, kullanıcı girer."
+    assert router.cloud_safe_messages([{"role": "system", "content": rule}, {"role": "user", "content": "hangi dersleri alıyorum?"}])[1] is False
+    assert router.cloud_safe_messages([{"role": "system", "content": "şifre: hunter22"}, {"role": "user", "content": "selam"}])[1] is True
+    assert router.cloud_safe_messages([{"role": "system", "content": rule}, {"role": "user", "content": "kart numaram şu"}])[1] is True
+    assert router.cloud_safe_messages([{"role": "tool", "content": "IBAN'ım burada"}])[1] is True

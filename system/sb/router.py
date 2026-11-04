@@ -54,7 +54,14 @@ def cloud_safe_messages(messages: list[dict]) -> tuple[list[dict], bool]:
                     yield part
                 elif isinstance(part, dict) and isinstance(part.get("text"), str):
                     yield part["text"]
-    forced = any(sensitive(t) for m in messages for t in _texts(m))
+    def _hit(m: dict, t: str) -> bool:
+        # Sistem talimatı (asistan kuralları, hafıza) kullanıcının kendi metnidir ve "kart numarası forma girilmez" gibi sır
+        # KONUSU kurallar içerir: konu sözcüğü yüzünden her sohbet yerele düşüyordu. Orada yalnız sır DEĞERİ aranır;
+        # kullanıcı mesajı ve araç/dış içerik sonuçları eskisi gibi sıkı (konu sözcüğü dahil) taranır.
+        if isinstance(m, dict) and m.get("role") == "system":
+            return _sensitive.is_sensitive(t, strict=False)
+        return sensitive(t)
+    forced = any(_hit(m, t) for m in messages for t in _texts(m))
     return messages, forced
 
 
