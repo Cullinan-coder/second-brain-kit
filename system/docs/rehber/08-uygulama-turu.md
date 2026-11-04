@@ -141,7 +141,7 @@ Açılış: **Uygulama ayarları → Ayarları aç** (ya da tepsi → **Ayarlar*
 
 ## Onay kartları
 
-Takvime etkinlik eklemek, komut çalıştırmak, bir şeyi unutmak, WhatsApp taslağı, mail/SMS taslağı gibi **dış etkili** işlerde sohbette bir **onay kartı** çıkar: üstte tür («Takvim · onay gerekli», «Komut · onay gerekli», «Unutma», «Silme», «Mail», «WhatsApp», «SMS», «Not»), altında ne yapılacağı ve **Onayla** / **İptal** düğmeleri. Onaylayınca «Onaylandı», iptalde «İptal edildi». Beklenen birden çok onay varsa çipte «Onayla (3 bekliyor)» yazar. Ayrıntı: [Asistan kullanımı](09-asistan-kullanimi.md#onay-kartlari).
+Takvime etkinlik eklemek, komut çalıştırmak, bir şeyi unutmak, WhatsApp mesajı (onaylanınca **gönderilir**), mail/SMS taslağı gibi **dış etkili** işlerde sohbette bir **onay kartı** çıkar: üstte tür («Takvim · onay gerekli», «Komut · onay gerekli», «Unutma», «Silme», «Mail», «WhatsApp», «SMS», «Not»), altında ne yapılacağı ve **Onayla** / **İptal** düğmeleri. Onaylayınca «Onaylandı», iptalde «İptal edildi». Beklenen birden çok onay varsa çipte «Onayla (3 bekliyor)» yazar. Bekleyen bütün onaylar (sohbet, otomasyon, tarih adayları) üst çubuktaki **✓ Onaylar** düğmesinde tek listede toplanır. Ayrıntı: [Asistan kullanımı](09-asistan-kullanimi.md#onay-kartlari).
 
 <a id="telefon"></a>
 ## Telefon

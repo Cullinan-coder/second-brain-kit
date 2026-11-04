@@ -5,8 +5,8 @@ name:
   tr: WhatsApp
   en: WhatsApp
 desc:
-  tr: Onaylı mesaj taslağı ve gönderme
-  en: Approved message drafts and sending.
+  tr: Onaylı mesaj gönderimi (kartı onaylayınca mesaj gönderilir)
+  en: Approved message sending (the message is sent when you approve the card).
 category: messaging
 module: whatsapp
 catalog_ids:

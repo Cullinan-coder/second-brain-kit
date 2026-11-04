@@ -25,6 +25,7 @@
 <script defer src="/static/privacy.js"></script>
 <script defer src="/static/personal.js"></script>
 <script defer src="/static/auto.js"></script>
+<script defer src="/static/approvals.js"></script>
 <script defer src="/static/agents.js"></script>
 <script defer src="/static/mobile.js"></script>
 <script defer src="/static/startup.js"></script>
@@ -69,6 +70,10 @@
         <button class="ibtn" id="btn-palette" aria-label="Komut paleti (Ctrl+K)" title="Komut paleti (Ctrl+K)" data-icon="command"></button>
         <button class="ibtn" id="btn-phone" aria-label="Telefon eşleme" title="Telefon eşleme" data-icon="phone" hidden></button>
         <button class="ibtn" id="btn-theme" aria-label="Tema" title="Tema" data-icon="sun"></button>
+        <span class="bell-wrap">
+          <button class="ibtn" id="btn-approvals" aria-label="Onaylar" title="Onaylar" data-icon="check" hidden></button>
+          <span id="appr-badge" class="bell-badge" hidden></span>
+        </span>
         <span class="bell-wrap">
           <button class="ibtn" id="btn-bell" aria-label="Bildirimler" aria-haspopup="dialog" aria-expanded="false" data-icon="bell" hidden></button>
           <span id="bell-badge" class="bell-badge" hidden></span>

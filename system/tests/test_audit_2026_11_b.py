@@ -962,3 +962,33 @@ def test_d29_every_covered_audit_item_has_a_test():
     # D-09 (Select-String/git diff/virgüllü yol) test_d01_attacks_never_free içinde; D-07/D-17/D-30 kullanıcı kararı bekliyor
     expected = {f"d{n:02d}" for n in range(1, 30)} - {"d07", "d09", "d17"}
     assert expected <= names, sorted(expected - names)
+
+
+# ================================================================== yedek kapsamı (2026-11-05)
+def test_backup_includes_office_attachments_and_obsidian_but_not_code(tmp_path, monkeypatch):
+    v = tmp_path / "kasa"
+    for rel, data in {"10-Dersler/not.md": b"# not", "_attachments/Gelen/cv.docx": b"PK-docx", "_attachments/sunum.pptx": b"PK",
+                      "_attachments/tablo.xlsx": b"PK", "_attachments/foto.jpeg": b"\xff\xd8", "_attachments/g.webp": b"RIFF",
+                      ".obsidian/app.json": b"{}", "Plan.canvas": b"{}", "00-Inbox/x.base": b"",
+                      "_attachments/~$cv.docx": b"kilit", "_system/sb/kod.py": b"x=1", ".git/HEAD": b"ref"}.items():
+        f = v / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(data)
+    monkeypatch.setattr(pv, "VAULT", v)
+    got = {a for _, a in pv._vault_files()}
+    for want in ("10-Dersler/not.md", "_attachments/Gelen/cv.docx", "_attachments/sunum.pptx", "_attachments/tablo.xlsx",
+                 "_attachments/foto.jpeg", "_attachments/g.webp", ".obsidian/app.json", "Plan.canvas", "00-Inbox/x.base"):
+        assert want in got, f"yedeğe girmiyor: {want}"
+    for no in ("_attachments/~$cv.docx", "_system/sb/kod.py", ".git/HEAD"):
+        assert no not in got, f"yedeğe girmemeli: {no}"
+
+
+def test_backup_skips_oversized_file(tmp_path, monkeypatch):
+    v = tmp_path / "kasa"
+    (v / "_attachments").mkdir(parents=True)
+    (v / "_attachments" / "dev.mp4").write_bytes(b"0" * 2048)
+    (v / "_attachments" / "kucuk.mp4").write_bytes(b"0" * 10)
+    monkeypatch.setattr(pv, "VAULT", v)
+    monkeypatch.setattr(pv, "BACKUP_MAX_FILE", 1024)
+    got = {a for _, a in pv._vault_files()}
+    assert "_attachments/kucuk.mp4" in got and "_attachments/dev.mp4" not in got

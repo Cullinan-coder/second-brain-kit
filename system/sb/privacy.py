@@ -219,10 +219,26 @@ def _zip_files(dest: Path, files: list[tuple[Path, str]]) -> Path:
     return dest
 
 
+BACKUP_SKIP_DIRS = {"_system", ".git", ".trash", "node_modules", "__pycache__"}   # kod ve git kendi deposunda; geri kalan HER ŞEY yedeğe
+BACKUP_MAX_FILE = 500 * 1024 * 1024
+
+
+def _backup_wanted(p: Path) -> bool:
+    n = p.name
+    if n.startswith("~$") or n.endswith((".tmp", ".part", ".crdownload")) or n in ("Thumbs.db", ".DS_Store"):
+        return False                                            # Office kilit dosyası, yarım indirme, sistem artığı
+    try:
+        return p.stat().st_size <= BACKUP_MAX_FILE
+    except OSError:
+        return False
+
+
 def _vault_files(folder: str = "") -> list[tuple[Path, str]]:
+    """Yedeklenecek kasa dosyaları: _system/.git dışındaki her dosya (Word/Excel/PowerPoint ekleri, Obsidian ayarları,
+    canvas dahil). Eskiden yalnız .md/.enc/.yaml/.png/.jpg/.pdf alınıyordu ve belgeler yedeğe girmiyordu."""
     base = (VAULT / folder) if folder else VAULT
     return [(p, p.relative_to(VAULT).as_posix()) for p in base.rglob("*")
-            if p.is_file() and not (set(p.relative_to(VAULT).parts) & (SKIP_DIRS - {"_attachments"})) and p.suffix in (".md", ".enc", ".yaml", ".png", ".jpg", ".pdf")]
+            if p.is_file() and not (set(p.relative_to(VAULT).parts) & BACKUP_SKIP_DIRS) and _backup_wanted(p)]
 
 
 def vault_backup(folder: str = "", dest: Path | None = None, cipher=None) -> Path:

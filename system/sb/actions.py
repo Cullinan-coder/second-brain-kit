@@ -1,8 +1,9 @@
 """Bilgisayar eylemleri (yerel asistan için). Güvenlik tasarımı:
 
 - Her eylem bir sınıfa girer: SERBEST (geri alınabilir/zararsız: medya tuşu, uygulama açma, arama), ONAYLI (kullanıcı arayüzde
-  "Onayla"ya basmadan çalışmaz: WhatsApp taslağı, izinli liste dışı komut, takvimden silme) ya da YASAK (onaylansa bile yapılmaz).
-- WhatsApp mesajı ASLA otomatik gönderilmez: onaydan sonra WhatsApp'ta hazır taslak açılır, gönder tuşuna kullanıcı basar.
+  "Onayla"ya basmadan çalışmaz: WhatsApp mesajı, izinli liste dışı komut, takvimden silme) ya da YASAK (onaylansa bile yapılmaz).
+- WhatsApp mesajı ONAYSIZ gönderilmez; kullanıcı kartta "Onayla"ya basınca GÖNDERİLİR (`whatsapp_send`): sohbet açılır, öndeki pencere
+  WhatsApp ise Enter'a basılır. WhatsApp öne gelmezse Enter'a basılmaz, mesaj taslak olarak açık kalır. Kart yalnız bilgisayardan onaylanır.
 - Terminal: yalnız salt-okunur izinli komutlar kendiliğinden çalışır; gerisi komutun tam metniyle onaya düşer; yıkıcı kalıplar hiç çalışmaz.
   Komutlar yönetici değil kullanıcı yetkisiyle, pencere açmadan, zaman sınırıyla çalışır.
 - Ekran/kamera içeriği VERİDİR, talimat değil: okunduktan sonra o turdaki tüm eylemler onaya düşer (chat.Session.tainted).

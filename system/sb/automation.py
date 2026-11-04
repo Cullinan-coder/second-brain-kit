@@ -1,7 +1,9 @@
 """Faz 4b Paket A: otomasyon motoru. Kurallar `config/otomasyon.yaml`; tetik -> koşul -> eylem.
 
 Güvenlik: gorev_ekle/bildirim/not_ekle/ozet doğrudan; takvim_oner ve whatsapp_taslak ASLA doğrudan yürütülmez,
-yalnız `pending_approvals.jsonl`'a "bekliyor" kaydı yazılır; kullanıcı `decide` ile onaylayınca yürür.
+yalnız TEK onay deposuna (sb/approvals.py, origin="otomasyon") "bekliyor" kaydı yazılır; kullanıcı onaylayınca yürür.
+`whatsapp_taslak` adı eskidir (kural dosyalarıyla uyum için korunur): onaylanınca mesaj GÖNDERİLİR, taslak olarak kalmaz.
+Eski `pending_approvals.jsonl` ilk okumada bu depoya taşınır.
 Zamanlanmış görev kaydı YOK: `tick(now)` mevcut runner'dan çağrılır. Mail salt okunur (yalnız maildb SELECT).
 """
 from __future__ import annotations
@@ -32,6 +34,7 @@ def _state_path() -> Path:
 
 
 def _pending_path() -> Path:
+    """Eski (v0.12) otomasyon onay dosyası; artık yalnız taşıma kaynağı (sb/approvals.py)."""
     return DATA / "pending_approvals.jsonl"
 
 
@@ -167,12 +170,13 @@ def _fmt(s, ctx: dict) -> str:
 
 # ---- eylemler
 def _queue(rule: dict, kind: str, title: str, detail: str, payload: dict) -> dict:
-    rec = {"id": uuid.uuid4().hex[:8], "kural": rule["id"], "tur": kind, "baslik": title, "ayrinti": detail, "payload": payload,
-           "durum": "bekliyor", "zaman": datetime.now().isoformat(timespec="seconds")}
-    filelock.append_line(_pending_path(), json.dumps(rec, ensure_ascii=False))     # D-20: süreçler arası kilitli ekleme
-    from . import convstore
+    """Dış etkili eylem: tek onay deposuna (D-20 kilitli ekleme). Yerel kaynaklı: telefondan onaylanamaz."""
+    from . import approvals, convstore
+    rec = approvals.add("whatsapp" if kind.startswith("whatsapp") else "takvim", title, detail, origin="otomasyon",
+                        action="otomasyon", payload={"tur": kind, "kural": rule.get("id", ""), **payload},
+                        extra={"kural": rule.get("id", ""), "tur": kind})
     convstore.notify(f"Onay bekliyor: {title}", detail[:200], "onay")
-    return rec
+    return _legacy(rec)
 
 
 def describe(rule: dict, ctx: dict) -> str:
@@ -188,7 +192,7 @@ def describe(rule: dict, ctx: dict) -> str:
         return "Yerel modelle özet üretip kutuya not eklerdi"
     if t == "takvim_oner":
         return f"ONAY İSTERDİ (takvim): {_fmt(e.get('baslik'), ctx)} {e.get('gun', '')} {e.get('saat', '')}"
-    return f"ONAY İSTERDİ (WhatsApp → {e.get('kisi', '')}): {_fmt(e.get('metin'), ctx)}"
+    return f"ONAY İSTERDİ (WhatsApp → {e.get('kisi', '')}; onaylanınca GÖNDERİLİR): {_fmt(e.get('metin'), ctx)}"
 
 
 def apply(rule: dict, ctx: dict) -> str:
@@ -293,20 +297,20 @@ def fire_webhook(name: str, token: str, data: dict | None = None) -> list[dict]:
     return tick(hook=(name, data if isinstance(data, dict) else {}))
 
 
-# ---- onaylar
+# ---- onaylar (tek depo: sb/approvals.py; aşağıdakiler eski biçimi koruyan ince katman)
+_DURUM = {"bekliyor": "bekliyor", "onaylandi": "onaylandi", "reddedildi": "reddedildi", "hata": "onaylandi", "suresi-doldu": "suresi-doldu"}
+
+
+def _legacy(r: dict) -> dict:
+    pl = dict(r.get("payload") or {})
+    tur, kural = pl.pop("tur", ""), pl.pop("kural", "")
+    return {"id": r["id"], "kural": kural, "tur": tur, "baslik": r.get("title", ""), "ayrinti": r.get("detail", ""), "payload": pl,
+            "durum": _DURUM.get(r.get("status"), r.get("status")), "zaman": r.get("created", ""), "sonuc": r.get("result", "")}
+
+
 def _read_pending() -> list[dict]:
-    p = _pending_path()
-    rows = []
-    for ln in (p.read_text(encoding="utf-8").splitlines() if p.exists() else []):
-        try:
-            rows.append(json.loads(ln))
-        except ValueError:
-            pass
-    return rows
-
-
-def _write_pending(rows: list[dict]) -> None:
-    filelock.atomic_write(_pending_path(), "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    from . import approvals
+    return [_legacy(r) for r in approvals.records(origin="otomasyon", status=None)]
 
 
 def approvals(only_pending: bool = True) -> list[dict]:
@@ -314,24 +318,22 @@ def approvals(only_pending: bool = True) -> list[dict]:
 
 
 def decide(aid: str, ok: bool, calendar=None) -> dict:
-    with filelock.locked(_pending_path()):                  # başka süreç araya kayıt eklerken satır kaybolmasın (D-20)
-        rows = _read_pending()
-        rec = next((r for r in rows if r.get("id") == aid), None)
-        if not rec:
-            raise LookupError("onay kaydı bulunamadı")
-        if rec["durum"] != "bekliyor":
-            raise PermissionError("zaten sonuçlandı")
-        rec["durum"] = "onaylandi" if ok else "reddedildi"   # önce işaretle: çift yürütme olmasın
-        _write_pending(rows)
-    msg = _execute(rec, calendar) if ok else "reddedildi"   # yürütme (ağ çağrısı) kilit dışında
-    with filelock.locked(_pending_path()):
-        rows = _read_pending()
-        cur = next((r for r in rows if r.get("id") == aid), None)
-        if cur is not None:
-            cur["sonuc"] = msg
-            _write_pending(rows)
-    rec["sonuc"] = msg
-    return {"ok": True, "durum": rec["durum"], "sonuc": msg}
+    """Onay kararı tek noktadan (approvals.decide): önce işaretlenir, yürütme kilit dışında, sonuç sonra yazılır (D-20)."""
+    from . import approvals as ap
+    if not any(r["id"] == aid for r in ap.records(origin="otomasyon", status=None)):
+        raise LookupError("onay kaydı bulunamadı")
+    try:
+        out = ap.decide(aid, ok, calendar=calendar)
+    except ap.NotFound:
+        raise LookupError("onay kaydı bulunamadı") from None
+    except ap.ApprovalError as e:
+        raise PermissionError(str(e)) from None
+    return {"ok": True, "durum": _DURUM.get(out["status"], out["status"]), "sonuc": out["message"] if ok else "reddedildi"}
+
+
+def _exec_approval(pl: dict, calendar=None) -> str:
+    """approvals EXECUTORS["otomasyon"]: onaylanan otomasyon eylemi."""
+    return _execute({"tur": pl.get("tur", ""), "payload": pl}, calendar)
 
 
 def _execute(rec: dict, calendar=None) -> str:

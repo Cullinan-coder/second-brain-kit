@@ -43,26 +43,9 @@ def safe_filename(name: str) -> str:
     return re.sub(r"\s+", " ", UNSAFE_FILENAME.sub("", name)).strip()
 
 
-# Gevşek yedek desen (YAML ayrıştırılamazsa): büyük/küçük harf, tırnak, satır sonu yorumu (D-11).
-PRIVATE_RE = re.compile(r"^[ \t]*visibility[ \t]*:[ \t]*['\"]?[ \t]*private[ \t]*['\"]?[ \t]*(?:#.*)?$", re.M | re.I)
+# Gizli not kalıbı ve denetimi: TEK kaynak sb/sensitive.py (D-30); buradaki adlar geriye uyumluluk için.
+from .sensitive import PRIVATE_RE, is_private_text  # noqa: E402,F401
 FRONTMATTER_READ = 256 * 1024         # ön bilginin tamamı okunur (eskiden 2000 karakter: uzun ön bilgide gizlilik işareti kaçıyordu)
-
-
-def is_private_text(text: str) -> bool:
-    """Not metni `visibility: private` mi. TEK doğruluk kaynağı (notes + agents). Ön bilgi YAML olarak ayrıştırılır; BOM, tırnak,
-    büyük harf (`Private`), satır sonu yorumu ve uzun ön bilgi fark etmez. Ayrıştırılamıyorsa gevşek desenle bakar (gizli yönünde hata)."""
-    t = text.lstrip("\ufeff")
-    if not t.startswith("---"):
-        return False
-    m = FRONTMATTER_RE.match(t)
-    block = m.group(1) if m else t[3:]
-    try:
-        fm = yaml.safe_load(block)
-    except yaml.YAMLError:
-        fm = None
-    if isinstance(fm, dict):
-        return str(fm.get("visibility", "")).strip().lower() == "private" or bool(PRIVATE_RE.search(block))
-    return bool(PRIVATE_RE.search(block))
 
 
 def is_private(path: Path) -> bool:

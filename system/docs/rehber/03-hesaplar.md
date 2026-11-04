@@ -325,7 +325,7 @@ Resmî yardım: https://docs.github.com/authentication/keeping-your-account-and-
 <a id="hesap-whatsapp"></a>
 ## WhatsApp
 
-WhatsApp için **hesap bağlanmaz**; sohbet dışa aktarma **dosyası** içe aktarılır ve (isteğe bağlı) WhatsApp Masaüstü ile **onaylı mesaj taslağı** hazırlanır. Sohbeti dışa aktarmanın ve içe aktarmanın adımları: [WhatsApp sohbetleri](kaynaklar/whatsapp.md). Asistan WhatsApp mesajı **göndermez**; taslağı hazırlar, onay kartı çıkar ve kart yalnız bilgisayardan onaylanır.
+WhatsApp için **hesap bağlanmaz**; sohbet dışa aktarma **dosyası** içe aktarılır ve (isteğe bağlı) WhatsApp Masaüstü ile **onaylı mesaj gönderimi** yapılır. Sohbeti dışa aktarmanın ve içe aktarmanın adımları: [WhatsApp sohbetleri](kaynaklar/whatsapp.md). Asistan WhatsApp mesajını **onaysız göndermez**: önce mesajın tam metniyle onay kartı çıkar; kartı (yalnız bilgisayardan) onaylarsan mesaj **gönderilir**.
 
 <a id="hesap-linkedin"></a>
 ## LinkedIn

@@ -13,7 +13,7 @@ import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import filelock
+from . import filelock, sensitive
 from .config import DATA, SYSTEM, VAULT
 from .notes import dump_note, split_note
 from .config import USER
@@ -252,7 +252,8 @@ def rules_text(limit: int = 3000, note: Path | None = None) -> str:
     return "\n".join(l for l in note.read_text(encoding="utf-8").splitlines() if l.startswith("- "))[-limit:]
 
 
-SENSITIVE_RE = re.compile(r"şifre|sifre|parola|password|pin kodu|cvv|iban|kart numara|tc kimlik|(?<!\d)\d{11}(?!\d)|(?:\d[ -]?){13,19}", re.I)
+# Hassas DEĞER kalıbı: tek kaynak sb/sensitive.py (D-30). "şifreli yedek" geçer, "şifrem 1234" geçmez.
+SENSITIVE_RE = sensitive.SECRET_RE
 
 
 def add_memory(fact: str, actor: str = "asistan") -> str:

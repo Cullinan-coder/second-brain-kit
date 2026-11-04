@@ -899,13 +899,15 @@ def test_chat_http_security_and_flow(monkeypatch):
         req = urllib.request.Request(base + path, data=json.dumps(body).encode(), headers={k: v for k, v in h.items() if v})
         return urllib.request.urlopen(req)
     try:
-        page = urllib.request.urlopen(base + "/classic")
-        assert b"Yerel asistan" in page.read() and "app://obsidian.md" in page.headers["Content-Security-Policy"]
-        assert json.loads(post("/api/chat", {"sid": "a", "text": "selam"}).read())["reply"] == "Merhaba Ayşe"
-        for headers in ({"X-SB": ""}, {"Origin": "https://kotu.example"}, {"Host": "kotu.example"}):      # başlıksız / yabancı origin / yabancı host
-            with __import__("pytest").raises(urllib.error.HTTPError) as e:
-                post("/api/chat", {"sid": "a", "text": "selam"}, headers)
-            assert e.value.code == 403
+        page = urllib.request.urlopen(base + "/classic")                     # klasik arayüz kaldırıldı: tek arayüze yönlenir (D-30)
+        assert page.url.rstrip("/") == base and b'id="composer"' in page.read() and "app://obsidian.md" in page.headers["Content-Security-Policy"]
+        assert json.loads(post("/api/v2/chat", {"sid": "a", "text": "selam"}).read())["reply"]["text"] == "Merhaba Ayşe"
+        assert json.loads(post("/api/chat", {"sid": "a", "text": "selam"}).read())["reply"] == "Merhaba Ayşe"   # eski uç: ince katman
+        for path in ("/api/v2/chat", "/api/chat"):
+            for headers in ({"X-SB": ""}, {"Origin": "https://kotu.example"}, {"Host": "kotu.example"}):  # başlıksız / yabancı origin / yabancı host
+                with __import__("pytest").raises(urllib.error.HTTPError) as e:
+                    post(path, {"sid": "a", "text": "selam"}, headers)
+                assert e.value.code == 403
     finally:
         srv.shutdown()
 

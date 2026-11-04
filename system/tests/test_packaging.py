@@ -282,3 +282,16 @@ def test_build_kit_ships_packaging_and_release_yml():
         pytest.skip("kitte build_kit yok")
     src = bk.read_text(encoding="utf-8")
     assert "release.yml" in src and "build_packaging" in src and '"app"' in src
+
+
+def test_ci_runs_macos_only_on_tags_and_manual():
+    yaml = pytest.importorskip("yaml")
+    path = SYSTEM / "kit" / "ci.yml"
+    if not path.exists():
+        pytest.skip("test akışı dosyası bu kopyada yok")
+    wf = yaml.safe_load(path.read_text(encoding="utf-8"))
+    on = wf.get("on", wf.get(True))
+    assert "v*" in on["push"]["tags"] and "main" in on["push"]["branches"]
+    expr = wf["jobs"]["install-and-test"]["strategy"]["matrix"]["os"]
+    assert "refs/tags/v" in expr and "workflow_dispatch" in expr                       # macOS: etiket ve elle
+    assert '["windows-latest","macos-latest"]' in expr and '["windows-latest"]' in expr   # her push: yalnız Windows

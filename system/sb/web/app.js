@@ -427,9 +427,7 @@
     bus.emit('message', { role: 'user', text, voice: !!o.voice });
     setChips([]);
     const ids = attIds(atts);
-    const call = SB.has('/api/v2/chat')
-      ? () => api('/api/v2/chat', ids.length ? { text, attachments: ids } : { text })
-      : () => api('/api/chat', { text });
+    const call = () => api('/api/v2/chat', ids.length ? { text, attachments: ids } : { text });   // tek sohbet giriş noktası (D-30)
     return runTurn(call, { text, userEl, o });
   }
   SB.sendMessage = async function (text, o) {
@@ -441,7 +439,7 @@
 
   /* ---------- onay kartları ---------- */
   const KIND_P = { takvim: 'calendar', calendar: 'calendar', komut: 'terminal', bilgisayar: 'terminal', command: 'terminal', unut: 'archive', sil: 'archive', mail: 'mail', whatsapp: 'chat', sms: 'chat', mesaj: 'chat', not: 'note', gorev: 'check' };
-  const KIND_TR_P = { takvim: 'Takvim', calendar: 'Takvim', komut: 'Komut', bilgisayar: 'Bilgisayar', unut: 'Unutma', sil: 'Silme', mail: 'Mail', whatsapp: 'WhatsApp', sms: 'SMS', not: 'Not' };
+  const KIND_TR_P = { takvim: 'Takvim', calendar: 'Takvim', komut: 'Komut', bilgisayar: 'Bilgisayar', unut: 'Unutma', sil: 'Silme', 'takvim-sil': 'Takvim silme', mail: 'Mail', whatsapp: 'WhatsApp (onaylanınca gönderilir)', sms: 'SMS', not: 'Not', gece: 'Gece koşusu', eylem: 'Eylem', kasa: 'Kasa' };
   function propCard(p) {
     const title = p.title || p.summary || 'Onay bekliyor', detail = p.detail || p.when || '';
     const kind = String(p.kind || 'takvim').toLowerCase();
@@ -466,7 +464,7 @@
   async function decide(card, ok) {
     if (card._done || card._working) return;
     card._working = true; card._yes.disabled = card._no.disabled = true;
-    const r = await api('/api/decide', { id: card._p.id, ok });
+    const r = await api('/api/v2/approvals/decide', { id: card._p.id, ok });   // tek onay deposu (D-30)
     card._working = false;
     if (failed(r)) { card._yes.disabled = card._no.disabled = false; return SB.toast('İşlem yapılamadı: ' + (r && r.error), 'error'); }
     card._done = true; card.classList.add('done'); if (ok) card.classList.add('ok');
@@ -611,7 +609,7 @@
     closeDrawer(); closeView();
     let sid = '';
     if (SB.has('/api/v2/conv/new')) { const r = await api('/api/v2/conv/new', {}); if (!failed(r) && r.sid) sid = r.sid; }
-    if (!sid) { sid = rand(); api('/api/reset', {}); }
+    if (!sid) sid = rand();
     SB.sid = sid; settings.set('sid', sid); lastReplyText = '';
     welcome(); setTitle('Yeni sohbet'); renderConvs(); bus.emit('conv', { sid, title: '' }); q.focus();
   }
