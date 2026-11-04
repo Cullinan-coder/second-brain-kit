@@ -2,25 +2,6 @@
 (function () {
   "use strict";
 
-  const CSS = [
-    ".pl{display:grid;gap:var(--s3,12px);padding:var(--s3,12px);color:var(--fg,#222)}",
-    ".pl h2,.pl h3{margin:0 0 var(--s2,8px)}",
-    ".pl-card{background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:10px;padding:var(--s3,12px);min-width:0;overflow-wrap:anywhere}",
-    ".pl-muted{color:var(--muted,#666);font-size:.9em}",
-    ".pl-row{display:flex;gap:var(--s2,8px);align-items:center;flex-wrap:wrap}",
-    ".pl-btn{border:1px solid var(--border,#ccc);background:var(--surface,#fff);color:var(--fg,#222);border-radius:8px;padding:6px 10px;cursor:pointer}",
-    ".pl-btn:focus-visible,.pl-kcard:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px}",
-    ".pl-btn.on{background:var(--accent,#2563eb);color:#fff;border-color:var(--accent,#2563eb)}",
-    ".pl-warn{border-left:3px solid var(--accent,#d97706);padding-left:var(--s2,8px);margin:4px 0}",
-    ".pl-slot{display:grid;grid-template-columns:7.5em 1fr;gap:var(--s2,8px);padding:4px 0;border-bottom:1px solid var(--border,#eee)}",
-    ".pl-slot.mola{opacity:.6}.pl-slot.etkinlik{font-weight:600}",
-    ".pl-timer{font-size:2em;font-variant-numeric:tabular-nums}",
-    ".pl-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--s3,12px);padding:var(--s3,12px)}",
-    ".pl-col{background:var(--surface,#fff);border:1px solid var(--border,#ddd);border-radius:10px;padding:var(--s2,8px);min-height:8em}",
-    ".pl-col.over{outline:2px dashed var(--accent,#2563eb)}",
-    ".pl-kcard{border:1px solid var(--border,#ddd);border-radius:8px;padding:var(--s2,8px);margin:var(--s2,8px) 0;cursor:grab;background:var(--surface,#fff)}",
-    ".pl-kcard.blocked{opacity:.55}"
-  ].join("\n");
 
   function h(tag, attrs) {
     const e = document.createElement(tag);
@@ -45,11 +26,8 @@
       return r == null ? { error: "boş yanıt" } : r;
     } catch (e) { return { error: String(e && e.message || e) }; }
   }
-  function ensureCss() {
-    if (document.getElementById("pl-css")) return;
-    const s = document.createElement("style"); s.id = "pl-css"; s.textContent = CSS; document.head.appendChild(s);
-  }
-  function btn(label, fn, extra) { return h("button", { type: "button", class: "pl-btn" + (extra ? " " + extra : ""), onclick: fn, text: label }); }
+  function ensureCss() { /* stiller components.css içinde */ }
+  function btn(label, fn, extra) { return h("button", { type: "button", class: "btn" + (extra ? " " + extra : ""), onclick: fn, text: label }); }
 
   // ---- saf yardımcı (node ile denenebilir) ----
   function fmtClock(sec) {
@@ -61,29 +39,29 @@
   // ---------- bugün ----------
   function planView(el) {
     ensureCss();
-    const wrap = h("div", { class: "pl" });
+    const wrap = h("div", { class: "sbv stack" });
     el.replaceChildren(wrap);
     let timer = null;
 
     async function load() {
-      wrap.replaceChildren(h("p", { class: "pl-muted", role: "status", text: "Yükleniyor…" }));
+      wrap.replaceChildren(h("p", { class: "muted", role: "status", text: "Yükleniyor…" }));
       const d = await call("/api/v2/plan/today");
       if (d.error) { wrap.replaceChildren(h("p", { role: "status", text: "Yüklenemedi: " + d.error })); return; }
       wrap.replaceChildren(h("h2", { text: "Bugün" }));
-      const top = h("section", { class: "pl-card", "aria-label": "En önemli 3 iş" }, h("h3", { text: "En önemli 3 iş" }));
-      if (!d.top3.length) top.append(h("p", { class: "pl-muted", text: "Açık görev yok." }));
+      const top = h("section", { class: "card", "aria-label": "En önemli 3 iş" }, h("h3", { text: "En önemli 3 iş" }));
+      if (!d.top3.length) top.append(h("p", { class: "muted", text: "Açık görev yok." }));
       d.top3.forEach(function (t, i) {
-        top.append(h("div", { class: "pl-row" }, h("strong", { text: (i + 1) + ". " + t.text }),
-          h("span", { class: "pl-muted", text: t.reason || "" }),
+        top.append(h("div", { class: "row" }, h("strong", { text: (i + 1) + ". " + t.text }),
+          h("span", { class: "muted", text: t.reason || "" }),
           btn("Odaklan", function () { startPomodoro(t); })));
       });
       wrap.append(top);
       if (d.warnings.length) {
-        wrap.append(h("section", { class: "pl-card", role: "alert", "aria-label": "Uyarılar" }, h("h3", { text: "Uyarılar" }),
-          d.warnings.map(function (w) { return h("div", { class: "pl-warn", text: w }); })));
+        wrap.append(h("section", { class: "card", role: "alert", "aria-label": "Uyarılar" }, h("h3", { text: "Uyarılar" }),
+          d.warnings.map(function (w) { return h("div", { class: "note-warn", text: w }); })));
       }
-      const tl = h("section", { class: "pl-card", "aria-label": "Zaman çizelgesi" }, h("h3", { text: "Plan" }));
-      if (!d.plan.length) tl.append(h("p", { class: "pl-muted", text: "Plan boş." }));
+      const tl = h("section", { class: "card", "aria-label": "Zaman çizelgesi" }, h("h3", { text: "Plan" }));
+      if (!d.plan.length) tl.append(h("p", { class: "muted", text: "Plan boş." }));
       d.plan.forEach(function (s) {
         tl.append(h("div", { class: "pl-slot " + s.kind }, h("span", { text: s.start + "–" + s.end }),
           h("span", null, s.title + " ", s.kind === "görev" ? btn("Takvime blokla", function () { block(s); }) : null)));
@@ -100,7 +78,7 @@
 
     const pomo = { task: null, left: 25 * 60, total: 25 * 60 };
     const clock = h("div", { class: "pl-timer", role: "timer", "aria-live": "off", text: fmtClock(pomo.left) });
-    const label = h("span", { class: "pl-muted", text: "Görev seçilmedi" });
+    const label = h("span", { class: "muted", text: "Görev seçilmedi" });
     function startPomodoro(t) {
       pomo.task = t; label.textContent = t.text; resetTimer(); runTimer();
     }
@@ -118,14 +96,14 @@
       }, 1000);
     }
     function pomodoroBox() {
-      return h("section", { class: "pl-card", "aria-label": "Pomodoro" }, h("h3", { text: "Pomodoro" }), clock, label,
-        h("div", { class: "pl-row" }, btn("Başlat", runTimer), btn("Sıfırla", resetTimer),
+      return h("section", { class: "card", "aria-label": "Pomodoro" }, h("h3", { text: "Pomodoro" }), clock, label,
+        h("div", { class: "row" }, btn("Başlat", runTimer), btn("Sıfırla", resetTimer),
           btn("25 dk", function () { pomo.total = 25 * 60; resetTimer(); }), btn("50 dk", function () { pomo.total = 50 * 60; resetTimer(); })));
     }
     function moodBox(cur) {
       const labels = ["Çok düşük", "Düşük", "Orta", "İyi", "Çok iyi"];
-      return h("section", { class: "pl-card", "aria-label": "Ruh hali" }, h("h3", { text: "Bugün nasılsın?" }),
-        h("div", { class: "pl-row" }, labels.map(function (l, i) {
+      return h("section", { class: "card", "aria-label": "Ruh hali" }, h("h3", { text: "Bugün nasılsın?" }),
+        h("div", { class: "row" }, labels.map(function (l, i) {
           return btn((i + 1) + " · " + l, async function () {
             const r = await call("/api/v2/plan/mood", { level: i + 1 });
             toast(r.error ? r.error : "Kaydedildi; plan güncelleniyor.", r.error ? "error" : "ok");
@@ -152,7 +130,7 @@
       const k = h("div", { class: "pl-kcard" + (c.blocked ? " blocked" : ""), draggable: "true", tabindex: "0", "data-id": c.id,
         "aria-label": c.text + (c.blocked ? " (engelli)" : "") + ". Taşımak için Sağ/Sol ok." },
         h("div", { text: c.text }),
-        h("div", { class: "pl-muted", text: [c.due ? "son " + c.due : "", c.project, c.repeat ? "↻ " + c.repeat : "", c.blocked ? "engelli: " + c.after : ""].filter(Boolean).join(" · ") }));
+        h("div", { class: "muted", text: [c.due ? "son " + c.due : "", c.project, c.repeat ? "↻ " + c.repeat : "", c.blocked ? "engelli: " + c.after : ""].filter(Boolean).join(" · ") }));
       k.addEventListener("dragstart", function (e) { e.dataTransfer.setData("text/plain", c.id); e.dataTransfer.effectAllowed = "move"; });
       k.addEventListener("keydown", function (e) {
         const order = ["todo", "doing", "done"], i = order.indexOf(col);
@@ -171,7 +149,7 @@
         if (r.error) toast(r.error, "error"); else { input.value = ""; load(); }
       };
       input.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
-      return h("div", { class: "pl-row" }, input, due, btn("Ekle", go));
+      return h("div", { class: "row" }, input, due, btn("Ekle", go));
     }
     async function load() {
       const d = await call("/api/v2/tasks/board");

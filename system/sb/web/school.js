@@ -31,7 +31,7 @@
     if (Array.isArray(c)) c.forEach(function (x) { put(e, x); });
     else e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
   }
-  function btn(label, fn, cls) { return h("button", { type: "button", class: "sbv-btn " + (cls || ""), onclick: fn, text: label }); }
+  function btn(label, fn, cls) { return h("button", { type: "button", class: "btn " + (cls || ""), onclick: fn, text: label }); }
   function toast(m, k) { if (window.SB && window.SB.toast) window.SB.toast(m, k); }
   async function call(path, body) {
     try { const r = await window.SB.api(path, body); return r == null ? { error: "boş yanıt" } : r; }
@@ -45,22 +45,22 @@
 
   function courseCard(c, onPlan) {
     const exams = (c.exams || []).filter(function (e) { return daysLeft(e.date) >= 0; });
-    return h("section", { class: "sbv-card" },
+    return h("section", { class: "card" },
       h("h3", { text: c.code + " " + c.name }),
-      c.grade ? h("p", { class: "sbv-muted", text: "Not: " + c.grade }) : null,
+      c.grade ? h("p", { class: "muted", text: "Not: " + c.grade }) : null,
       h("p", { text: "Sıradaki: " + whenLabel(c.next_due) }),
       exams.length ? h("p", { text: "Sınav: " + exams.map(function (e) { return e.date; }).join(", ") }) : null,
-      h("p", { class: "sbv-muted", text: c.files_count + " dosya · son hareket " + (c.last_activity || "—") }),
+      h("p", { class: "muted", text: c.files_count + " dosya · son hareket " + (c.last_activity || "—") }),
       h("div", { class: "sbv-actions" }, btn("Çalışma planı", function () { onPlan(c.code); })));
   }
 
   function gpaBox(box) {
-    const out = h("p", { role: "status", class: "sbv-muted" });
+    const out = h("p", { role: "status", class: "muted" });
     const code = h("input", { placeholder: "Ders kodu", "aria-label": "Ders kodu", size: 8 });
     const grade = h("select", { "aria-label": "Harf notu" }, ["AA", "BA", "BB", "CB", "CC", "DC", "DD", "FD", "FF"].map(function (g) { return h("option", { value: g, text: g }); }));
     const kredi = h("input", { placeholder: "AKTS (yeni ders)", "aria-label": "AKTS", size: 6, type: "number" });
     const changes = [];
-    const list = h("div", { class: "sbv-muted" });
+    const list = h("div", { class: "muted" });
     function paint() { list.textContent = changes.map(function (c) { return c.code + "=" + c.grade; }).join(", "); }
     const form = h("div", { class: "sbv-toolbar" }, code, grade, kredi,
       btn("Ekle", function () {
@@ -73,7 +73,7 @@
         if (!changes.length) return toast("Önce bir değişiklik ekle", "error");
         const r = await call("/api/v2/gpa/what-if", { changes: changes });
         out.textContent = r.error ? r.error : "Senaryo GANO: " + r.gpa + " (şu an " + r.current + ", fark " + r.delta + ")";
-      }, "sbv-primary"),
+      }, "primary"),
       btn("Temizle", function () { changes.length = 0; paint(); out.textContent = ""; }));
     box.append(h("h4", { text: "Senaryo (ya olursa)" }), form, list, out);
   }
@@ -82,19 +82,19 @@
     const wrap = h("div", { class: "sbv" });
     el.replaceChildren(wrap);
     wrap.append(h("header", { class: "sbv-head" }, h("h2", { text: "Dersler" })));
-    const gbox = h("section", { class: "sbv-card" }, h("p", { class: "sbv-muted", text: "GANO yükleniyor…" }));
-    const grid = h("div", { class: "sbv-grid" });
+    const gbox = h("section", { class: "card" }, h("p", { class: "muted", text: "GANO yükleniyor…" }));
+    const grid = h("div", { class: "grid" });
     wrap.append(gbox, grid);
     call("/api/v2/gpa").then(function (g) {
       if (g.error) { gbox.replaceChildren(h("p", { text: g.error })); return; }
       gbox.replaceChildren(h("h3", { text: "GANO" }),
         h("p", { text: g.gpa == null ? "Henüz not girilmemiş (config/notlar.yaml)" : g.gpa + " · " + g.credits + " AKTS" }),
-        (g.terms || []).map(function (t) { return h("p", { class: "sbv-muted", text: t.term + ": " + (t.gpa == null ? "—" : t.gpa) }); }));
+        (g.terms || []).map(function (t) { return h("p", { class: "muted", text: t.term + ": " + (t.gpa == null ? "—" : t.gpa) }); }));
       gpaBox(gbox);
     });
     call("/api/v2/courses").then(function (cs) {
       if (cs.error) { grid.replaceChildren(h("p", { text: cs.error })); return; }
-      if (!cs.length) { grid.replaceChildren(h("p", { class: "sbv-empty", text: "Ders bulunamadı." })); return; }
+      if (!cs.length) { grid.replaceChildren(h("p", { class: "empty", text: "Ders bulunamadı." })); return; }
       cs.sort(function (a, b) { return String((a.next_due || {}).date || "9999").localeCompare(String((b.next_due || {}).date || "9999")); });
       grid.replaceChildren(cs.map(function (c) {
         return courseCard(c, function (code) { window.__sbStudyCode = code; window.SB.openView("study", { code: code }); });
@@ -114,9 +114,9 @@
         const r = await call("/api/v2/study-plan", { code: code.value.trim(), exam_date: exam.value, hours_per_day: Number(hours.value) });
         if (r.error) return res.replaceChildren(h("p", { text: r.error }));
         toast("Plan notu yazıldı: " + r.path);
-        res.replaceChildren(h("p", { class: "sbv-muted", text: r.topics + " konu · " + r.path }),
+        res.replaceChildren(h("p", { class: "muted", text: r.topics + " konu · " + r.path }),
           h("ul", {}, r.plan.map(function (p) { return h("li", {}, h("strong", { text: p.date + " " }), p.hours + " sa — " + p.topics.join("; ")); })));
-      }, "sbv-primary")), res);
+      }, "primary")), res);
   }
 
   function init() {

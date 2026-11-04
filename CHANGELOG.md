@@ -2,6 +2,15 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.10.0 — 2026-11-04 (tasarım cilası + ayrıntılı kullanıcı rehberi)
+- **Rehber** (`docs/rehber/`, 130 sayfa): kurulum, sihirbazın her adımı ve alanı, hesap bağlama (Google Cloud, Gmail/Outlook/iCloud/Yandex uygulama şifresi,
+  okul, Tailscale, Spotify, Telegram, GitHub), API anahtarları, modeller ve ses, MCP, veri yükleme, uygulama turu, asistan kullanımı, güvenlik ve gizlilik,
+  30+ sorun giderme maddesi, SSS, sözlük, 97 komutun referansı. Katalogdaki **250 özelliğin her biri** kendi modül sayfasında; 39 veri kaynağı ve 18 MCP için ayrı sayfa.
+  Üçüncü taraf menüleri için resmi yardım adresi verilir. Üretici: `python tools/build_guide.py` (`--check` eksik madde/bağlantı/sır denetler).
+- **Tasarım:** asistanın bütün ekranları ve kurulum sihirbazı tek bileşen katmanında (`components.css`) ve tek belirteç kümesinde; sabit renkler kalktı,
+  koyu temada okunmayan metinler düzeldi, odak halkası ve dar ekran desteği.
+- **Kit:** rehber ve üreticisi kitle birlikte gelir.
+
 ## 0.9.9 — 2026-11-04
 - Aynı anda oluşan iki çökme raporu (Windows saat çözünürlüğü) birbirinin üstüne yazılıyordu; artık ayrı dosya olur (`sb logs`, hata panosu).
 

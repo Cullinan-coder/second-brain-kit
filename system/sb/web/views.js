@@ -71,7 +71,16 @@
     return s ? "?" + s : "";
   }
   const KIND_COLORS = { kisi: "#e07a5f", proje: "#3d85c6", ders: "#81b29a", kavram: "#c9a227", other: "#8a8f98" };
-  function kindColor(k) { return KIND_COLORS[k] || KIND_COLORS.other; }
+  let kcs = null;
+  function kindColor(k) {
+    const key = KIND_COLORS[k] ? k : "other";
+    try {
+      if (!kcs) kcs = getComputedStyle(document.documentElement);
+      const c = kcs.getPropertyValue("--k-" + key).trim();
+      if (c) return c;
+    } catch (e) { /* node/yedek */ }
+    return KIND_COLORS[key];
+  }
 
   const api_ = { forceStep, gradeFor, safeUrl, obsidianUrl, qs, kindColor };
   if (typeof module !== "undefined") module.exports = api_;
@@ -105,14 +114,14 @@
     return h("a", { href: u, target: "_blank", rel: "noopener noreferrer", text: label });
   }
   function btn(label, fn, cls) {
-    return h("button", { type: "button", class: "sbv-btn " + (cls || ""), onclick: fn, text: label });
+    return h("button", { type: "button", class: "btn " + (cls || ""), onclick: fn, text: label });
   }
   function noteLink(title, path) { return link(title || path, obsidianUrl(path)); }
   function section(title, body, cls) {
-    return h("section", { class: "sbv-card " + (cls || ""), "aria-label": title }, h("h3", { text: title }), body);
+    return h("section", { class: "card " + (cls || ""), "aria-label": title }, h("h3", { text: title }), body);
   }
   function list(items, fn) {
-    if (!items || !items.length) return h("p", { class: "sbv-muted", text: "Boş." });
+    if (!items || !items.length) return h("p", { class: "muted", text: "Boş." });
     return h("ul", { class: "sbv-list" }, items.map(function (x) { return h("li", null, fn(x)); }));
   }
   function md(text) {
@@ -133,13 +142,13 @@
     } catch (e) { return { error: String(e && e.message || e) }; }
   }
   function emptyState(el, msg) {
-    el.replaceChildren(h("div", { class: "sbv-empty", role: "status" }, h("p", { text: msg })));
+    el.replaceChildren(h("div", { class: "empty", role: "status" }, h("p", { text: msg })));
   }
   // Ortak yükleyici: uç yoksa/hata varsa boş durum, yoksa render(data)
   async function load(el, path, render) {
     const base = path.split("?")[0];
     if (!hasRoute("GET", base)) return emptyState(el, "Bu görünüm için sunucu ucu yok (" + base + ").");
-    el.replaceChildren(h("p", { class: "sbv-muted", role: "status", text: "Yükleniyor…" }));
+    el.replaceChildren(h("p", { class: "muted", role: "status", text: "Yükleniyor…" }));
     const r = await call(path);
     if (r.error) return emptyState(el, "Yüklenemedi: " + r.error);
     if (r.available === false) return emptyState(el, r.hint || "Bu özellik kurulu değil.");
@@ -157,8 +166,8 @@
     const label = x.title || x.subject || x.text || x.name || x.snippet || "";
     const head = x.path ? noteLink(label || x.path, x.path) : document.createTextNode(label);
     return h("span", null, x.date ? h("span", { class: "sbv-date", text: x.date + " " }) : null, head,
-      x.snippet && x.snippet !== label ? h("span", { class: "sbv-muted", text: " — " + x.snippet }) : null,
-      x.from ? h("span", { class: "sbv-muted", text: " · " + x.from }) : null);
+      x.snippet && x.snippet !== label ? h("span", { class: "muted", text: " — " + x.snippet }) : null,
+      x.from ? h("span", { class: "muted", text: " · " + x.from }) : null);
   }
   function head(title, extra) {
     return h("header", { class: "sbv-head" }, h("h2", { text: title }), extra || null);
@@ -184,12 +193,12 @@
     el.replaceChildren(wrap);
     load(wrap, "/api/v2/dashboard", function (d) {
       wrap.replaceChildren(head(d.greeting || "Bugün"));
-      const grid = h("div", { class: "sbv-grid" });
+      const grid = h("div", { class: "grid" });
       grid.append(
         section("Bugün", list(d.today, function (x) { return [h("strong", { text: (x.time || "") + " " }), x.title]; })),
         section("Yaklaşan", list(d.due, function (x) { return [h("span", { class: "sbv-date", text: (x.date || "") + " " }), x.path ? noteLink(x.title, x.path) : x.title]; })),
-        section("Görevler", list(d.tasks, function (x) { return [x.path ? noteLink(x.text, x.path) : x.text, x.due ? h("span", { class: "sbv-muted", text: " (" + x.due + ")" }) : null]; })),
-        section("Son notlar", list(d.recent, function (x) { return [noteLink(x.title, x.path), h("span", { class: "sbv-muted", text: " " + (x.updated || "") })]; }))
+        section("Görevler", list(d.tasks, function (x) { return [x.path ? noteLink(x.text, x.path) : x.text, x.due ? h("span", { class: "muted", text: " (" + x.due + ")" }) : null]; })),
+        section("Son notlar", list(d.recent, function (x) { return [noteLink(x.title, x.path), h("span", { class: "muted", text: " " + (x.updated || "") })]; }))
       );
       const st = d.stats || {};
       const stats = h("div", { class: "sbv-stats" }, Object.keys(st).map(function (k) {
@@ -216,7 +225,7 @@
     const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canvas = h("canvas", { class: "sbv-canvas", tabindex: "0", role: "img", "aria-label": "Bilgi grafı. Oklarla kaydır, + ve - ile yakınlaştır." });
     const preview = h("div", { class: "sbv-preview", "aria-live": "polite" });
-    const status = h("span", { class: "sbv-muted", role: "status" });
+    const status = h("span", { class: "muted", role: "status" });
     let nodes = [], edges = [], raf = 0, alpha = 1, view = { s: 1, tx: 0, ty: 0 }, hover = -1, drag = null, dead = false;
 
     function redraw() {
@@ -270,7 +279,7 @@
       if (!n) return;
       if (n.kind === "kisi") return window.SB.openView("person", { name: n.label, path: n.id });
       if (n.kind === "proje") return window.SB.openView("project", { name: n.label, path: n.id });
-      preview.replaceChildren(h("strong", { text: n.label }), h("span", { class: "sbv-muted", text: "  " + (n.kind || "not") + " · " + n.id + "  " }),
+      preview.replaceChildren(h("strong", { text: n.label }), h("span", { class: "muted", text: "  " + (n.kind || "not") + " · " + n.id + "  " }),
         link("Obsidian'da aç", obsidianUrl(n.id)), " ", btn("Merkez yap", function () { state.center = n.id; fetchGraph(); }));
     }
     function zoom(f, px, py) {
@@ -364,14 +373,14 @@
         if (!rows.length) return emptyState(out, "Kayıt yok.");
         const ul = h("ol", { class: "sbv-timeline" });
         rows.forEach(function (r) {
-          ul.append(h("li", null, h("time", { text: r.date || "" }), h("span", { class: "sbv-badge", text: r.kind || "" }),
-            r.path ? noteLink(r.title, r.path) : h("span", { text: r.title || "" }), r.snippet ? h("p", { class: "sbv-muted", text: r.snippet }) : null));
+          ul.append(h("li", null, h("time", { text: r.date || "" }), h("span", { class: "badge", text: r.kind || "" }),
+            r.path ? noteLink(r.title, r.path) : h("span", { text: r.title || "" }), r.snippet ? h("p", { class: "muted", text: r.snippet }) : null));
         });
         out.replaceChildren(ul);
       });
     }
     q.addEventListener("keydown", function (ev) { if (ev.key === "Enter") run(); });
-    wrap.append(head("Zaman çizelgesi"), h("div", { class: "sbv-toolbar" }, q, from, to, btn("Ara", run, "sbv-primary")), out);
+    wrap.append(head("Zaman çizelgesi"), h("div", { class: "sbv-toolbar" }, q, from, to, btn("Ara", run, "primary")), out);
     el.replaceChildren(wrap);
     run();
   }
@@ -390,7 +399,7 @@
       }
       function field(label, val) { return val ? h("p", null, h("strong", { text: label + ": " }), val) : null; }
       function render(d) {
-        const g = h("div", { class: "sbv-grid" });
+        const g = h("div", { class: "grid" });
         const top = [d.role || d.status, d.company].filter(Boolean).join(" · ");
         const meta = h("div");
         add(meta, [h("h3", { text: d.name || inp.value }), top ? h("p", { text: top }) : null,
@@ -415,7 +424,7 @@
         return g;
       }
       inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") go(); });
-      wrap.append(head(titleText), h("div", { class: "sbv-toolbar" }, inp, btn("Göster", go, "sbv-primary")), out);
+      wrap.append(head(titleText), h("div", { class: "sbv-toolbar" }, inp, btn("Göster", go, "primary")), out);
       el.replaceChildren(wrap);
       if (params.name) go(); else emptyState(out, "Bir ad yazıp Enter'a basın.");
     };
@@ -430,10 +439,10 @@
       load(body, "/api/v2/cards/decks", function (decks) {
         if (!Array.isArray(decks)) decks = decks.decks || [];
         const frag = h("div");
-        frag.append(decks.length ? h("div", { class: "sbv-grid" }, decks.map(function (d) {
+        frag.append(decks.length ? h("div", { class: "grid" }, decks.map(function (d) {
           return section(d.deck || "(deste)", [h("p", { text: d.total + " kart · " + d.due + " tekrar bekliyor" }),
-            btn("Çalış", function () { session(d.deck); }, "sbv-primary")]);
-        })) : h("p", { class: "sbv-muted", text: "Henüz deste yok." }));
+            btn("Çalış", function () { session(d.deck); }, "primary")]);
+        })) : h("p", { class: "muted", text: "Henüz deste yok." }));
         frag.append(forms());
         body.replaceChildren(frag);
       });
@@ -447,17 +456,17 @@
         toast("Kartlar üretiliyor…");
         const r = await call("/api/v2/cards/generate", body_);
         if (r.error) toast(r.error, "error"); else { toast("Kartlar üretildi"); showDecks(); }
-      }, "sbv-primary")));
+      }, "primary")));
       const dk = h("input", { placeholder: "Deste", "aria-label": "Deste" }), fr = h("input", { placeholder: "Ön yüz", "aria-label": "Ön yüz" }), bk = h("input", { placeholder: "Arka yüz", "aria-label": "Arka yüz" });
       const man = section("Elle ekle", h("div", { class: "sbv-toolbar" }, dk, fr, bk, btn("Ekle", async function () {
         if (!fr.value.trim() || !bk.value.trim()) return;
         const r = await call("/api/v2/cards/add", { deck: dk.value.trim() || "Genel", front: fr.value.trim(), back: bk.value.trim() });
         if (r.error) toast(r.error, "error"); else { toast("Eklendi"); fr.value = bk.value = ""; showDecks(); }
       })));
-      return h("div", { class: "sbv-grid" }, gen, man);
+      return h("div", { class: "grid" }, gen, man);
     }
     async function session(deck) {
-      body.replaceChildren(h("p", { class: "sbv-muted", text: "Yükleniyor…" }));
+      body.replaceChildren(h("p", { class: "muted", text: "Yükleniyor…" }));
       const r = await call("/api/v2/cards/due" + qs({ deck: deck, limit: 20 }));
       const q = Array.isArray(r) ? r : (r.cards || []);
       if (r.error || !q.length) { body.replaceChildren(h("p", { text: r.error ? r.error : "Bugün tekrar yok." }), btn("Geri", showDecks)); return; }
@@ -478,15 +487,15 @@
         done++; i++; flipped = false; draw();
       }
       function draw() {
-        if (i >= q.length) { document.removeEventListener("keydown", onKey); body.replaceChildren(h("p", { text: done + " kart tamamlandı." }), btn("Desteler", showDecks, "sbv-primary")); return; }
+        if (i >= q.length) { document.removeEventListener("keydown", onKey); body.replaceChildren(h("p", { text: done + " kart tamamlandı." }), btn("Desteler", showDecks, "primary")); return; }
         const c = q[i];
-        card.replaceChildren(h("small", { class: "sbv-muted", text: (i + 1) + " / " + q.length }), h("div", { class: "sbv-front" }, md(c.front)),
+        card.replaceChildren(h("small", { class: "muted", text: (i + 1) + " / " + q.length }), h("div", { class: "sbv-front" }, md(c.front)),
           flipped ? h("div", { class: "sbv-back" }, md(c.back)) : null,
           flipped && c.source ? h("small", null, noteLink("Kaynak", c.source)) : null);
         bar.replaceChildren();
-        if (!flipped) bar.append(btn("Çevir (Boşluk)", function () { flipped = true; draw(); }, "sbv-primary"));
+        if (!flipped) bar.append(btn("Çevir (Boşluk)", function () { flipped = true; draw(); }, "primary"));
         else [["Tekrar", 1], ["Zor", 3], ["İyi", 4], ["Kolay", 5]].forEach(function (p) {
-          bar.append(btn(p[0] + " (" + p[1] + ")", function () { grade(gradeFor(p[0])); }, p[0] === "İyi" ? "sbv-primary" : ""));
+          bar.append(btn(p[0] + " (" + p[1] + ")", function () { grade(gradeFor(p[0])); }, p[0] === "İyi" ? "primary" : ""));
         });
         bar.append(btn("Bitir", showDecks));
       }
@@ -535,15 +544,15 @@
       row("Uyandırma sözcüğü (yalnız sekme açıkken)", chk(sget("wake", false), function (v) {
         sset("wake", v); const w = window.SB.voice && window.SB.voice.wake; if (w) v ? w.enable() : w.disable();
       }, "Uyandırma")),
-      hasStt ? null : h("p", { class: "sbv-muted", text: "Konuşma tanıma ucu bulunamadı." })]);
+      hasStt ? null : h("p", { class: "muted", text: "Konuşma tanıma ucu bulunamadı." })]);
 
     // Persona
     const personaBox = h("div");
     const persona = section("Asistan kişiliği", personaBox);
-    wrap.append(head("Ayarlar"), h("div", { class: "sbv-grid" }, persona, voice, look));
-    if (!hasRoute("GET", "/api/v2/persona")) { personaBox.append(h("p", { class: "sbv-muted", text: "Persona ucu yok." })); return; }
+    wrap.append(head("Ayarlar"), h("div", { class: "grid" }, persona, voice, look));
+    if (!hasRoute("GET", "/api/v2/persona")) { personaBox.append(h("p", { class: "muted", text: "Persona ucu yok." })); return; }
     call("/api/v2/persona").then(function (p) {
-      if (p.error) return personaBox.replaceChildren(h("p", { class: "sbv-muted", text: p.error }));
+      if (p.error) return personaBox.replaceChildren(h("p", { class: "muted", text: p.error }));
       const f = {
         name: h("input", { value: p.name || "", "aria-label": "Ad" }),
         tone: h("input", { value: p.tone || "", "aria-label": "Ton", placeholder: "samimi, resmi…" }),
@@ -557,7 +566,7 @@
           if (voiceSel.value) body.voice = voiceSel.value;
           const r = await call("/api/v2/persona", body);
           r.error ? toast(r.error, "error") : toast("Kaydedildi");
-        }, "sbv-primary"));
+        }, "primary"));
     });
   }
 
@@ -570,9 +579,9 @@
     load(out, "/api/v2/errors", function (rows) {
       if (!Array.isArray(rows)) rows = rows.items || [];
       if (!rows.length) return emptyState(out, "Kayıtlı hata yok.");
-      out.replaceChildren(h("div", { class: "sbv-grid" }, rows.map(function (r) {
+      out.replaceChildren(h("div", { class: "grid" }, rows.map(function (r) {
         return section(r.key || "hata", [h("p", { text: r.error || "" }), r.fix ? h("p", null, h("strong", { text: "Çözüm: " }), r.fix) : null,
-          h("p", { class: "sbv-muted", text: [r.count ? r.count + " kez" : "", r.last || "", r.source || ""].filter(Boolean).join(" · ") })]);
+          h("p", { class: "muted", text: [r.count ? r.count + " kez" : "", r.last || "", r.source || ""].filter(Boolean).join(" · ") })]);
       })));
     });
   }
@@ -597,7 +606,7 @@
       showList();
     }
     topic.addEventListener("keydown", function (ev) { if (ev.key === "Enter") make(); });
-    wrap.append(head("Öğrenme yolları"), h("div", { class: "sbv-toolbar" }, topic, btn("Oluştur", make, "sbv-primary")), out);
+    wrap.append(head("Öğrenme yolları"), h("div", { class: "sbv-toolbar" }, topic, btn("Oluştur", make, "primary")), out);
     showList();
   }
 
@@ -610,7 +619,7 @@
       load(out, "/api/v2/journal?days=7", function (r) {
         const rows = Array.isArray(r) ? r : (r.entries || r.days || []);
         if (!rows.length) return emptyState(out, "Son günlerde kayıt yok.");
-        out.replaceChildren(h("div", { class: "sbv-grid" }, rows.map(function (x) {
+        out.replaceChildren(h("div", { class: "grid" }, rows.map(function (x) {
           const t = x.text || x.content || (Array.isArray(x.entries) ? x.entries.map(function (e) { return typeof e === "string" ? e : (e.who ? e.who + ": " : "") + (e.text || ""); }).join("\n") : "");
           return section(x.date || "", md(t));
         })));
@@ -621,7 +630,7 @@
       const r = await call("/api/v2/journal", { text: t, who: "ayse" });
       if (r.error) return toast(r.error, "error");
       ta.value = ""; showList();
-    }, "sbv-primary")), out);
+    }, "primary")), out);
     showList();
   }
 

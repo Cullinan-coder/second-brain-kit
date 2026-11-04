@@ -37,7 +37,7 @@
     if (Array.isArray(c)) c.forEach(function (x) { put(e, x); });
     else e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
   }
-  function btn(label, fn, cls) { return h("button", { type: "button", class: "sbv-btn " + (cls || ""), onclick: fn, text: label }); }
+  function btn(label, fn, cls) { return h("button", { type: "button", class: "btn " + (cls || ""), onclick: fn, text: label }); }
   function toast(m, k) { if (window.SB && window.SB.toast) window.SB.toast(m, k); }
   async function call(path, body) {
     try { const r = await window.SB.api(path, body); return r == null ? { error: "boş yanıt" } : r; }
@@ -52,7 +52,7 @@
     const wrap = h("div", { class: "sbv" });
     el.replaceChildren(wrap);
     if (!hasRoute("GET", "/api/v2/memory")) {
-      wrap.append(h("div", { class: "sbv-empty", role: "status" }, h("p", { text: "Hafıza ucu bulunamadı." })));
+      wrap.append(h("div", { class: "empty", role: "status" }, h("p", { text: "Hafıza ucu bulunamadı." })));
       return;
     }
     let scope = "all", timer = 0;
@@ -64,20 +64,20 @@
     q.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(refresh, 250); });
 
     async function refresh() {
-      listEl.replaceChildren(h("p", { class: "sbv-muted", text: "Yükleniyor…" }));
+      listEl.replaceChildren(h("p", { class: "muted", text: "Yükleniyor…" }));
       const qs = new URLSearchParams({ scope: scope });
       if (q.value.trim()) qs.set("q", q.value.trim());
       const rows = await call("/api/v2/memory?" + qs.toString());
-      if (rows.error) return listEl.replaceChildren(h("p", { class: "sbv-muted", text: "Yüklenemedi: " + rows.error }));
+      if (rows.error) return listEl.replaceChildren(h("p", { class: "muted", text: "Yüklenemedi: " + rows.error }));
       const arr = Array.isArray(rows) ? rows : (rows.items || []);
-      if (!arr.length) return listEl.replaceChildren(h("p", { class: "sbv-muted", text: "Kayıt yok." }));
+      if (!arr.length) return listEl.replaceChildren(h("p", { class: "muted", text: "Kayıt yok." }));
       listEl.replaceChildren.apply(listEl, arr.map(row));
     }
 
     function row(m) {
       const textEl = h("div", { class: "sbv-memtext", text: m.text });
       const box = h("article", { class: "sbv-memrow" });
-      const meta = h("small", { class: "sbv-muted", text: [m.scope, m.source_path ? m.source_path + (m.line ? ":" + m.line : "") : "", m.added || "", m.context || ""].filter(Boolean).join(" · ") });
+      const meta = h("small", { class: "muted", text: [m.scope, m.source_path ? m.source_path + (m.line ? ":" + m.line : "") : "", m.added || "", m.context || ""].filter(Boolean).join(" · ") });
       function view() {
         box.replaceChildren(textEl, meta, h("div", { class: "sbv-actions" },
           btn("Düzenle", edit), btn("Sil", del), btn("Unut…", forget)));
@@ -90,7 +90,7 @@
             const t = ta.value.trim(); if (!t) return;
             const r = await call("/api/v2/memory/update", { id: m.id, text: t });
             if (r.error) toast(r.error, "error"); else { toast("Güncellendi"); refresh(); }
-          }, "sbv-primary"), btn("Vazgeç", view)));
+          }, "primary"), btn("Vazgeç", view)));
         ta.focus();
       }
       function del() {
@@ -98,7 +98,7 @@
           h("div", { class: "sbv-actions" }, btn("Evet, sil", async function () {
             const r = await call("/api/v2/memory/delete", { id: m.id });
             if (r.error) toast(r.error, "error"); else { toast("Silindi (arşive taşındı)"); refresh(); }
-          }, "sbv-danger"), btn("Vazgeç", view)));
+          }, "danger"), btn("Vazgeç", view)));
       }
       function forget() { askForget(m.text.slice(0, 80)); }
       view();
@@ -125,7 +125,7 @@
       if (addCtx.value.trim()) body.context = addCtx.value.trim();
       const r = await call("/api/v2/memory/add", body);
       if (r.error) toast(r.error, "error"); else { addText.value = addCtx.value = ""; toast("Eklendi"); refresh(); }
-    }, "sbv-primary"));
+    }, "primary"));
 
     // Aday tercihler (152)
     async function loadPrefs() {
@@ -133,10 +133,10 @@
       const c = await call("/api/v2/prefs/candidates");
       const arr = Array.isArray(c) ? c : [];
       if (!arr.length) return prefsEl.replaceChildren();
-      prefsEl.replaceChildren(h("section", { class: "sbv-card" }, h("h3", { text: "Öğrendiğim aday tercihler" }),
+      prefsEl.replaceChildren(h("section", { class: "card" }, h("h3", { text: "Öğrendiğim aday tercihler" }),
         arr.map(function (p) {
           return h("div", { class: "sbv-memrow" }, h("div", { text: p.text || p.pref || JSON.stringify(p) }), h("div", { class: "sbv-actions" },
-            btn("Onayla", async function () { await call("/api/v2/prefs/decide", { id: p.id, ok: true }); loadPrefs(); refresh(); }, "sbv-primary"),
+            btn("Onayla", async function () { await call("/api/v2/prefs/decide", { id: p.id, ok: true }); loadPrefs(); refresh(); }, "primary"),
             btn("Reddet", async function () { await call("/api/v2/prefs/decide", { id: p.id, ok: false }); loadPrefs(); })));
         })));
     }

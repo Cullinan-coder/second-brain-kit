@@ -34,17 +34,17 @@
     if (Array.isArray(c)) c.forEach(function (x) { put(e, x); });
     else e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
   }
-  function btn(label, fn, cls) { return h("button", { type: "button", class: "sbv-btn " + (cls || ""), onclick: fn, text: label }); }
+  function btn(label, fn, cls) { return h("button", { type: "button", class: "btn " + (cls || ""), onclick: fn, text: label }); }
   function toast(m, k) { if (window.SB && window.SB.toast) window.SB.toast(m, k); }
   async function call(path, body) {
     try { const r = await window.SB.api(path, body); return r == null ? { error: "boş yanıt" } : r; }
     catch (e) { return { error: String(e && e.message || e) }; }
   }
   function field(ph, extra) { return h("input", Object.assign({ placeholder: ph, "aria-label": ph }, extra || {})); }
-  function section(title, body) { return h("section", { class: "sbv-card" }, h("h3", { text: title }), body); }
-  function pre(text) { return h("pre", { class: "sbv-pre", style: "white-space:pre-wrap" , text: text }); }
+  function section(title, body) { return h("section", { class: "card" }, h("h3", { text: title }), body); }
+  function pre(text) { return h("pre", { class: "pre", style: "white-space:pre-wrap" , text: text }); }
   function loading(box, path, paint) {
-    box.append(h("p", { class: "sbv-muted", text: "Yükleniyor…" }));
+    box.append(h("p", { class: "muted", text: "Yükleniyor…" }));
     call(path).then(function (r) {
       box.replaceChildren();
       if (r && r.error) box.append(h("p", { role: "alert", text: r.error })); else paint(r);
@@ -58,7 +58,7 @@
   function crmBox() {
     const box = h("div", {});
     loading(box, "/api/v2/crm", function (rows) {
-      if (!rows.length) return box.append(h("p", { class: "sbv-empty", text: "Müşteri yok (kişi notuna musteri: true ya da company ekle)." }));
+      if (!rows.length) return box.append(h("p", { class: "empty", text: "Müşteri yok (kişi notuna musteri: true ya da company ekle)." }));
       box.append(rows.map(function (r) {
         return h("p", {}, h("strong", { text: r.name }), r.company ? " (" + r.company + ")" : "",
           " · son iletişim " + (r.last_contact || "—") + " · açık iş " + r.open_jobs.length + " · fatura " + money(r.invoice_total));
@@ -70,9 +70,9 @@
   function boardBox() {
     const box = h("div", {});
     loading(box, "/api/v2/applications/board", function (b) {
-      box.append(h("div", { class: "sbv-grid" }, b.columns.map(function (c) {
+      box.append(h("div", { class: "grid" }, b.columns.map(function (c) {
         return h("div", {}, h("h4", { text: c.status + " (" + c.items.length + ")" }),
-          c.items.map(function (i) { return h("p", { class: "sbv-muted", text: i.title + (i.due ? " · " + i.due : "") }); }));
+          c.items.map(function (i) { return h("p", { class: "muted", text: i.title + (i.due ? " · " + i.due : "") }); }));
       })));
     });
     return section("Başvuru panosu", box);
@@ -87,7 +87,7 @@
         const r = await call("/api/v2/time", { project: project.value.trim(), minutes: Number(minutes.value), note: note.value });
         if (r.error) return toast(r.error, "error");
         toast("Kaydedildi"); minutes.value = ""; note.value = "";
-      }, "sbv-primary")),
+      }, "primary")),
       h("div", { class: "sbv-toolbar" }, month, btn("Rapor", async function () {
         const q = "/api/v2/time/report?project=" + encodeURIComponent(project.value.trim()) + "&month=" + encodeURIComponent(month.value.trim());
         const r = await call(q);
@@ -99,9 +99,9 @@
     const box = h("div", {});
     loading(box, "/api/v2/finance", function (f) {
       box.append(f.months.length ? f.months.map(function (m) { return h("p", { text: m.month + ": " + money(m.totals) }); })
-        : h("p", { class: "sbv-empty", text: "Fatura kaydı yok." }),
+        : h("p", { class: "empty", text: "Fatura kaydı yok." }),
         h("h4", { text: "Yaklaşan vergi tarihleri" }),
-        f.reminders.map(function (r) { return h("p", { class: "sbv-muted", text: r.date + " · " + r.kind + " (" + r.days_left + " gün)" }); }));
+        f.reminders.map(function (r) { return h("p", { class: "muted", text: r.date + " · " + r.kind + " (" + r.days_left + " gün)" }); }));
     });
     return section("Gelir/gider ve vergi", box);
   }
@@ -109,9 +109,9 @@
   function contractBox() {
     const box = h("div", {});
     loading(box, "/api/v2/contracts", function (rows) {
-      if (!rows.length) return box.append(h("p", { class: "sbv-empty", text: "Sözleşme bulunamadı." }));
+      if (!rows.length) return box.append(h("p", { class: "empty", text: "Sözleşme bulunamadı." }));
       box.append(rows.map(function (r) {
-        return h("p", { class: r.warn ? "sbv-warn" : "" }, (r.warn ? "UYARI · " : "") + r.title + " — " + dueLabel(r.days_left));
+        return h("p", { class: r.warn ? "note-warn" : "" }, (r.warn ? "UYARI · " : "") + r.title + " — " + dueLabel(r.days_left));
       }));
     });
     return section("Sözleşmeler", box);
@@ -127,10 +127,10 @@
     const out = h("div", { role: "status" });
     return section(title, h("div", {}, h("div", { class: "sbv-toolbar" }, inputs,
       asyncBtn(label, async function () {
-        out.replaceChildren(h("p", { class: "sbv-muted", text: "Çalışıyor…" }));
+        out.replaceChildren(h("p", { class: "muted", text: "Çalışıyor…" }));
         const r = await call(path, build());
         out.replaceChildren(r.error ? h("p", { role: "alert", text: r.error }) : show(r));
-      }, "sbv-primary")), out));
+      }, "primary")), out));
   }
 
   function renderStudyTools(el) {
@@ -140,7 +140,7 @@
     const nc = field("Ders kodu", { size: 8 }), nsrc = field("Kaynak not yolu (isteğe bağlı)");
     wrap.append(tool("Ders notu üretici", [nc, nsrc], "Özetle", "/api/v2/course-notes",
       function () { return { code: nc.value.trim(), source_path: nsrc.value.trim() }; },
-      function (r) { return h("div", {}, h("p", { class: "sbv-muted", text: "Yazıldı: " + r.path }), pre(r.text)); }));
+      function (r) { return h("div", {}, h("p", { class: "muted", text: "Yazıldı: " + r.path }), pre(r.text)); }));
     const tc = field("Ders kodu", { size: 8 }), tq = field("Sorun");
     wrap.append(tool("Öğretici (cevap vermez, ipucu verir)", [tc, tq], "İpucu al", "/api/v2/tutor",
       function () { return { code: tc.value.trim(), question: tq.value.trim() }; },
@@ -148,7 +148,7 @@
     const bt = field("Metin, DOI ya da URL");
     wrap.append(tool("Kaynakça", [bt], "Ekle", "/api/v2/bib",
       function () { return { text: bt.value.trim() }; },
-      function (r) { return h("div", {}, h("p", { text: "APA: " + r.apa }), h("p", { text: "IEEE: " + r.ieee }), h("p", { class: "sbv-muted", text: "Eklendi: " + r.path })); }));
+      function (r) { return h("div", {}, h("p", { text: "APA: " + r.apa }), h("p", { text: "IEEE: " + r.ieee }), h("p", { class: "muted", text: "Eklendi: " + r.path })); }));
     const wp = field("Not yolu (örn. 10-Dersler/…/tez.md)");
     const wt = h("select", { "aria-label": "Görev" }, ["outline", "review", "expand"].map(function (t) { return h("option", { value: t, text: t }); }));
     wrap.append(tool("Yazım asistanı", [wp, wt], "Öner", "/api/v2/writing",

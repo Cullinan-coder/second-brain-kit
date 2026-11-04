@@ -9,10 +9,6 @@
   --d1:120ms;--d2:200ms;--ease:cubic-bezier(.2,.7,.2,1);
   --a-l:#2563eb;--a-d:#7aa7ff;
   --side-w:272px;
-  /* görünüm dosyalarının (views/memory/voice) kullandığı takma adlar */
-  --text:var(--fg);--text-muted:var(--muted);--accent-contrast:var(--on-accent);
-  --space-1:var(--s1);--space-2:var(--s2);--space-3:var(--s3);--space-4:var(--s4);--space-5:var(--s5);--space-6:var(--s6);
-  --radius:var(--r2);--radius-sm:var(--r1);--fs-sm:var(--t-sm);--fs-md:var(--t-md);--fs-lg:var(--t-lg);
   color-scheme:light dark;
 }
 :root[data-accent=green]{--a-l:#15803d;--a-d:#4ade80}
@@ -22,7 +18,8 @@
 /* açık tema (varsayılan) */
 :root,:root[data-theme=light]{
   --bg:#ffffff;--surface:#f6f7f9;--surface-2:#eceef2;--raised:#ffffff;--border:#dfe2e8;--border-strong:#c4c9d3;
-  --fg:#1a1b22;--muted:#5a5e6d;--accent:var(--a-l);--on-accent:#ffffff;
+  --fg:#1a1b22;--muted:#5a5e6d;--accent:var(--a-l);--on-accent:#ffffff;--on-danger:#ffffff;
+  --k-kisi:#c2410c;--k-proje:#1d4ed8;--k-ders:#15803d;--k-kavram:#a16207;--k-other:#6b7280;
   --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent);
   --ok:#15803d;--warn:#b45309;--danger:#b91c1c;--user-bg:color-mix(in srgb,var(--accent) 10%,var(--bg));
   --shadow:0 1px 2px rgba(20,22,30,.06),0 8px 24px rgba(20,22,30,.10);--shadow-sm:0 1px 2px rgba(20,22,30,.08);
@@ -32,7 +29,8 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme=light]){
     --bg:#121317;--surface:#1a1c22;--surface-2:#23262e;--raised:#1f2128;--border:#2b2e38;--border-strong:#3c404c;
-    --fg:#e8e9ee;--muted:#9da1b3;--accent:var(--a-d);--on-accent:#0b0d1a;
+    --fg:#e8e9ee;--muted:#9da1b3;--accent:var(--a-d);--on-accent:#0b0d1a;--on-danger:#0b0d1a;
+    --k-kisi:#fb923c;--k-proje:#7aa7ff;--k-ders:#4ade80;--k-kavram:#fbbf24;--k-other:#9ca3af;
     --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent);
     --ok:#4ade80;--warn:#fbbf24;--danger:#f87171;--user-bg:color-mix(in srgb,var(--accent) 16%,var(--bg));
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.5);--shadow-sm:0 1px 2px rgba(0,0,0,.4);
@@ -42,7 +40,8 @@
 }
 :root[data-theme=dark]{
   --bg:#121317;--surface:#1a1c22;--surface-2:#23262e;--raised:#1f2128;--border:#2b2e38;--border-strong:#3c404c;
-  --fg:#e8e9ee;--muted:#9da1b3;--accent:var(--a-d);--on-accent:#0b0d1a;
+  --fg:#e8e9ee;--muted:#9da1b3;--accent:var(--a-d);--on-accent:#0b0d1a;--on-danger:#0b0d1a;
+    --k-kisi:#fb923c;--k-proje:#7aa7ff;--k-ders:#4ade80;--k-kavram:#fbbf24;--k-other:#9ca3af;
   --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent);
   --ok:#4ade80;--warn:#fbbf24;--danger:#f87171;--user-bg:color-mix(in srgb,var(--accent) 16%,var(--bg));
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.5);--shadow-sm:0 1px 2px rgba(0,0,0,.4);
@@ -86,7 +85,9 @@ svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .btn.primary:hover{filter:brightness(1.07);background:var(--accent)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
 .btn.ghost:hover{background:var(--surface-2);color:var(--fg)}
-.btn.danger{color:var(--danger)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 55%,var(--border))}
+.btn.danger:hover{background:color-mix(in srgb,var(--danger) 10%,var(--raised))}
+.btn.on{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
 .btn.sm{min-height:28px;padding:var(--s1) var(--s2);font-size:var(--t-sm)}
 .btn.block{width:100%}
 .btn:disabled,.ibtn:disabled{opacity:.5;cursor:not-allowed}
@@ -95,9 +96,9 @@ svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .ibtn[aria-pressed=true]{background:var(--accent);color:var(--on-accent)}
 .ibtn.send{background:var(--accent);color:var(--on-accent)}
 .ibtn.send:hover{filter:brightness(1.07);background:var(--accent);color:var(--on-accent)}
-.ibtn.rec{background:var(--danger);color:#fff}
+.ibtn.rec{background:var(--danger);color:var(--on-danger)}
 .bell-wrap{position:relative;display:inline-flex}
-.badge{position:absolute;top:2px;right:0;min-width:16px;height:16px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px;font-weight:700;pointer-events:none}
+.bell-badge{position:absolute;top:2px;right:0;min-width:16px;height:16px;border-radius:8px;background:var(--danger);color:var(--on-danger);font-size:.6875rem;line-height:16px;text-align:center;padding:0 4px;font-weight:700;pointer-events:none}
 
 /* kenar çubuğu */
 .search{position:relative;display:flex;align-items:center}
@@ -121,7 +122,6 @@ svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .menu{position:fixed;z-index:75;min-width:168px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--shadow);padding:var(--s1)}
 .menu button{display:flex;width:100%;align-items:center;gap:var(--s2);border:0;background:transparent;border-radius:var(--r1);padding:var(--s2) var(--s3);text-align:left}
 .menu button:hover,.menu button:focus-visible{background:var(--surface-2)}
-.empty{color:var(--muted);font-size:var(--t-sm);padding:var(--s3);text-align:center}
 .side-sec-h{display:flex;align-items:center;gap:var(--s2);width:100%;border:0;background:transparent;color:var(--muted);font-size:var(--t-xs);text-transform:uppercase;letter-spacing:.06em;padding:var(--s2) var(--s1);font-weight:600}
 .side-sec-h .chev{margin-left:auto;transition:transform var(--d2) var(--ease)}
 .side-sec-h[aria-expanded=true] .chev{transform:rotate(90deg)}
@@ -257,7 +257,7 @@ details.trace pre{margin:var(--s1) 0 0;white-space:pre-wrap;font-family:var(--mo
 .pair code{font-family:var(--mono);background:var(--code-bg);padding:2px 6px;border-radius:var(--r1)}
 #toasts{position:fixed;bottom:var(--s4);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:var(--s2);z-index:90;width:min(440px,calc(100vw - 32px));pointer-events:none}
 .toast{pointer-events:auto;background:var(--fg);color:var(--bg);border-radius:var(--r2);padding:var(--s3) var(--s4);box-shadow:var(--shadow);font-size:var(--t-sm);animation:rise var(--d2) var(--ease);display:flex;gap:var(--s3);align-items:center}
-.toast.error{background:var(--danger);color:#fff}.toast.ok{background:var(--ok);color:var(--bg)}
+.toast.error{background:var(--danger);color:var(--on-danger)}.toast.ok{background:var(--ok);color:var(--bg)}
 .toast a{color:inherit;font-weight:600}
 #drop{position:fixed;inset:0;background:var(--scrim);z-index:80;display:flex;align-items:center;justify-content:center;pointer-events:none}
 #drop div{background:var(--raised);border:2px dashed var(--accent);border-radius:var(--r3);padding:var(--s5) var(--s6);font-weight:600}
@@ -285,7 +285,7 @@ details.trace pre{margin:var(--s1) 0 0;white-space:pre-wrap;font-family:var(--mo
 @media (forced-colors:active){.btn.primary,.ibtn.send{border:1px solid ButtonText}}
 
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-body.sbv-listening #mic-btn{background:var(--danger);color:#fff}
+body.sbv-listening #mic-btn{background:var(--danger);color:var(--on-danger)}
 body.sbv-listening .comp-box{border-color:var(--danger)}
 a.src{text-decoration:none;color:var(--fg)}
 a.src .src-t{color:var(--accent)}

@@ -32,7 +32,7 @@
     if (!badge && n) {
       badge = document.createElement('div');
       badge.setAttribute('role', 'status'); badge.setAttribute('aria-live', 'polite');
-      badge.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:9999;padding:6px 12px;border-radius:16px;background:#374151;color:#fff;font:14px system-ui';
+      badge.className = 'queue-badge';
       document.body.appendChild(badge);
     }
     if (badge) { badge.textContent = 'Kuyrukta ' + n; badge.hidden = n === 0; }

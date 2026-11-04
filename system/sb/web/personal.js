@@ -37,17 +37,17 @@
     if (Array.isArray(c)) c.forEach(function (x) { put(e, x); });
     else e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
   }
-  function btn(label, fn, cls) { return h("button", { type: "button", class: "sbv-btn " + (cls || ""), onclick: fn, text: label }); }
+  function btn(label, fn, cls) { return h("button", { type: "button", class: "btn " + (cls || ""), onclick: fn, text: label }); }
   function toast(m, k) { if (window.SB && window.SB.toast) window.SB.toast(m, k); }
   async function call(path, body) {
     try { const r = await window.SB.api(path, body); return r == null ? { error: "boş yanıt" } : r; }
     catch (e) { return { error: String(e && e.message || e) }; }
   }
   function field(ph, extra) { return h("input", Object.assign({ placeholder: ph, "aria-label": ph }, extra || {})); }
-  function section(title, body) { return h("section", { class: "sbv-card" }, h("h3", { text: title }), body); }
-  function empty(t) { return h("p", { class: "sbv-empty", text: t }); }
+  function section(title, body) { return h("section", { class: "card" }, h("h3", { text: title }), body); }
+  function empty(t) { return h("p", { class: "empty", text: t }); }
   function loading(box, path, paint) {
-    box.append(h("p", { class: "sbv-muted", text: "Yükleniyor…" }));
+    box.append(h("p", { class: "muted", text: "Yükleniyor…" }));
     call(path).then(function (r) {
       box.replaceChildren();
       if (r && r.error) box.append(h("p", { role: "alert", text: r.error })); else paint(r);
@@ -62,10 +62,10 @@
       box.append(h("p", { text: s.month + " toplam: " + money(s.total) }));
       s.categories.forEach(function (c) {
         const spent = c.totals.TRY || 0;
-        box.append(h("div", { class: c.over ? "sbv-warn" : "" },
+        box.append(h("div", { class: c.over ? "note-warn" : "" },
           h("div", { text: c.category + " — " + money(c.totals) + (c.limit ? " / limit " + c.limit + (c.over ? " (AŞILDI)" : "") : "") }),
-          h("div", { style: "background:var(--border,#ddd);height:8px;border-radius:4px", role: "img", "aria-label": c.category + " çubuğu" },
-            h("div", { style: "height:8px;border-radius:4px;background:" + (c.over ? "#c0392b" : "var(--accent,#3b82f6)") + ";width:" + barPct(spent, max) + "%" }))));
+          h("div", { class: "meter", role: "img", "aria-label": c.category + " çubuğu" },
+            h("div", { class: c.over ? "meter-fill over" : "meter-fill", style: "width:" + barPct(spent, max) + "%" }))));
       });
     });
     return section("Harcama", box);
@@ -75,7 +75,7 @@
     const box = h("div", {});
     loading(box, path, function (rows) {
       if (!rows.length) return box.append(empty(emptyText));
-      box.append(rows.map(function (r) { return h("p", { class: r.warn || r.soon ? "sbv-warn" : "" }, line(r)); }));
+      box.append(rows.map(function (r) { return h("p", { class: r.warn || r.soon ? "note-warn" : "" }, line(r)); }));
     });
     return section(title, box);
   }
@@ -107,7 +107,7 @@
     const level = h("select", { "aria-label": "Ruh hali" }, [1, 2, 3, 4, 5].map(function (n) { return h("option", { value: String(n), text: String(n) }); }));
     const note = field("Not");
     function paint() {
-      out.replaceChildren(h("p", { class: "sbv-muted", text: "Yükleniyor…" }));
+      out.replaceChildren(h("p", { class: "muted", text: "Yükleniyor…" }));
       call("/api/v2/mood?days=30").then(function (m) {
         out.replaceChildren(m.error ? h("p", { role: "alert", text: m.error })
           : m.series.length ? h("div", {}, h("p", { text: "30 gün ortalama: " + m.average + " (" + m.count + " gün)" }),
@@ -118,7 +118,7 @@
       const r = await call("/api/v2/mood", { level: Number(level.value), note: note.value });
       if (r.error) return toast(r.error, "error");
       toast("Kaydedildi"); note.value = ""; paint();
-    }, "sbv-primary")), out);
+    }, "primary")), out);
     paint();
     return section("Ruh hali", box);
   }
@@ -131,12 +131,12 @@
       ["okunacak", "izlenecek"].forEach(function (k) {
         box.append(h("h4", { text: k }), r[k].length ? r[k].map(function (i) { return h("p", { text: (i.done ? "✓ " : "• ") + i.title }); }) : empty("Boş."));
       });
-      if (r.suggestions.length) box.append(h("h4", { text: "Öneriler" }), r.suggestions.map(function (s) { return h("p", { class: "sbv-muted", text: s.source + " · " + s.title }); }));
+      if (r.suggestions.length) box.append(h("h4", { text: "Öneriler" }), r.suggestions.map(function (s) { return h("p", { class: "muted", text: s.source + " · " + s.title }); }));
       box.append(h("div", { class: "sbv-toolbar" }, title, kind, btn("Ekle", async function () {
         const x = await call("/api/v2/reading-list", { title: title.value.trim(), kind: kind.value });
         if (x.error) return toast(x.error, "error");
         toast("Eklendi"); title.value = "";
-      }, "sbv-primary")));
+      }, "primary")));
     });
     return section("Okuma ve izleme listesi", box);
   }
@@ -154,7 +154,7 @@
       const r = await call("/api/v2/gift", { person: person.value.trim(), idea: idea.value.trim() });
       if (r.error) return out.replaceChildren(h("p", { role: "alert", text: r.error }));
       out.replaceChildren(h("p", { text: "Eklendi: " + r.person })); idea.value = "";
-    }, "sbv-primary")), out));
+    }, "primary")), out));
   }
 
   function renderLife(el) {

@@ -313,10 +313,10 @@
     const box = h("div", { id: "sbv-result", class: "sbv-modal", role: "dialog", "aria-modal": "true", "aria-label": title, onkeydown: function (e) { if (e.key === "Escape") close(); } },
       h("div", { class: "sbv-modal-card" }, h("h3", { text: title }), body,
         h("div", { class: "sbv-actions" },
-          h("button", { type: "button", class: "sbv-btn", text: "Sohbete gönder", onclick: function () { if (window.SB.sendMessage) window.SB.sendMessage(title + ":\n" + String(text || "")); close(); } }),
-          h("button", { type: "button", class: "sbv-btn sbv-primary", text: "Kapat", onclick: close }))));
+          h("button", { type: "button", class: "btn", text: "Sohbete gönder", onclick: function () { if (window.SB.sendMessage) window.SB.sendMessage(title + ":\n" + String(text || "")); close(); } }),
+          h("button", { type: "button", class: "btn primary", text: "Kapat", onclick: close }))));
     document.body.appendChild(box);
-    box.querySelector(".sbv-primary").focus();
+    box.querySelector(".primary").focus();
   }
 
   // Kayıt penceresi: Başlat/Durdur -> Blob
@@ -325,8 +325,8 @@
       if (!secure) { filePick("audio/*", true).then(resolve); return; }
       let r = null, stream = null;
       const status = h("p", { text: "Hazır." });
-      const go = h("button", { type: "button", class: "sbv-btn sbv-primary", text: "Kaydı başlat" });
-      const cancelB = h("button", { type: "button", class: "sbv-btn", text: "Vazgeç" });
+      const go = h("button", { type: "button", class: "btn primary", text: "Kaydı başlat" });
+      const cancelB = h("button", { type: "button", class: "btn", text: "Vazgeç" });
       const box = h("div", { class: "sbv-modal", role: "dialog", "aria-modal": "true", "aria-label": title },
         h("div", { class: "sbv-modal-card" }, h("h3", { text: title }), status, h("div", { class: "sbv-actions" }, go, cancelB)));
       function end(v) { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); box.remove(); resolve(v); }

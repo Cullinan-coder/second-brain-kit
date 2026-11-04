@@ -16,7 +16,6 @@
     return n;
   };
   const MARK = { pending: '○', running: '…', ok: '✓', warn: '!', error: '✗', skipped: '–' };
-  const COLOR = { ok: '#16a34a', warn: '#d97706', error: '#dc2626', running: '#2563eb', pending: '#9ca3af', skipped: '#9ca3af' };
   let timer = null, last = null, box = null, btn = null;
 
   function paint(st) {
@@ -28,14 +27,13 @@
       kids.push(el('div', { cls: 'card', text: 'Güncelleme var: ' + (st.update.current || '?') + ' → ' + (st.update.new || '?') }));
     }
     (st.steps || []).forEach((s) => {
-      const row = el('div', { cls: 'sb-step', attrs: { 'data-step': s.id }, }, [
+      const row = el('div', { cls: 'sb-step st-' + (s.status || 'pending'), attrs: { 'data-step': s.id }, }, [
         el('span', { text: MARK[s.status] || '•', attrs: { 'aria-hidden': 'true' } }),
         el('strong', { text: ' ' + s.title }),
         el('span', { text: s.duration_s ? '  (' + s.duration_s + ' sn)' : '' }),
         s.message ? el('div', { text: s.message }) : null,
-        s.fix ? el('pre', { text: 'Nasıl düzeltilir:\n' + s.fix, style: 'white-space:pre-wrap;font:inherit;opacity:.85;margin:.25em 0 0' }) : null
+        s.fix ? el('pre', { text: 'Nasıl düzeltilir:\n' + s.fix, cls: 'pre' }) : null
       ]);
-      row.style.cssText = 'padding:8px 0;border-bottom:1px solid rgba(128,128,128,.25);color:' + (COLOR[s.status] || 'inherit');
       row.lastChild && row.querySelectorAll('div,pre').forEach((n) => { n.style.color = 'inherit'; });
       kids.push(row);
     });
@@ -72,7 +70,7 @@
     render(root) {
       box = el('div', { attrs: { role: 'status', 'aria-live': 'polite' } });
       const go = el('button', { cls: 'btn', type: 'button', text: 'Çalışmaya başla', on: { click: run } });
-      root.append(el('div', { style: 'padding:16px;max-width:720px' }, [el('p', { text: 'Güncelleme, sağlık, günlük işler ve model ısıtma sırayla çalışır.' }), go, box]));
+      root.append(el('div', { cls: 'sbv stack' }, [el('p', { text: 'Güncelleme, sağlık, günlük işler ve model ısıtma sırayla çalışır.' }), go, box]));
       poll();
       return () => { box = null; if (timer) { clearTimeout(timer); timer = null; } };
     }
@@ -80,7 +78,7 @@
   SB.registerView('app-settings', {
     title: 'Uygulama ayarları', icon: 'settings',
     render(root) {
-      root.append(el('div', { style: 'padding:16px' }, [
+      root.append(el('div', { cls: 'sbv stack' }, [
         el('p', { text: 'Özellikler, hesaplar, API anahtarları, MCP, veri yükleme, başlangıç, güncelleme ve sağlık ayarları ayrı bir pencerede açılır.' }),
         el('button', { cls: 'btn', type: 'button', text: 'Ayarları aç', on: { click: openSettings } })]));
     }

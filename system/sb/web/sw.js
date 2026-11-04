@@ -1,7 +1,7 @@
 /* Paket M: kabuk önbelleği (statik dosyalar), ağ-önce API (API yanıtları ÖNBELLEĞE ALINMAZ), paylaşım hedefi, push. */
 'use strict';
-const CACHE = 'sb-shell-v1';
-const SHELL = ['/', '/static/design.css', '/static/views.css', '/static/app.js', '/static/mobile.js', '/static/icon.svg', '/manifest.webmanifest'];
+const CACHE = 'sb-shell-v2';
+const SHELL = ['/', '/static/design.css', '/static/components.css', '/static/views.css', '/static/app.js', '/static/mobile.js', '/static/icon.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => null)))).then(() => self.skipWaiting()));
