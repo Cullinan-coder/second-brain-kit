@@ -29,8 +29,11 @@ TCKN_RE = re.compile(r"(?<!\d)[1-9]\d{10}(?!\d)")
 # Harf/rakam/"/" ile bitişik sayılar kimliktir (ör. people/c123..., takvim id), kart sayılmaz.
 CARD_RE = re.compile(r"(?<![\w/])(?:\d[ -]?){13,19}(?![\w/])")
 IBAN_RE = re.compile(r"\bTR\d{2}(?:\s?\d{4}){5}\s?\d{2}\b", re.I)
+# Anahtar sözcük kendi başına geçmeli ("Autoencoder", "spinning" içindeki code/pin sayılmaz); tarihin parçası olan sayı
+# ("kod video · son etkinlik 2026-11-03", "03.11.2026") kod değildir.
 OTP_CONTEXT_RE = re.compile(
-    rf"(kod|code|{PW_STEM}|password|otp|pin|doğrulama|verification)[^\d\n]{{0,40}}(\d{{4,8}})(?!\d)", re.I)
+    rf"(?<!\w)(kod|code|{PW_STEM}|password|otp|pin|doğrulama|verification)[^\d\n]{{0,40}}(?<![\d./-])(\d{{4,8}})(?!\d)"
+    r"(?![-./]\d{1,2}[-./]\d)", re.I)
 # Bilinen API anahtarı biçimleri ve ortam değişkeni atamaları (SMTP_PASSWORD=..., API_KEY: ...).
 KEY_RE = re.compile(r"\b(?:AIza[0-9A-Za-z_-]{30,}|sk-(?:ant-|proj-)?[0-9A-Za-z_-]{20,}|gh[pousr]_[0-9A-Za-z]{30,}"
                     r"|xox[abp]-[0-9A-Za-z-]{20,}|AKIA[0-9A-Z]{16})")
