@@ -8,7 +8,7 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.13.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.13.1** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
@@ -113,9 +113,11 @@ sb apps install nashi
 sb apps autostart clipboardline login    # login = bilgisayar açılınca · startup = "Çalışmaya başla" ile · off
 sb apps start nashi
 sb apps sync all                  # kütüphanelerini şimdi beyne al
-sb apps update                    # yeni sürüm var mı
+sb apps update                    # yeni sürüm var mı: yalnız BİLDİRİR, kurmaz
+sb apps update nashi --accept <sürüm>   # yeni sürümü kabul et: özeti sabitler ve kurar
 ```
-- SHA-256 uyuşmazsa indirilen dosya silinir ve kurulum durur.
+- **Sürüm sabit:** kit her uygulamanın bilinen iyi sürümünü ve dosya SHA-256'sını içerir; kurulum yalnız o sürümü kurar ve indirileni bu sabit özetle (ek olarak yayıncının `SHA256SUMS`'u ile) karşılaştırır. Uyuşmazsa dosya silinir ve kurulum durur. Yeni sürüm otomatik gelmez; `sb apps update` haber verir, sen `--accept` ile onaylarsın. Bu, yayıncı hesabı ele geçirilse bile kötü bir sürümün sessizce kurulmasını önler.
+- Şirket paketlerinde (`tekstil`) ClipBoardLine ve Nashi varsayılan kapalıdır.
 - Nashi taşınabilir zip olduğu için kurulum Başlat menüsüne **Nashi** kısayolu ekler; ClipBoardLine kendi kurucusuyla zaten ekler.
 - Second Brain bu uygulamaların dosyalarına **hiç yazmaz**; kütüphanelerini salt okunur kopyalayarak okur.
 - **Başlangıç:** kurulumda her uygulama için sorulur, varsayılan "bilgisayar açılınca". Bu, Windows'ta `HKCU\…\Run` girdisidir ve `sb apps autostart <id> off` ile kaldırılır.
@@ -167,7 +169,7 @@ Komut masaüstüne **Second Brain Setup** (Windows `.exe`, Mac `.app`) indirir v
 `Second-Brain-Setup.exe` / `Second-Brain-Setup-macOS.zip` indir.
 
 - **Kurulum dosyası imzasız.** Windows SmartScreen "Windows bilgisayarınızı korudu" der: **Ek bilgi → Yine de çalıştır**. macOS "açılamıyor" der: sağ tık → Aç.
-- Tek komutlu kurucu indirdiği Setup dosyasının SHA-256'sını sürümdeki `SHA256SUMS` ile **kendisi doğrular**; uyuşmazsa ya da özet yoksa dosyayı siler ve durur. Elle indirdiysen aynı karşılaştırmayı sürüm sayfasındaki `SHA256SUMS` ile yap. Kurulu kopyayı doğrulamak için: `python setup/engine.py --verify`.
+- Tek komutlu kurucu indirdiği Setup dosyasının SHA-256'sını sürümdeki `SHA256SUMS` ile **kendisi doğrular**; uyuşmazsa ya da özet yoksa dosyayı siler ve durur. Elle indirdiysen aynı karşılaştırmayı sürüm sayfasındaki `SHA256SUMS` ile yap. Kurulu kopyayı doğrulamak için: `sb verify` (kodu kitin `SHA256SUMS`'u ile karşılaştırır; değişmiş/eksik dosyaları listeler, `config`, `.venv` ve kullanıcı verisini atlar; çıkış 0 = uyuşuyor, 1 = fark var, 2 = özet dosyası yok). Kökteki `SHA256SUMS` git'in sakladığı LF içerikten üretilir, temiz bir checkout'ta tutar.
 - **Komut satırı yolu** (sihirbazsız, repo klasöründe): `powershell -ExecutionPolicy Bypass -File install.ps1` ya da `bash install.sh`. Sessiz kurulum için `SB_SECRET_<ALAN>` ortam değişkenleri kullanılır.
 - **`sb` komutu:** kurulum terminale `sb` komutunu ekler (Windows `%USERPROFILE%\.secondbrain\bin\sb.cmd`, kullanıcı PATH'ine; macOS `~/.local/bin/sb`). Kurulumdan sonra **yeni açılan** bir terminalde hangi klasörde olursan ol `sb doctor`, `sb apps status` yazman yeter. Bu README'deki tüm `sb …` komutları bu kısayolu varsayar.
 - **Denemek için:** sihirbazı gerçek sisteme dokunmadan açmak istersen `SB_SETUP_SANDBOX=<klasör>` ile ya da `--sandbox` bayrağıyla başlat. Sağ üstte "DENEME KİPİ" yazar; anahtarlar dosyaya, komutlar "[deneme] atlandı" olur.
@@ -274,7 +276,7 @@ Ayrıntı: [docs/KURULUM-TELEFON.md](docs/KURULUM-TELEFON.md).
   - KVKK paketi (aydınlatma metni, saklama/silme politikası) yok.
   - Çok kullanıcılı/rol bazlı yetki yok.
 
-Ayrıntı: [docs/GUVENLIK.md](docs/GUVENLIK.md) · [10-guvenlik-gizlilik](system/docs/rehber/10-guvenlik-gizlilik.md).
+Ayrıntı: [docs/GUVENLIK.md](docs/GUVENLIK.md) · denetim özeti (30 bulgu + bağımsız inceleme, durumlarıyla): [docs/GUVENLIK-DENETIM-OZET.md](docs/GUVENLIK-DENETIM-OZET.md) · [10-guvenlik-gizlilik](system/docs/rehber/10-guvenlik-gizlilik.md).
 
 ## 12. Güncelleme, yedek ve geri alma
 

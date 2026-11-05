@@ -26,6 +26,8 @@ health:
 default_on: true
 presets:
 - yogunluk:guc
+# GÜVEN ZİNCİRİ: her platformda `version`/`tag`/`asset`/`sha256` BİLİNEN İYİ sürümdür (özet elle çapraz doğrulandı). `sb apps install` yalnız bunu kurar ve
+# indirileni bu özetle karşılaştırır; sürümdeki SHA256SUMS ikinci denetimdir. Yeni sürüm yalnız bildirilir: `sb apps update <id> --accept <sürüm>`.
 app:
   name: ClipBoardLine
   repo: orkunisitmak/clipboardline
@@ -40,6 +42,7 @@ app:
     version: 1.7.8
     tag: windows-1.7.8-build71
     asset: ClipBoardLine-Setup-1.7.8-x64.exe
+    sha256: 69a2e7708c9846985a128b4cd5d9e5bb467ed02dd6e5bd66af8b284f8b507387
     sums: SHA256SUMS
     method: nsis-silent
     install_dir: '%LOCALAPPDATA%\Programs\clipboardline-desktop'
@@ -52,6 +55,7 @@ app:
     version: 1.7.8
     tag: clipboardline-1.7.8-build78
     asset: ClipboardLine-1.7.8-build78.zip
+    sha256: 6bcd8be64b416eb176e8a54a25544ff34b5f245ad1524f832246e061781f9aed
     sums: SHA256SUMS
     method: zip-extract
     install_dir: '~/Applications'

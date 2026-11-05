@@ -2,6 +2,8 @@
 type: dashboard
 tags: [dashboard]
 kume: Küme - Akademik ve Teknik Araştırmalar
+source: manual
+source_id: ""
 ---
 # Dashboard
 

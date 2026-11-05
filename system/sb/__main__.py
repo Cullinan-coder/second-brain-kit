@@ -885,6 +885,9 @@ def main(argv: list[str] | None = None) -> int:
                                    u.run(check_only=a.check, yes=a.yes, tags_only=a.tags_only))(
         __import__("sb.update", fromlist=["x"])))
 
+    g = sub.add_parser("verify", help="kurulu kodu kitin SHA256SUMS dosyasıyla karşılaştır (yerel değişiklik/eksik/fazla dosyaları listeler)")
+    g.set_defaults(func=lambda a: __import__("sb.kitsums", fromlist=["x"]).cli(a))
+
     g = sub.add_parser("version", help="kurulu sürüm")
     g.set_defaults(func=lambda a: print(__import__("sb.update", fromlist=["x"]).version()) or 0)
 
@@ -1052,13 +1055,14 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--yes", action="store_true")
     g.set_defaults(func=lambda a: __import__("sb.models", fromlist=["x"]).cli(a))
 
-    g = sub.add_parser("apps", help="hazır uygulamalar (ClipBoardLine, Nashi): list | status [id] | install <id> | start <id> | autostart <id> [login|startup|off] | update <id> | sync <id|all>")
+    g = sub.add_parser("apps", help="hazır uygulamalar (ClipBoardLine, Nashi): list | status [id] | install <id> | start <id> | autostart <id> [login|startup|off] | update <id> [--accept SÜRÜM] | sync <id|all>")
     g.add_argument("action", choices=["list", "status", "install", "start", "autostart", "update", "sync"])
     g.add_argument("id", nargs="?", default="", help="uygulama kimliği (clipboardline, nashi); status/sync için all")
     g.add_argument("mode", nargs="?", default="", choices=["", "login", "startup", "off"], help="autostart: login = bilgisayar açılınca, startup = Çalışmaya başla ile, off = başlamasın")
     g.add_argument("--force", action="store_true", help="install: kuruluysa da yeniden kur")
     g.add_argument("--background", action="store_true", help="start: arka planda (Nashi tepsiye) başlat")
     g.add_argument("--dry-run", action="store_true", help="sync: yazmadan say")
+    g.add_argument("--accept", default="", metavar="SÜRÜM", help="update: bildirilen yeni sürümü kabul et (sürüm+özet sabitlenir, sonra kurulur)")
     g.set_defaults(func=lambda a: __import__("sb.apps", fromlist=["x"]).cli(a))
 
     g = sub.add_parser("usage", help="model kullanımı ve maliyet özeti (bütçeyle birlikte)")

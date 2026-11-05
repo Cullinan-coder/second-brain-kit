@@ -186,6 +186,8 @@ def _check_app(a, errs: list[str]) -> None:
             errs.append(f"app.{plat_}: zip-extract için install_dir gerekli")
         if "/" in str(s.get("asset", "")) or "\\" in str(s.get("asset", "")):
             errs.append(f"app.{plat_}.asset dosya adı olmalı (yol değil)")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(s.get("sha256") or "")):
+            errs.append(f"app.{plat_}.sha256 gerekli: bilinen iyi dosyanın 64 haneli küçük harfli SHA-256 özeti (güven zinciri sabitlemesi)")
 
 
 def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
@@ -266,6 +268,11 @@ def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
                 want = {"modules": "module", "sources": "source", "mcp": "mcp"}[k]
                 if not get(x, want):
                     errs.append(f"sector.{k}: {x} bulunamadı ya da türü yanlış")
+        for x in m.get("disabled") or []:
+            if not get(x, "module"):
+                errs.append(f"sector.disabled: {x} bir modül değil")
+            if x in (m.get("modules") or []):
+                errs.append(f"sector.disabled: {x} hem modules hem disabled içinde")
         pr = m.get("presets") or {}
         for ax, val in pr.items():
             if ax not in AXES or (val is not None and val not in (ps.get("axes", {}).get(ax) or {})):

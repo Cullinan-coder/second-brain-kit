@@ -2,6 +2,32 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.13.1 — 2026-11-05
+
+İş ortağı incelemesi (v0.12.0) düzeltmeleri. Güvenlik denetimi özeti: `docs/GUVENLIK-DENETIM-OZET.md`.
+
+### Güvenlik (B-01)
+- **`git diff` ile kasa dışı dosya okuma kapandı:** komut ev klasöründe (genelde git deposu değil) çalıştığı için `git diff A B` iki dosyayı karşılaştırma kipinde onaysız gösterebiliyordu.
+  Artık git komutlarında dosya yoluna benzeyen her bağımsız değişken (`/ \ . :` içeren, `NUL`, `/dev/null`, `--` sonrası hepsi, `rev:yol` biçiminde yol kısmı) kasa/Workspace kuralıyla denetlenir
+  (`_system/config` hariç) ve `git diff` iki ya da daha fazla konumsal argüman alırsa onay ister. Seçenek kısaltmaları (`--outp=`), `-O`, `--orderfile`, `--help`, `-c`/`--git-dir`/`--work-tree`/`GIT_DIR=` önekleri,
+  `git grep --no-index`, `hash-object`, `cat-file` onaylı. `git status`, `git log`, argümansız `git diff` serbest kalır.
+  **Etkisi:** `git diff HEAD~1 HEAD` ve `git log -- dosya.py` gibi komutlar (ev klasöründe, kasa/Workspace dışı yolla) artık kart ister.
+
+### Kit bütünlüğü
+- **Kök `SHA256SUMS` temiz checkout'ta tutuyor:** özetler Windows CRLF çalışma kopyasından değil, git'in depoda SAKLAYACAĞI içerikten hesaplanır (`text=auto` sezgisi: CRLF→LF, NUL/yalın CR içeren ikili dosya olduğu gibi; iç içe `.gitattributes` kuralları dahil).
+- **`sb verify` (yeni):** kurulu `_system` klasörünü kitin `SHA256SUMS` dosyasıyla karşılaştırır; yerel değişmiş / eksik / kitte olmayan fazla dosyaları ayrı listeler. `config/`, `.venv`, `data/`, `__pycache__`, `*.pyc` gibi
+  kurulumdan sonra değişmesi normal olanlar atlanır (çıktıda yazar). Kurucular (`install.py`, `setup/engine.py`) `SHA256SUMS` dosyasını `_system/SHA256SUMS` olarak da kopyalar; eski kurulumda dosya yoksa `sb update` sonrası oluşur.
+  `python setup/engine.py --verify <zip> <sha256>` (zip özeti) aynen kalır.
+- **Belge:** CHANGELOG'daki depoda olmayan rapor atfı kaldırıldı; yerine saldırı adımı içermeyen `docs/GUVENLIK-DENETIM-OZET.md` (30 bulgu + B-01 durum tablosu, D-07 / D-17 / D-30 ayrıntısı).
+
+### Hazır uygulamalar güven zinciri (ClipBoardLine, Nashi)
+- **Bilinen iyi sürüm + dosya SHA-256 katalogda sabit** (her platform): ClipBoardLine windows-1.7.8-build71 `ClipBoardLine-Setup-1.7.8-x64.exe` `69a2e770…7387`, macOS `ClipboardLine-1.7.8-build78.zip` `6bcd8be6…9aed`;
+  Nashi v0.7.14-45 `Nashi-Windows-x64.zip` `9b822f18…d3fb` (gerçek dosyayla çapraz doğrulandı), macOS `Nashi-macOS-arm64.zip` `28d3cfd3…2f51d`. `install` yalnız bu sürümü kurar, indirileni SABİT özetle karşılaştırır
+  (uyuşmazsa siler ve durur); sürümdeki SHA256SUMS ikinci denetimdir (sabitle çelişirse indirmeden durur). Yayıncı hesabı ele geçirilse bile sabit özet değişmez.
+- **`sb apps update <id>` artık yalnız bildirir:** yeni sürüm, değişiklik notu bağlantısı ve yeni dosya özeti gösterilir; kurmak için açık onay: `sb apps update <id> --accept <sürüm>` (sürüm+özet `~/.secondbrain/apps_pins.json` içinde sabitlenir, sonra kurulur).
+  Arayüzde (Çalışmaya başla → Uygulamalar) «Yeni sürüm var mı?» ve onay kartı «Bu sürümü kabul et» (yalnız sabitler; kurulum `sb apps install <id> --force`). Kullanıcı sabiti kataloğdan eskiyse yok sayılır.
+- **Manifest doğrulaması:** `app.<platform>.sha256` zorunlu. **Sektör paketi `tekstil`:** `disabled: [clipboardline, nashi]`, ClipBoardLine varsayılan kapalı.
+
 ## 0.13.0 — 2026-11-05
 
 ### Kasa şeması
@@ -86,7 +112,7 @@ Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; 
 - **Katalog** 258 madde (251-258 yeniden tanımlandı), modül 52 (`clipboardline`, `nashi`), veri kaynağı 41. **Rehber** 135 sayfa: «Uygulamalar: ClipBoardLine ve Nashi» + `sb apps` komutu.
 - Sınır: macOS kurulum/başlangıç komutları yazıldı ama denenmedi; bağlayıcılar yalnız Windows veri biçimini okur. ClipBoardLine'da metin toplama varsayılan kapalıdır (uygulamanın kendi ayarı).
 
-### Güvenlik (denetim 2026-11, `docs/denetim-2026-11.md`)
+### Güvenlik (denetim 2026-11; özet: `docs/GUVENLIK-DENETIM-OZET.md`)
 - **Komut sınıflandırıcı yeniden yazıldı (D-01, D-09):** `run_command` artık metin regex'iyle değil, "ayrıştır ve doğrula" ile sınıflanır. Komut tek bir basit çağrı + düz bağımsız
   değişkenler (+ `Sort-Object`/`Select-Object`/`Format-Table` gibi biçimleyici borular) değilse en az onay kartı çıkar: alt ifade `( )`, `$( )`, `@( )`, `{ }` betik bloğu, değişken,
   ters tırnak, `;` `&` `<` `>`, virgüllü dizi, yeni satır, `%ortam%`, ASCII dışı (benzer) karakter, `python -c/-m/-v`, `node -e`. `python`/`node`/`uv` yalnız sürüm sorgusu.

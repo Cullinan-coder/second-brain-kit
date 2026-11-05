@@ -311,7 +311,11 @@ VERSION_ONLY = {"python", "node", "uv"}                  # sürüm bayrağından
 SAFE_PIPES = {"sort-object", "sort", "select-object", "select", "format-table", "ft", "format-list", "fl", "measure-object",
               "out-string"}
 GIT_BAD_OPTS = ("--no-index", "--ext-diff", "--textconv", "--output", "--exec", "--open-files-in-pager", "--upload-pack",
-                "--git-dir", "--work-tree", "-o", "--paginate")
+                "--git-dir", "--work-tree", "-o", "--paginate", "--orderfile", "--help", "-h", "--config", "--namespace")
+GIT_LONG_BAD = tuple(o for o in GIT_BAD_OPTS if o.startswith("--"))
+_GIT_RANGE = re.compile(r"^(?:[A-Za-z0-9_~-]+\.{2,3}[A-Za-z0-9_~-]*|\.{2,3}[A-Za-z0-9_~-]+)$")             # main..HEAD: sürüm aralığı, dosya yolu değil
+_GIT_REVPATH = re.compile(r"^([^:\\/]*):(?![\\/])(.+)$")                        # rev:yol ("C:\x" sürücü yolu bu değil)
+_NULL_NAMES = {"nul", "null", "con", "aux", "prn", "/dev/null", "/dev/stdin", "/dev/zero", "/dev/random"}
 READERS = {"get-content", "type", "cat"}
 READER_VALUE_OPTS = {"-totalcount", "-head", "-first", "-tail", "-last", "-encoding", "-readcount", "-delimiter"}
 READER_PATH_OPTS = {"-path", "-literalpath"}
@@ -387,6 +391,46 @@ def _readable_path(arg: str) -> bool:
     return any(r in target.parents for r in roots) and config not in target.parents
 
 
+def _git_path_like(a: str) -> bool:
+    return a.lower() in _NULL_NAMES or any(ch in a for ch in "/\\.:")
+
+
+def _git_args_ok(sub: str, args: list[str]) -> bool:
+    """git alt komutunun bağımsız değişkenleri onaysız çalışabilir mi (B-01). Ev klasörü genelde depo değildir ve git depo dışında
+    `git diff A B` ile iki dosyayı (no-index kipi) gösterir; bu yüzden diff'te ikiden çok konumsal argüman ve dosya yolu gibi
+    görünen her argüman `_readable_path` ile denetlenir. `--` sonrasındakilerin hepsi yoldur. Seçenekler kısaltmayla da yasaktır
+    (`--outp=`: git belirsiz olmayan kısaltmaları kabul eder)."""
+    pos, paths, after = [], [], False
+    for a in args:
+        if after:
+            pos.append(a)
+            paths.append(a)
+            continue
+        if a == "--":
+            after = True
+            continue
+        low = a.lower()
+        if low.startswith("-"):
+            if low.startswith(GIT_BAD_OPTS):
+                return False
+            if low.startswith("--"):
+                name = low.split("=", 1)[0]
+                if len(name) > 2 and any(b.startswith(name) for b in GIT_LONG_BAD):
+                    return False
+            continue
+        pos.append(a)
+        if _git_path_like(a) and not _GIT_RANGE.match(a):
+            paths.append(a)
+    if sub == "diff" and len(pos) >= 2:
+        return False                                            # depo dışında no-index kipine düşer: iki dosyanın içeriği
+    for p in paths:
+        m = _GIT_REVPATH.match(p)
+        target = m.group(2) if m else p
+        if target.lower() in _NULL_NAMES or not _readable_path(target):
+            return False
+    return True
+
+
 def _reader_paths(args: list[str]) -> list[str] | None:
     """Get-Content/type/cat bağımsız değişkenlerinden okunacak yollar; tanınmayan seçenek varsa None."""
     paths, i = [], 0
@@ -436,8 +480,8 @@ def classify_command(cmd: str) -> str:
     elif head in SAFE_SUBCMDS:
         if not args or args[0].lower() not in SAFE_SUBCMDS[head]:
             return "onayli"
-        if head == "git" and any(a.lower().startswith(GIT_BAD_OPTS) for a in args[1:]):
-            return "onayli"                                     # --no-index (rastgele dosya okuma), --output, --ext-diff ...
+        if head == "git" and not _git_args_ok(args[0].lower(), args[1:]):
+            return "onayli"                                     # no-index okuma (iki yol), depo dışı yol, --output, --ext-diff ...
     if head in READERS:
         paths = _reader_paths(args)
         if not paths or len(paths) != 1 or not _readable_path(paths[0]):

@@ -1,13 +1,18 @@
 """Hazır uygulamalar (ClipBoardLine, Nashi): resmî açık kaynak sürümleri OLDUĞU GİBİ kurar, başlatır, başlangıca ekler.
 
-Yeniden yazma yok: GitHub Releases'tan resmî paket indirilir, SHA-256 (sürümdeki SHA256SUMS) ile doğrulanır, sonra
+Yeniden yazma yok: GitHub Releases'tan resmî paket indirilir, SHA-256 ile doğrulanır, sonra
   nsis-silent  → electron-builder NSIS kurucusu `/S` ile sessiz (çalışmazsa normal kurulum penceresi açılır, kullanıcıya bırakılır)
   zip-extract  → zip güvenli açılır (zip-slip / bomba korumalı) ve kurulum klasörüne konur.
 Katalog `plugins/module/<id>.yaml` içindeki `app:` bölümünden okunur. Uygulamanın kendi ayarlarına ve verisine DOKUNULMAZ;
 başlangıç için uygulamanın ayarı yerine kaldırılabilir bir Run anahtarı (HKCU\\...\\Run) yazılır (macOS: LaunchAgents plist).
 
+GÜVEN ZİNCİRİ (0.13.1): kurulan sürüm "en son" değil, katalogda SABİTLENMİŞ bilinen iyi sürümdür (sürüm + etiket + dosya + SHA-256).
+`install` indirileni SABİT özetle karşılaştırır (uyuşmazsa dosyayı siler, durur); sürümdeki SHA256SUMS yalnız ikinci denetimdir
+(yayıncı hesabı ele geçirilirse dosya ve SHA256SUMS birlikte değişebilir, sabit özet değişmez). `update` yalnız BİLDİRİR;
+kullanıcı `--accept <sürüm>` ile onaylarsa yeni sürüm+özet `~/.secondbrain/apps_pins.json` içinde kullanıcı tarafında sabitlenir.
+
 Deneme kipinde (`SB_SETUP_SANDBOX`) indirme, kurulum ve başlangıç yazımı "[deneme] atlandı" olur.
-İşlevler: catalog(), status(id), install(id, progress), start(id), set_autostart(id, mode), update_available(id), sync(id).
+İşlevler: catalog(), status(id), install(id, progress), start(id), set_autostart(id, mode), update_available(id), accept_update(id, sürüm), sync(id).
 Ağ ve sistem çağrıları `_open`, `_run`, `_spawn`, `_proc_running`, `_reg_*` ile yapılır (testte taklit edilir).
 """
 from __future__ import annotations
@@ -133,13 +138,59 @@ def get(app_id: str) -> dict:
     raise AppsError(f"Bilinmeyen uygulama: {app_id} (seçenekler: {', '.join(ids())})")
 
 
+def _vkey(v: str) -> tuple:
+    return tuple(int(x) for x in re.findall(r"\d+", v))
+
+
+# ------------------------------------------------------------------ kullanıcı sabitleri (apps_pins.json)
+PIN_FIELDS = ("version", "tag", "asset", "sha256")
+
+
+def _pins_file() -> Path:
+    return _data() / "apps_pins.json"
+
+
+def load_pins() -> dict:
+    try:
+        d = json.loads(_pins_file().read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_pins(pins: dict) -> None:
+    f = _pins_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_suffix(".tmp")
+    tmp.write_text(json.dumps(pins, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, f)
+
+
+def _valid_pin(app: dict, base: dict, pin) -> bool:
+    """Kullanıcı sabiti yalnız KATALOGDAN DAHA YENİ ve biçimi sağlam ise geçerli (eski/bozuk dosya sürümü geri çekemez)."""
+    if not isinstance(pin, dict) or not all(isinstance(pin.get(k), str) for k in PIN_FIELDS):
+        return False
+    if not re.fullmatch(r"[0-9a-f]{64}", pin["sha256"]) or not re.fullmatch(r"[\w][\w .+-]*", pin["asset"]):
+        return False
+    try:
+        if not re.match(app.get("tag_pattern") or r".+", pin["tag"]) or not (_vkey(pin["version"]) > _vkey(base["version"])):
+            return False
+    except (ValueError, re.error):
+        return False
+    return True
+
+
 def spec(app_id: str, p: str | None = None) -> dict:
-    """Bu platformun bölümü (win/mac); platform desteklenmiyorsa AppsError."""
+    """Bu platformun bölümü (win/mac); platform desteklenmiyorsa AppsError. Kullanıcının kabul ettiği daha yeni sürüm varsa
+    (apps_pins.json) sürüm/etiket/dosya/özet alanları onunla değişir; geri kalan (kurulum yolu, yöntem ...) katalogdan."""
     c = get(app_id)
     p = p or plat()
     s = (c["app"].get(p) if p else None)
     if not s:
         raise AppsError(f"{c['app'].get('name', app_id)} bu işletim sisteminde desteklenmiyor.")
+    pin = (load_pins().get(app_id) or {}).get(p)
+    if pin and _valid_pin(c["app"], s, pin):
+        return {**s, **{k: pin[k] for k in PIN_FIELDS}, "pinned_by_user": True}
     return s
 
 
@@ -246,10 +297,11 @@ def status(app_id: str, p: str | None = None) -> dict:
            "installed": False, "version": None, "running": False, "exe": "", "data_dir": "", "data_exists": False,
            "autostart": autostart_mode(app_id), "autostart_active": False, "size_mb": c["app"].get("size_mb"),
            "last_sync": st.get("last_sync"), "records": st.get("records"), "skipped_secret": st.get("skipped_secret"),
-           "last_error": st.get("last_error"), "pinned_version": (c["app"].get(p) or {}).get("version") if p else None}
+           "last_error": st.get("last_error"), "pinned_version": None, "pinned_sha256": None, "pinned_by_user": False}
     if not out["supported"]:
         return out
-    s = c["app"][p]
+    s = spec(app_id, p)
+    out.update(pinned_version=s["version"], pinned_sha256=s.get("sha256"), pinned_by_user=bool(s.get("pinned_by_user")))
     exe = expand(s["exe"])
     out.update(exe=str(exe), data_dir=str(expand(s["data"])), data_exists=expand(s["data"]).exists(), installed=exe.exists())
     if out["installed"]:
@@ -479,6 +531,9 @@ def install(app_id: str, progress=None, p: str | None = None, force: bool = Fals
     free = shutil.disk_usage(dl).free
     if free < max_bytes * 2:
         raise AppsError(f"Diskte yer yetersiz: {free // 2**20} MB boş, en az {max_bytes * 2 // 2**20} MB gerekir.")
+    want = str(s.get("sha256") or "").lower()                                # SABİT bilinen iyi özet (katalog ya da kullanıcının kabul ettiği)
+    if not re.fullmatch(r"[0-9a-f]{64}", want):
+        raise AppsError(f"{name} için sabit SHA-256 özeti tanımlı değil; güvenle doğrulanamadığı için kurulmadı.")
     progress(1, "Sürüm bilgisi alınıyor")
     url, api_size = resolve_asset(app, s, s["asset"])
     sums_url, _ = resolve_asset(app, s, s["sums"])
@@ -488,9 +543,12 @@ def install(app_id: str, progress=None, p: str | None = None, force: bool = Fals
         raise
     except Exception as e:                                                   # noqa: BLE001
         raise AppsError(f"Sürümün SHA256SUMS dosyası okunamadı: {type(e).__name__}: {str(e)[:100]}") from None
-    want = expected_sha(sums, s["asset"])
-    if not want:
+    rel = expected_sha(sums, s["asset"])                                     # ikinci denetim: yayıncının kendi özeti sabitle çelişmemeli
+    if not rel:
         raise AppsError(f"SHA256SUMS içinde {s['asset']} için özet yok; güvenle doğrulanamadığı için kurulmadı.")
+    if rel != want:
+        raise AppsError(f"Sürümün SHA256SUMS özeti ({rel[:12]}…) sabitlenmiş bilinen iyi özetle ({want[:12]}…) çelişiyor; "
+                        f"{name} indirilmedi, kurulum durdu (yayıncı dosyası değişmiş olabilir).")
     f = dl / s["asset"]
     if not (f.exists() and sha256_file(f) == want):
         f.unlink(missing_ok=True)
@@ -499,7 +557,7 @@ def install(app_id: str, progress=None, p: str | None = None, force: bool = Fals
     got = sha256_file(f)
     if got != want:
         f.unlink(missing_ok=True)
-        raise AppsError(f"SHA-256 uyuşmuyor (beklenen {want[:12]}…, gelen {got[:12]}…); dosya silindi, kurulum durdu.")
+        raise AppsError(f"SHA-256 sabit özetle uyuşmuyor (beklenen {want[:12]}…, gelen {got[:12]}…); dosya silindi, kurulum durdu.")
     progress(88, "Kuruluyor")
     res = _install_method(app_id, s, f, p)
     if res.get("installed"):
@@ -683,13 +741,20 @@ def start_startup_apps(log=print) -> list[dict]:
     return out
 
 
-# ------------------------------------------------------------------ sürüm denetimi
-def _vkey(v: str) -> tuple:
-    return tuple(int(x) for x in re.findall(r"\d+", v))
+# ------------------------------------------------------------------ sürüm denetimi (yalnız BİLDİRİR; kurmaz)
+def _new_asset(s: dict, latest: str, release: dict) -> str:
+    """Yeni sürümün dosya adı: sürümün varlık listesinde eski adla aynı biçimde (yalnız sayılar farklı) olan; yoksa eski addaki sürümü değiştirir."""
+    pat = re.compile("^" + re.sub(r"\d+", r"\\d+", re.escape(s["asset"])) + "$")
+    names = [a.get("name") for a in (release.get("assets") or []) if isinstance(a, dict) and a.get("name")]
+    hits = [n for n in names if pat.match(n)]
+    if hits:
+        return next((n for n in hits if latest in n), hits[0])
+    return s["asset"].replace(s["version"], latest)
 
 
 def update_available(app_id: str, p: str | None = None) -> dict:
-    """Ağa çıkar (yalnız api.github.com). Dönüş: {available, current, latest, tag, error?}."""
+    """Ağa çıkar (yalnız api.github.com ve sürümün SHA256SUMS dosyası). KURMAZ, sabitlemez. Dönüş: {available, current, latest, tag,
+    notes_url, asset, digest, accept_cmd, error?}. `digest`: yeni sürümün SHA256SUMS'undaki özet (kullanıcı görüp onaylar)."""
     c = get(app_id)
     app = c["app"]
     s = spec(app_id, p)
@@ -705,10 +770,46 @@ def update_available(app_id: str, p: str | None = None) -> dict:
         if m and not r.get("draft") and not r.get("prerelease"):
             key = tuple(_vkey(g) for g in m.groups())
             if best is None or key > best[0]:
-                best = (key, r["tag_name"], m.group(1))
+                best = (key, r, m.group(1))
     if not best:
         return {"available": False, "current": cur, "latest": None}
-    return {"available": _vkey(best[2]) > _vkey(cur), "current": cur, "latest": best[2], "tag": best[1]}
+    rel, latest = best[1], best[2]
+    tag = rel["tag_name"]
+    out = {"available": _vkey(latest) > _vkey(s["version"]) and _vkey(latest) > _vkey(cur), "current": cur, "latest": latest, "tag": tag,
+           "pinned": s["version"]}
+    if not out["available"]:
+        return out
+    out["notes_url"] = rel.get("html_url") or f"https://github.com/{app['repo']}/releases/tag/{tag}"
+    out["asset"] = _new_asset(s, latest, rel)
+    out["accept_cmd"] = f"sb apps update {app_id} --accept {latest}"
+    try:
+        sums = parse_sums(_get_text(resolve_asset(app, {"tag": tag}, s["sums"])[0]))
+        out["digest"] = expected_sha(sums, out["asset"])
+    except (AppsError, OSError, ValueError) as e:
+        out["digest"], out["error"] = None, f"yeni sürümün SHA256SUMS dosyası okunamadı: {str(e)[:100]}"
+    return out
+
+
+def accept_update(app_id: str, version: str, p: str | None = None) -> dict:
+    """Kullanıcının AÇIK onayı: bildirilen yeni sürümü + özetini kullanıcı tarafında sabitler (apps_pins.json). Kurmaz (kurmak için `install --force`)."""
+    p = p or plat()
+    u = update_available(app_id, p)
+    if u.get("error") and not u.get("digest"):
+        raise AppsError(f"Sürüm bilgisi alınamadı: {u['error']}")
+    if not u.get("available") or u.get("latest") != str(version).strip():
+        raise AppsError(f"Kabul edilecek {version!r} sürümü yok (bulunan: {u.get('latest') or 'yok'}"
+                        f"{'' if u.get('available') else ', kurulu/sabit sürümden yeni değil'}); önce `sb apps update {app_id}` ile bak.")
+    if not u.get("digest"):
+        raise AppsError(f"{u.get('asset')} için yayıncının SHA256SUMS dosyasında özet yok; sabitlenmedi.")
+    pin = {"version": u["latest"], "tag": u["tag"], "asset": u["asset"], "sha256": u["digest"],
+           "accepted_at": datetime.now().isoformat(timespec="seconds"), "notes_url": u["notes_url"]}
+    if not _valid_pin(get(app_id)["app"], spec(app_id, p), pin):
+        raise AppsError("Sabit biçimi geçersiz (sürüm etiketi ya da özet beklenen biçimde değil); sabitlenmedi.")
+    pins = load_pins()
+    pins.setdefault(app_id, {})[p] = pin
+    _save_pins(pins)
+    return {"ok": True, "pinned": pin, "message": f"{get(app_id)['app'].get('name', app_id)} {u['latest']} sabitlendi (SHA-256 {u['digest'][:12]}…). "
+            f"Kurmak için: sb apps install {app_id} --force"}
 
 
 # ------------------------------------------------------------------ senkron (bağlayıcılar salt okunur)
@@ -805,6 +906,35 @@ def format_status(s: dict) -> str:
     return "\n".join(lines)
 
 
+def _cli_update(args) -> int:
+    accept = str(getattr(args, "accept", "") or "").strip()
+    if accept:
+        r = accept_update(args.id, accept)
+        print(r["message"])
+        print("Kuruluyor (sabitlenen sürüm ve özet doğrulanarak)...")
+        last = [-1]
+
+        def prog(pc, msg):
+            if pc // 10 != last[0]:
+                last[0] = pc // 10
+                print(f"  %{pc:<3} {msg}", flush=True)
+        res = install(args.id, prog, force=True)
+        print(res["message"])
+        return 0 if res.get("ok") else 1
+    u = update_available(args.id)
+    head = f"{args.id}: kurulu {u['current']}, bilinen iyi (sabit) sürüm {u.get('pinned', u['current'])}"
+    if not u["available"]:
+        print(head + ", güncel" + (f" (denetim hatası: {u['error']})" if u.get("error") else ""))
+        return 0
+    print(head + f"; YENİ SÜRÜM VAR: {u['latest']} ({u.get('tag')}). Kendiliğinden KURULMAZ.")
+    print(f"  Değişiklik notları : {u['notes_url']}")
+    print(f"  Yeni dosya         : {u.get('asset')}")
+    print(f"  SHA-256 (yayıncı)  : {u.get('digest') or 'okunamadı'}" + (f"  [{u['error']}]" if u.get("error") else ""))
+    print("  Notları okuyup özeti yayıncının sayfasından çapraz denetledikten sonra kabul etmek için:")
+    print(f"    {u['accept_cmd']}")
+    return 0
+
+
 def cli(args) -> int:
     act = args.action
     try:
@@ -843,10 +973,7 @@ def cli(args) -> int:
             print(r["message"])
             return 0 if r.get("ok") else 1
         if act == "update":
-            u = update_available(args.id)
-            print(f"{args.id}: kurulu {u['current']}, " + (f"yeni sürüm var: {u['latest']} ({u.get('tag')})" if u["available"] else
-                                                          "güncel" + (f" (denetim hatası: {u['error']})" if u.get("error") else "")))
-            return 0
+            return _cli_update(args)
         if act == "sync":
             rows = sync_all(args.dry_run, require_enabled=True) if args.id == "all" else [sync(args.id, args.dry_run)]
             for r in rows:

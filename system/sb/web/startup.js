@@ -58,9 +58,25 @@
         const x = await SB.api('/api/v2/apps/start', { id: a.id }); SB.toast(x && x.message || (x && x.error) || 'Tamam'); setTimeout(paintApps, 1500); } } });
       const syn = el('button', { cls: 'btn sm', type: 'button', text: 'Şimdi senkronla', disabled: !a.supported, on: { click: async () => {
         const x = await SB.api('/api/v2/apps/sync', { id: a.id }); SB.toast(x && x.text || (x && x.error) || 'Tamam'); paintApps(); } } });
+      const pin = a.pinned_version ? 'Bilinen iyi (sabit) sürüm: ' + a.pinned_version + (a.pinned_by_user ? ' (senin onayınla)' : '') + ' · SHA-256 ' + String(a.pinned_sha256 || '').slice(0, 12) + '…' : '';
+      const note = el('div', { cls: 'stack', attrs: { 'aria-live': 'polite' } });
+      const chk = el('button', { cls: 'btn sm', type: 'button', text: 'Yeni sürüm var mı?', disabled: !a.supported, on: { click: async () => {
+        const x = await SB.api('/api/v2/apps/update', { id: a.id }); const u = x && x.update;
+        if (!u) { note.replaceChildren(el('div', { text: (x && x.error) || 'Denetlenemedi' })); return; }
+        if (!u.available) { note.replaceChildren(el('div', { text: 'Güncel' + (u.error ? ' (denetim hatası: ' + u.error + ')' : '') })); return; }
+        const ok = el('button', { cls: 'btn sm', type: 'button', text: 'Bu sürümü kabul et', disabled: !u.digest, on: { click: async () => {
+          const y = await SB.api('/api/v2/apps/accept', { id: a.id, version: u.latest }); SB.toast(y && y.message || (y && y.error) || 'Tamam'); paintApps(); } } });
+        const no = el('button', { cls: 'btn sm', type: 'button', text: 'Vazgeç', on: { click: () => note.replaceChildren() } });
+        const link = el('a', { text: 'Değişiklik notları', attrs: { href: u.notes_url, target: '_blank', rel: 'noopener noreferrer' } });
+        note.replaceChildren(el('div', { cls: 'card' }, [
+          el('strong', { text: 'Yeni sürüm: ' + u.latest + ' (kendiliğinden kurulmaz)' }), el('div', {}, [link]),
+          el('div', { text: 'Dosya: ' + (u.asset || '?') }), el('div', { text: 'SHA-256 (yayıncı): ' + (u.digest || 'okunamadı') }),
+          el('div', { text: 'Kabul edersen bu sürüm ve özet senin adına sabitlenir; kurmak için: sb apps install ' + a.id + ' --force' }),
+          el('div', { cls: 'row' }, [ok, no])]));
+      } } });
       return el('div', { cls: 'card', attrs: { 'data-app': a.id } }, [
-        el('strong', { text: a.title || a.name }), el('div', { text: state }), el('div', { text: sync }),
-        el('div', { cls: 'row' }, [open, syn])]);
+        el('strong', { text: a.title || a.name }), el('div', { text: state }), el('div', { text: sync }), pin ? el('div', { text: pin }) : null,
+        el('div', { cls: 'row' }, [open, syn, chk]), note]);
     }));
   }
 

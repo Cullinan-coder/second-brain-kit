@@ -691,6 +691,9 @@ def sync_code(src: Path, dst: Path) -> None:
     (dst / "config").mkdir(parents=True, exist_ok=True)
     for ex in (src / "config").glob("*.example.yaml"):
         shutil.copy2(ex, dst / "config" / ex.name)
+    sums = src.parent / "SHA256SUMS"                   # `sb verify` kurulu kopyayı kitin özet dosyasıyla karşılaştırır
+    if src.name == "system" and sums.is_file():
+        shutil.copy2(sums, dst / "SHA256SUMS")
 
 
 def _yaml():
@@ -773,7 +776,7 @@ def catalog(lang: str | None = "tr") -> dict:
                      "env": _loc_fields((m.get("requires") or {}).get("fields"), lang), "note": _t(mc.get("note"), lang) or "",
                      "default_on": bool(m.get("default_on", False))})
     sectors = [{"id": m["id"], "name": _t(m["name"], lang), "desc": _t(m["desc"], lang), "modules": m.get("modules") or [],
-                "sources": m.get("sources") or [], "mcp": m.get("mcp") or [], "presets": m.get("presets") or {},
+                "sources": m.get("sources") or [], "mcp": m.get("mcp") or [], "presets": m.get("presets") or {}, "disabled": m.get("disabled") or [],
                 "roles": [{"id": r["id"], "name": _t(r.get("name"), lang)} for r in m.get("roles") or []]} for m in P.all("sector")]
     return {"categories": [{"id": k, "name": _t(v, lang)} for k, v in cats.items()], "modules": modules, "sources": sources,
             "mcps": mcps, "sectors": sectors}

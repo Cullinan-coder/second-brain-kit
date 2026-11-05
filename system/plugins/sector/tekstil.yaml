@@ -37,6 +37,11 @@ modules:
 - memory_ui
 - privacy
 - tasks_plan
+# Varsayılan KAPALI hazır uygulamalar: ClipBoardLine panonun tamamını görür (parola/kart kopyalanabilir), şirket makinesinde varsayılan açılmaz.
+# Kullanıcı açıkça isterse `sb features --on clipboardline` ve `sb apps install clipboardline` ile açar.
+disabled:
+- clipboardline
+- nashi
 sources:
 - bank
 - whatsapp

@@ -53,6 +53,16 @@ def env(monkeypatch, tmp_path):
             raise OSError("404")
         return Resp(served[url])
     monkeypatch.setattr(apps, "_open", fake_open)
+    real_spec = apps.spec
+
+    def pinned_spec(app_id, p=None):
+        """Sabit özet = sahte yükün özeti (gerçek sabitler 0.13.1'de katalogda; bu testler yalnız akışı sınar)."""
+        sp = real_spec(app_id, p)
+        for base in (NASHI_REL, CBL_REL):
+            if base + sp["asset"] in served:
+                return {**sp, "sha256": hashlib.sha256(served[base + sp["asset"]]).hexdigest()}
+        return sp
+    monkeypatch.setattr(apps, "spec", pinned_spec)
     monkeypatch.setattr(apps, "NSIS_WAIT", 0)
     shortcuts: list = []
     monkeypatch.setattr(apps, "start_menu_shortcut", lambda name, exe: shortcuts.append((name, exe)) or None)
@@ -181,7 +191,7 @@ def test_install_nashi_flattens_verifies_and_writes_run_key(env):
 
 def test_install_sha_mismatch_stops_and_deletes(env):
     serve_nashi(env, sha="0" * 64)
-    with pytest.raises(apps.AppsError, match="SHA-256 uyuşmuyor"):
+    with pytest.raises(apps.AppsError, match="çelişiyor"):
         apps.install("nashi")
     assert not apps.exe_path("nashi").exists()
     assert not (apps.downloads_dir() / "Nashi-Windows-x64.zip").exists()

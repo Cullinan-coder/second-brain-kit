@@ -92,6 +92,9 @@ def sync_code(src: Path, dst: Path) -> None:
     for ex in (src / "config").glob("*"):
         if ex.name.endswith(".example.yaml") or not (dst / "config" / ex.name).exists():
             shutil.copy2(ex, dst / "config" / ex.name)
+    sums = src.parent / "SHA256SUMS"                   # `sb verify` kurulu kopyayı bununla karşılaştırır
+    if src.name == "system" and sums.is_file():
+        shutil.copy2(sums, dst / "SHA256SUMS")
 
 
 def remember(vault: Path) -> None:

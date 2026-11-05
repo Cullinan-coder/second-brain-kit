@@ -1,6 +1,8 @@
 ---
 type: dashboard
 tags: [dashboard, asistan]
+source: manual
+source_id: ""
 ---
 # Asistan
 

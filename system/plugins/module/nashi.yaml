@@ -26,6 +26,8 @@ health:
 default_on: true
 presets:
 - yogunluk:guc
+# GÜVEN ZİNCİRİ: her platformda `version`/`tag`/`asset`/`sha256` BİLİNEN İYİ sürümdür (özet elle çapraz doğrulandı). `sb apps install` yalnız bunu kurar ve
+# indirileni bu özetle karşılaştırır; sürümdeki SHA256SUMS ikinci denetimdir. Yeni sürüm yalnız bildirilir: `sb apps update <id> --accept <sürüm>`.
 app:
   name: Nashi
   repo: orkunisitmak/nashi-app
@@ -40,6 +42,7 @@ app:
     version: 0.7.14
     tag: v0.7.14-45
     asset: Nashi-Windows-x64.zip
+    sha256: 9b822f185eb034866492e8414ec4d5f5a1cadf06871b22db2cd78b2c9a61d3fb
     sums: SHA256SUMS.txt
     method: zip-extract
     install_dir: '%LOCALAPPDATA%\Programs\Nashi'
@@ -52,6 +55,7 @@ app:
     version: 0.7.14
     tag: v0.7.14-45
     asset: Nashi-macOS-arm64.zip
+    sha256: 28d3cfd34ca75d56b7c65314c2f1a31cea2f219e34ffc8d390458a346ba2f51d
     sums: SHA256SUMS.txt
     method: zip-extract
     install_dir: '~/Applications'
