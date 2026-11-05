@@ -68,7 +68,7 @@ TOOL_MODULE = {          # asistan aracı → modül (listede olmayan araç her 
 STEP_MODULE = {          # günlük çalışma komutu → modül
     "mail-fetch": None, "sms-sync": "sms", "mail-categorize": "gmail", "extract-dates": "dates", "approve": "calendar",
     "sync-gcal": "calendar", "inbox-process": "inbox", "contacts-sync": "contacts", "drive-sync": "drive", "drive-index": "drive",
-    "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "project-deep": "projects",
+    "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "moodle-sync": "courses", "project-deep": "projects",
     "course-files": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
     "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
     "github-deep": "github", "import-inbox": None, "apps": None, "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",

@@ -1,6 +1,6 @@
 """Second brain MCP sunucusu (stdio, SALT OKUNUR): Claude Code her projede kasayı bağlam olarak kullanır.
 
-Araçlar: brain_overview, brain_project, brain_course, brain_person, brain_note, brain_search, brain_today.
+Araçlar: brain_overview, brain_project, brain_course, brain_person, brain_note, brain_search, brain_today, tdk_sozluk.
 Kasadaki .md notlarını ve mail.db'yi (mode=ro) okur; hiçbir şeyi yazmaz, silmez, göndermez.
 Çıktılar `redact` ile maskelenir. Kayıt: `claude mcp add --scope user second-brain -- <python> -m sb.mcp_server`
 """
@@ -174,6 +174,14 @@ def brain_today(days: int = 14) -> str:
         items = [l for l in pending.read_text(encoding="utf-8").splitlines() if l.startswith("- [ ]")]
         out += ["", f"Onay bekleyen takvim adayları ({len(items)}):"] + items[:10]
     return redact("\n".join(out))
+
+
+@mcp.tool()
+def tdk_sozluk(kelime: str) -> str:
+    """TDK Güncel Türkçe Sözlük: kelimenin anlamları, kökeni, örnek cümle, birleşik sözler, deyim/atasözleri (önbellekli).
+    Türkçe kelimenin anlamı/yazımı sorulunca buna dayan. Kasaya yazmaz; kelime defterine ekleme asistan sohbetindedir."""
+    from . import tdk
+    return tdk.lookup(kelime)
 
 
 if __name__ == "__main__":

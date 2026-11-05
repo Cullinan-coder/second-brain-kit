@@ -161,6 +161,9 @@ def checks() -> list[tuple[str, str, str]]:
         add(OK if lnk.exists() else WARN, "Beyne at kısayolu (Ctrl+Alt+B)", "powershell -ExecutionPolicy Bypass -File _system/tools/hotkey.ps1")
     add(OK if _http("http://127.0.0.1:8765/") else WARN, "Asistan sunucusu (127.0.0.1:8765)", "zamanlayıcıyı kur ya da `sb chat`")
     from .spotify_api import client_id
+    from .moodle import BASE as _moodle
+    if _moodle:
+        add(OK if _kr("moodle-token") else WARN, "Okul Moodle girişi (isteğe bağlı)", "sb moodle-login")
     add(OK if client_id() and _kr("spotify-refresh") else WARN, "Spotify doğrudan çalma (isteğe bağlı)", "docs/KURULUM-SPOTIFY.md")
     add(OK if (DATA / "remote_tokens.json").exists() else WARN, "Telefon erişimi (isteğe bağlı, Tailscale)", "docs/KURULUM-TELEFON.md")
     from .update import PENDING

@@ -1738,3 +1738,95 @@ def test_otp_mask_keeps_codes_but_not_dates_or_inner_words():
     for t in ("kod video · aktif · son etkinlik 2026-11-03 · Claude Code", "Autoencoder, CWRU Bearing, DCASE 2024 Task 2",
               "spinning 2024 test", "kod 03.11.2026 tarihinde"):
         assert redact(t) == t and not router.sensitive(t)
+
+
+def test_mailer_delivery_detects_spam(monkeypatch):
+    from sb import google_auth, mailer
+    monkeypatch.setattr(mailer, "settings", lambda: {"to": ["a@gmail.com"], "host": "h", "user": "u@x.com", "alias": "hello"})
+    monkeypatch.setattr(mailer, "accounts", lambda: {"google": {"main": {"email": "a@gmail.com", "scopes": ["gmail"]}}})
+    seen = {}
+
+    class Req:
+        def __init__(self, v): self.v = v
+        def execute(self): return self.v
+
+    class Msgs:
+        def __init__(self, labels): self.labels = labels
+        def list(self, userId, q, includeSpamTrash): seen["q"], seen["spam"] = q, includeSpamTrash; return Req({"messages": [{"id": "1"}]})
+        def get(self, userId, id, format): return Req({"labelIds": self.labels})
+
+    for labels, want in ((["UNREAD", "SPAM"], "spam"), (["INBOX"], "gelen kutusu")):
+        gm = type("G", (), {"users": lambda self, m=Msgs(labels): type("U", (), {"messages": lambda s: m})()})()
+        monkeypatch.setattr(google_auth, "service", lambda *a, gm=gm: gm)
+        assert mailer.delivery("<abc@x.com>", wait=1) == want
+    assert seen == {"q": "rfc822msgid:abc@x.com", "spam": True}
+
+
+def test_moodle_read_only_and_parsing(monkeypatch):
+    from sb import moodle
+    for fn in ("mod_choice_submit_choice_response", "mod_assign_save_submission", "core_message_send_instant_messages",
+               "mod_resource_view_resource"):
+        with pytest.raises(PermissionError):
+            moodle.call(fn)
+    assert moodle.READ_ONLY.match("core_course_get_contents") and moodle.READ_ONLY.match("core_webservice_get_site_info")
+    assert moodle._norm("Türk Dili I (UE) (Ayşe YILMAZ)") == moodle._norm("Türk Dili I")
+    assert moodle.text("<p>Chapter</p><p>11: Matrix</p>&amp; x") == "Chapter 11: Matrix\n& x"
+    out = {}
+    moodle._flat("courseids", [5, 7], out)
+    assert out == {"courseids[0]": 5, "courseids[1]": 7}
+    body = "# X\n\n## Teslimler ve sınavlar\nA\n"
+    assert moodle._ensure_section(body).index("<!-- sb:auto:edestek:start -->") < moodle._ensure_section(body).index("## Teslimler")
+
+
+def test_tdk_lookup_cache_and_notebook(tmp_path, monkeypatch):
+    from sb import tdk
+    monkeypatch.setattr(tdk, "DB", tmp_path / "tdk.db")
+    monkeypatch.setattr(tdk, "DATA", tmp_path)
+    monkeypatch.setattr(tdk, "NOTEBOOK", tmp_path / "v" / "Kelime defteri.md")
+    entry = [{"madde": "kitap", "lisan": "Arapça kitāb", "birlesikler": "kitap kurdu, el kitabı", "atasozu": [{"madde": "kitaba uydurmak"}],
+              "anlamlarListe": [{"anlam_sira": "1", "anlam": "Basılı kâğıt yaprakların bütünü; betik",
+                                 "ozelliklerListe": [{"tam_adi": "isim"}],
+                                 "orneklerListe": [{"ornek": "O kitabı kendim okurum.", "yazar": [{"tam_adi": "Nurullah Ataç"}]}]},
+                                {"anlam_sira": "2", "anlam": "Kutsal kitap"}]}]
+    calls = []
+
+    class R:
+        def __init__(self, body): self.body = body
+        def read(self): return self.body
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    def fake(req, timeout=0):
+        calls.append(req.full_url)
+        body = entry if "kitap" in req.full_url else {"error": "Sonuç bulunamadı"}
+        return R(__import__("json").dumps(body).encode())
+    monkeypatch.setattr(tdk.urllib.request, "urlopen", fake)
+    out = tdk.lookup("Kitap")
+    assert "kitap (Arapça kitāb)" in out and "[isim] Basılı" in out and "Nurullah Ataç" in out and "kitaba uydurmak" in out
+    tdk.lookup("kitap")
+    assert len(calls) == 1                                                                # ikinci sorgu önbellekten
+    assert "bulunamadı" in tdk.lookup("tugray")
+    assert "eklendi" in tdk.lookup("kitap", save=True) and "zaten" in tdk.lookup("kitap", save=True)
+    note = (tmp_path / "v" / "Kelime defteri.md").read_text(encoding="utf-8")
+    assert note.count("- **kitap**") == 1 and "1. Basılı" in note and "source: tdk" in note
+
+
+def test_moodle_off_without_url_and_calendar_opt_in(monkeypatch, capsys):
+    """Moodle adresi yoksa modül sessizce atlanır; takvime yazma yalnız lms.moodle_calendar: true iken."""
+    from sb import moodle
+    monkeypatch.setattr(moodle, "BASE", "")
+    assert moodle.sync(apply=True) == 0 and "lms.moodle_url" in capsys.readouterr().out
+    assert moodle.login() == 1 and "lms.moodle_url" in capsys.readouterr().out
+    assert moodle.CALENDAR is False                       # örnek profilde kapalı
+
+
+def test_tdk_tool_does_not_write_notebook_in_tainted_chat(monkeypatch):
+    """Dış içerik görmüş sohbette 'deftere ekle' kasaya yazmaz; sözlük cevabı yine verilir."""
+    from sb import chat, tdk
+    calls = []
+    monkeypatch.setattr(tdk, "lookup", lambda w, save=False: calls.append(save) or f"{w}: anlam")
+    s = chat.Session()
+    s.user_text = "kitap kelimesini deftere ekle"
+    monkeypatch.setattr(type(s), "dirty", property(lambda self: True))
+    out = chat.run_tool(s, "tdk_sozluk", {"kelime": "kitap", "kaydet": True})
+    assert "eklenmedi" in out and calls == [False]

@@ -29,6 +29,7 @@
   daily / weekly                    Otomatik günlük güncelleme + sabah özeti (mail) / haftalık denetim
   notify-test                       Deneme maili (şirket SMTP → sadece kullanıcının adresi)
   telegram setup|pull|send          (İsteğe bağlı) Telegram: bağla / bota yazılanları 00-Inbox'a çek / deneme
+  moodle-login / moodle-sync        (İsteğe bağlı) okulun Moodle'ı: salt okunur giriş / ders notları, dosyalar, kapanışlar
 """
 from __future__ import annotations
 
@@ -676,6 +677,16 @@ def cmd_telegram(args) -> int:
     return 0
 
 
+def cmd_moodle_login(args) -> int:
+    from . import moodle
+    return moodle.login()
+
+
+def cmd_moodle_sync(args) -> int:
+    from . import moodle
+    return moodle.sync(apply=args.apply, download=not args.no_files)
+
+
 def cmd_set_secret(args) -> int:
     import getpass
 
@@ -1299,6 +1310,13 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--model", default="", help="<sağlayıcı>:<model>; boşsa tasks.chat")
     g.add_argument("--stream", action="store_true", help="cevabı parça parça yazdır")
     g.set_defaults(func=cmd_ask)
+
+    g = sub.add_parser("moodle-login", help="okulun Moodle'ına giriş: şifre gizli sorulur, yalnız jeton saklanır")
+    g.set_defaults(func=cmd_moodle_login)
+    g = sub.add_parser("moodle-sync", help="Moodle → ders notları (haftalar, duyurular, teslimler), dosyalar, kapanışlar")
+    g.add_argument("--apply", action="store_true", help="yaz (yoksa deneme)")
+    g.add_argument("--no-files", action="store_true", help="dosya indirme")
+    g.set_defaults(func=cmd_moodle_sync)
 
     g = sub.add_parser("set-secret")
     g.add_argument("name", choices=["claude-oauth", "telegram-bot", *[f"imap-{a}" for a in (accounts().get("imap") or {})],
