@@ -103,10 +103,10 @@ def test_m0002_keeps_crlf(vault):
 def test_run_applies_chain_and_commits_once(vault):
     n0 = int(git(vault, "rev-list", "--count", "HEAD"))
     r = schema.run(vault)
-    assert r["ok"] and r["applied"] == [2], r
-    assert schema.read_version(vault) == 2
-    assert int(git(vault, "rev-list", "--count", "HEAD")) == n0 + 1
-    assert git(vault, "log", "-1", "--format=%s").startswith("şema göçü 1→2")
+    assert r["ok"] and r["applied"] == list(range(2, schema.CURRENT + 1)), r      # her yeni göç eklenince test kendiliğinden uyar
+    assert schema.read_version(vault) == schema.CURRENT
+    assert int(git(vault, "rev-list", "--count", "HEAD")) == n0 + len(r["applied"])   # göç başına tek commit
+    assert git(vault, "log", "-1", "--format=%s").startswith(f"şema göçü {schema.CURRENT - 1}→{schema.CURRENT}")
     assert git(vault, "status", "--porcelain") == ""
     assert "kasa.yaml" in git(vault, "show", "--name-only", "--format=", "HEAD")
     assert len(BACKUP_CALLS) == 1
@@ -123,7 +123,7 @@ def test_chain_runs_in_order_one_commit_each(vault, monkeypatch):
     assert int(git(vault, "rev-list", "--count", "HEAD")) == n0 + 3
     subjects = git(vault, "log", "-3", "--format=%s").splitlines()
     assert subjects[0].startswith("şema göçü 3→4") and subjects[2].startswith("şema göçü 1→2")
-    assert len(BACKUP_CALLS) == 3
+    assert len(BACKUP_CALLS) == 1                                                 # zincir başına tek yedek (adım başına değil)
 
 
 def test_dirty_tree_stops_and_touches_nothing(vault):
@@ -219,7 +219,7 @@ def test_dry_run_writes_nothing(vault, capsys):
 def test_check_is_read_only_and_exit_codes(vault, capsys):
     assert schema.cli(check_only=True, vault=vault) == schema.EXIT_PENDING
     out = capsys.readouterr().out
-    assert "1 göç bekliyor" in out and "Asistan.md" in out
+    assert f"{schema.CURRENT - 1} göç bekliyor" in out and "Asistan.md" in out
     assert git(vault, "status", "--porcelain") == "" and not BACKUP_CALLS
     schema.write_version(schema.CURRENT, vault)
     assert schema.cli(check_only=True, vault=vault) == 0

@@ -35,11 +35,12 @@ Bu rehber Second Brain'i kurmaktan günlük kullanıma, hesap bağlamaktan sorun
 - [Sektör paketleri](20-sektor-paketleri.md)
 - [Hangi özellik ne ister](21-ne-ister.md)
 - [22 · Uygulamalar: ClipBoardLine ve Nashi](22-uygulamalar.md)
+- [23 · UZEM / Moodle dersleri](23-uzem-moodle.md)
 
 ## Sayfa sayıları
 
-- Elle yazılan bölüm: 16
+- Elle yazılan bölüm: 17
 - Modül sayfası: 52
-- Veri kaynağı sayfası: 42
+- Veri kaynağı sayfası: 43
 - MCP sayfası: 18
 - Özellik maddesi: 258

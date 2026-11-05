@@ -2,6 +2,39 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.15.0 — 2026-11-05
+
+### Katkı (buraqfe05, PR #3): e-destek (Moodle), TDK sözlüğü, özet maili teslim kontrolü
+- **Moodle / e-destek (`sb moodle-login`, `sb moodle-sync [--apply]`):** okulun resmî Moodle mobil servisini kullanır (`lms.moodle_url` boşsa modül kapalı). Yalnız okur: `_get_` içermeyen fonksiyon çağrılamaz (`PermissionError`). Şifre hiçbir yere yazılmaz, anahtarlığa yalnız jeton gider. Her derse «e-destek» bölümü: hoca, teslimler/seçimler, duyurular, haftalık içerik; dosyalar yerele iner. Kapanışları takvime [ÖDEV] yazmak varsayılan KAPALI (`lms.moodle_calendar: true`).
+- **TDK sözlüğü (`sb/tdk.py`, araç `tdk_sozluk`):** Türkçe kelimenin anlamını/yazımını model kendi bilgisiyle değil sozluk.gov.tr'ye dayanarak söyler (önbellekli). Dış içerik görmüş sohbette kelime defterine yazmaz.
+- **Özet maili teslim kontrolü (`mailer.delivery()`):** gönderilen özetin Gmail'de gelen kutusuna mı spam'e mi düştüğünü salt okunur kontrol eder; spam'e düştüyse masaüstü bildirimi + sonraki özette uyarı.
+- **Bizim sertleştirmemiz:** dosya indirmede Moodle jetonu yalnız okulun kendi sunucusuna gider (başka adresteyse indirme reddedilir); dosyaların yeri ayarlanabilir: `lms.moodle_files: data` (varsayılan, `~/.secondbrain/moodle`) ya da `vault` (kasada `40-Kaynaklar/UZEM/`, ama yalnız git bu yolu yok sayıyorsa; yoksa `sb migrate` önerir). `files_root`, `_same_host` testlerle.
+
+### Düzeltmeler
+- **Kasa göçü yedeği:** göç zincirinde her adım ayrı tüm-kasa yedeği alıyordu; artık zincir başına TEK şifreli yedek. Yedek alırken beklenmedik hata (disk dolu…) artık kontrollü «Yedek alınamadı, göç yapılmadı» der.
+- **UZEM günlük adımı** ilk elle `sb uzem sync` çalıştırılmadan hiçbir şey yapmaz (`--daily`): günlük çalışma okula kendiliğinden giriş yapmaz.
+- **Tazelik:** `uzem` kaynağı yalnız okul hesabı kayıtlıysa izlenir (hesapsız kurulumlarda sahte «hiç» uyarısı çıkmaz).
+- Test verisindeki gerçek kişi adı uydurma adla değiştirildi.
+
+### UZEM / Moodle
+- **`sb uzem sync [--dry-run] [--debug]`, `sb uzem status`** (`sb/uzem_sync.py`): ÜNİ UZEM EDS girişiyle Moodle (lms) derslerini okur; haftalık konular, duyurular (son 10), ödevler + teslim tarihleri, dış bağlantılar ve ders dosyaları ders notunun `sb:auto:uzem` bölümüne yazılır (elle yazılan kısım korunur, idempotent). Dersler `10-Dersler/<KOD Ad>` notlarıyla ada göre eşleşir (ve/boşluk/Türkçe karakter farkı yok sayılır); eşleşmeyen atlanır ve raporlanır. Yalnız GET, yalnız `*.universite.edu.tr`, yönlendirme ≤ 5 ve her adımda host denetimi, istekler ≥ 0,7 sn aralıklı, girişte tekrar deneme yok, oturum düşerse durur; şifre/giriş anahtarı hiçbir yere yazılmaz. Günlük çalışmada adım (`["uzem","sync"]`, 900 sn), tazelik kaynağı `uzem`, `config/uzem.yaml`.
+- **Ders dosyaları kasada, ama GitHub'a/telefona gitmez:** `40-Kaynaklar/UZEM/<KOD Ad>/<NN hafta>/` (Obsidian'da bağlantıyla açılır). Telif ve boyut nedeniyle `.gitignore` (`40-Kaynaklar/UZEM/**`) ve `.stignore` ile dışarıda tutulur; kit kasa şablonu aynı satırları taşır, mevcut kasalar için kasa şema göçü **m0003** (`sb migrate`; şema 3) satırları ekler. Eşitleme her dosyadan önce `git check-ignore` doğrular, ignore yoksa indirmez. `sb doctor`: UZEM'de git'e izlenen dosya ✗, klasör > 5 GB uyarı, yedek klasörü > 30 GB uyarı.
+- **Yedek:** UZEM dosyaları yedeğe dahildir (`backup_include_uzem`, varsayılan açık) ama ana yedeği şişirmez ve belleği patlatmaz: ayrı `vault-uzem-*.zip.enc`, zip doğrudan 64 MB'lık Fernet parçalarına akışla yazılır (en yeni 2 tutulur). `sb restore` ikisini de okur; eski yedek biçimi aynen çalışır. `sb backup` çıktısı UZEM'in yedeğe dahil olup olmadığını söyler.
+- Sınırlar (`config/uzem.yaml`): dosya ≤ 200 MB, çalıştırma başına ≤ 2 GB ve ≤ 300 dosya (kalanı ertesi çalışma); video/arşiv varsayılan atlanır (`indir_video`, `indir_arsiv`). Hiçbir şey otomatik silinmez.
+- İndirilen belgelerin metni (pdf, docx, pptx, xlsx, metin, kod, ipynb…) `file_text` dizinine girer (kaynak `uzem`, «dış içerik» başlığı, sır maskesi); ödev tarihleri onay deposuna takvim ÖNERİSİ olarak eklenir (aynı ödev+tarih tek kayıt). Sihirbaz Okul adımı metni düzeltildi (UZEM için kullanılır, ÖBS için henüz değil). Rehber: bölüm 23.
+
+### Asistan sohbeti: bulut (Gemini) ↔ yerel, anında geçiş
+- **Sohbet modu:** `~/.secondbrain/chat_mode.json` (`{"mode": "cloud"|"local"}`, kilit + atomik yazım; `sb/chat_mode.py`). Varsayılan: `config/llm.yaml` → `tasks.chat` bir bulut belirtecinde (`gemini:gemini-2.5-flash` gibi) ise `cloud`, yoksa `local`. Yerel modda bulut HİÇ çağrılmaz; `tasks.chat` bulut değilse bulut istenemez («bulut modeli ayarlı değil»).
+- **Arayüz:** üst çubuktaki başlık altı satırı gerçek durumu gösterir («Gemini 2.5 Flash · bulut» / «qwen3:14b · yerel»); tıklanınca küçük menü (bulut / yerel, gizlilik notu, bugünkü harcama). Klavye, `aria` ve dar ekran uyumlu; seçim bir sonraki mesajdan itibaren geçerli. `sw.js` önbelleği `sb-shell-v5`.
+- **API:** `GET /api/v2/chat/mode` (`mode`, `cloud_model`, `local_model`, `cloud_available`, `why_local`, `budget`), `POST /api/v2/chat/mode {mode}`. POST telefondan da çalışır (eşlenmiş cihaz çerezi; eşleme/Origin/jeton denetimleri aynen geçerli, eşlenmemiş cihaz reddedilir); menüdeki gizlilik satırı telefonda da görünür. **CLI:** `sb chat-mode [local|cloud|status]`; `sb ask` modele yazılmadıysa moda uyar.
+- **Güvenlik katmanları aynen:** hassas içerik (şifre/IBAN/kart/TCKN/sır konusu), sıkı izin profili ve bütçe sınırı (`BudgetExceeded`) turu yerele düşürür; `private` notlar buluta gitmez.
+- **Sessiz düşme yok:** bulut hata verirse (kota, ağ, anahtar, 5xx, bütçe) ve `fallback_to_local` açıksa o tur yerelde cevaplanır; cevabın başına «Bulut modeli yanıt vermedi, bu tur yerel modelle cevaplandı: <neden>» eklenir.
+- **Hangi model cevapladı:** her asistan mesajının kaydında `model` (`{"model": "gemini:…"}` ya da `{"model": "ollama:qwen3:14b", "reason": "hassas içerik"}`) tutulur; arayüzde mesajın altında küçük etiket.
+- **Kit:** `tools/build_kit.py` `llm.example.yaml`'daki `chat:` satırını yorum satırı yapar; kit kullanıcıları varsayılan yerelde başlar.
+- Rehber: «Gemini ile kullanım ve yerele geçiş» (bölüm 09), model sayfası (05), komut referansı.
+
+**Gizlilik dürüstlüğü:** bulut modunda o turun mesajı, sohbet geçmişi ve kasadan/mail/SMS'ten getirilen ilgili parçalar Google'a gider. Bilgimize göre Gemini API'nin **ücretsiz katmanında** veriler Google tarafından ürün geliştirmede kullanılabilir, **ücretli katmanda** kullanılmaz; Google şartları değişebilir, Gemini API Additional Terms sayfasından kendin kontrol et. Hassas içerik ve `private` notlar yerelde kalır; kuşkun varsa `sb chat-mode local`.
+
 ## 0.14.0 — 2026-11-05
 
 ### Katkı (buraqfe05, PR #2)

@@ -29,7 +29,7 @@ Second Brain **52 modül**den oluşur; her modül özellik kataloğundaki maddel
 | Modül | Ne yapar | Madde | Varsayılan |
 |---|---|---|---|
 | [Tarayıcı geçmişi](moduller/browser.md) | Chrome/Edge/Firefox geçmişi ve yer imleri (giriş/banka sayfaları hariç) | 1 | açık |
-| [Okul (ÖBS/LMS)](moduller/courses.md) | Ders notları, ders dosyaları, ders derlemesi | 13 | açık |
+| [Okul (ÖBS/LMS)](moduller/courses.md) | Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları | 13 | açık |
 | [GitHub derin](moduller/github.md) | Issue, PR, commit ve release kayıtları | 2 | açık |
 | [LinkedIn arşivi](moduller/linkedin.md) | LinkedIn veri arşivini içe aktarır | 0 | açık |
 | [Bilgisayar dosyaları](moduller/local_files.md) | Klasör notları ve belge içerik dizini | 0 | açık |

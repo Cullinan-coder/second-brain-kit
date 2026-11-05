@@ -97,10 +97,15 @@ def _turn(ctx: Ctx, conv: dict, user_msg: dict, reuse: dict | None = None) -> di
                                                       "sources": reuse.get("sources", [])})
         reuse.update({"text": reply_text, "ts": convstore.now(), "sources": sources, "trace": trace})
         reuse.pop("reaction", None)
+        reuse.pop("model", None)
+        if out.get("model"):
+            reuse["model"] = out["model"]
         reply = reuse
     else:
         reply = convstore.add_message(conv, "assistant", reply_text)
         reply.update({"sources": sources, "trace": trace})     # boş olsalar da alan hep bulunur
+        if out.get("model"):                                    # gerçekte hangi model cevapladı (+ neden yerele düştüyse)
+            reply["model"] = out["model"]
     convstore.save(conv)
     return {"conv": {"sid": conv["sid"], "title": conv.get("title", "")}, "user": user_msg, "reply": reply,
             "proposals": out.get("proposals") or []}

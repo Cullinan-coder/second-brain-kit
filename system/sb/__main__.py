@@ -16,6 +16,7 @@
   project-deep <klasör>|--all [--force]  Claude (salt okunur) projeyi inceler → notta "Proje dosyası"
   projects-sync [--dry-run]         ~/Workspace/projects + GitHub → 20-Projeler (son çalışmalar, özet)
   course-files [--dry-run]          Bilgisayardaki ders dosyalarını ders notlarına link olarak bağla
+  uzem sync [--dry-run] | status    ÜNİ UZEM/Moodle: haftalık konular, duyurular, ödevler, dosyalar → ders notları + 40-Kaynaklar/UZEM
   obs-import [--dry-run]            _system/data/obs.yaml (ÖBS, elle) → Akademik Durum + ders not geçmişi
   sms-sync                          Drive'daki SMS Backup & Restore yedekleri → mail.db (sonra contacts-sync)
   mail-categorize [--all]           Kurallarla yeniden kategorile
@@ -29,6 +30,7 @@
   daily / weekly                    Otomatik günlük güncelleme + sabah özeti (mail) / haftalık denetim
   notify-test                       Deneme maili (şirket SMTP → sadece kullanıcının adresi)
   telegram setup|pull|send          (İsteğe bağlı) Telegram: bağla / bota yazılanları 00-Inbox'a çek / deneme
+  moodle-login / moodle-sync        (İsteğe bağlı) okulun Moodle'ı: salt okunur giriş / ders notları, dosyalar, kapanışlar
 """
 from __future__ import annotations
 
@@ -185,6 +187,25 @@ def cmd_course_files(args) -> int:
     if missing:
         print(f"notu olmayan ders kodları (atlandı): {', '.join(missing)}")
     return 0
+
+
+def cmd_uzem(args) -> int:
+    from . import uzem_sync
+    if args.uzem_cmd == "status":
+        print(uzem_sync.status_text())
+        return 0
+    from .uzem import UzemError
+    if getattr(args, "daily", False) and not uzem_sync.state_path().exists():
+        # Günlük çalışma okula KENDİLİĞİNDEN giriş yapmaz: önce kullanıcı elle `sb uzem sync --dry-run`, sonra `sb uzem sync` çalıştırır.
+        print("UZEM: henüz elle çalıştırılmadı; atlandı. Önce `sb uzem sync --dry-run`, sonra `sb uzem sync` çalıştır.")
+        return 0
+    try:
+        rep = uzem_sync.sync(dry_run=args.dry_run, debug=args.debug)
+    except UzemError as e:
+        print(f"HATA: {e}")
+        return 1
+    uzem_sync.print_report(rep)
+    return 1 if rep["oturum_dustu"] else 0
 
 
 def cmd_projects_sync(args) -> int:
@@ -676,6 +697,16 @@ def cmd_telegram(args) -> int:
     return 0
 
 
+def cmd_moodle_login(args) -> int:
+    from . import moodle
+    return moodle.login()
+
+
+def cmd_moodle_sync(args) -> int:
+    from . import moodle
+    return moodle.sync(apply=args.apply, download=not args.no_files)
+
+
 def cmd_set_secret(args) -> int:
     import getpass
 
@@ -693,7 +724,8 @@ def cmd_set_secret(args) -> int:
 def cmd_ask(args) -> int:
     from . import llm, providers
     cfg = llm.config()
-    spec = args.model or cfg["tasks"].get("chat", "ollama")
+    from . import chat_mode
+    spec = args.model or chat_mode.active_spec(cfg) or "ollama"      # yerel modda tasks.chat'teki bulut kullanılmaz
     if spec == "ollama":
         spec = "ollama:" + cfg["ollama"]["model"]
     messages = [{"role": "user", "content": args.question}]
@@ -709,6 +741,26 @@ def cmd_ask(args) -> int:
     except providers.ProviderError as e:
         print(f"Hata: {e}", file=sys.stderr)
         return 1
+    return 0
+
+
+def cmd_chat_mode(args) -> int:
+    from . import chat_mode
+    if args.mode in ("local", "cloud"):
+        try:
+            chat_mode.set_mode(args.mode)
+        except ValueError as e:
+            print(f"Hata: {e}", file=sys.stderr)
+            return 1
+    st = chat_mode.status()
+    now = f"{st['cloud_label']} · bulut" if st["mode"] == "cloud" else f"{st['local_model']} · yerel"
+    print(f"Asistan modeli: {now}")
+    if st.get("why_local"):
+        print(f"  Neden yerel: {st['why_local']}")
+    print(f"  Bulut: {st['cloud_model'] or 'ayarlı değil'}" + (" (anahtar var)" if st["cloud_available"] else ""))
+    b = st["budget"]
+    if b["limit_usd"]:
+        print(f"  Bugünkü harcama: ${b['today_usd']:.2f} / ${b['limit_usd']:.2f}")
     return 0
 
 
@@ -804,6 +856,15 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("links")
     g.add_argument("--dry-run", action="store_true")
     g.set_defaults(func=cmd_links)
+
+    g = sub.add_parser("uzem", help="ÜNİ UZEM / Moodle: haftalık konular, duyurular, ödevler, ders dosyaları → ders notları + 40-Kaynaklar/UZEM")
+    gs = g.add_subparsers(dest="uzem_cmd", required=True)
+    gg = gs.add_parser("sync", help="giriş yap, dersleri eşitle (yalnız GET)")
+    gg.add_argument("--dry-run", action="store_true", help="giriş yapar, ne indirileceğini/yazılacağını listeler; hiçbir şey yazmaz")
+    gg.add_argument("--debug", action="store_true", help="ham HTML'i (maskeli) ~/.secondbrain/work/uzem-debug altına kaydet")
+    gg.add_argument("--daily", action="store_true", help="günlük çalışma için: ilk elle çalıştırma yapılmadıysa hiçbir şey yapmaz")
+    gs.add_parser("status", help="son eşitleme, ders başına sayılar, bekleyen dosyalar")
+    g.set_defaults(func=cmd_uzem)
 
     g = sub.add_parser("content-sync")
     g.add_argument("--limit", type=int)
@@ -1294,14 +1355,25 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("action", choices=["setup", "pull", "send"])
     g.set_defaults(func=cmd_telegram)
 
+    g = sub.add_parser("chat-mode", help="asistan modeli: bulut ↔ yerel (sb chat-mode [local|cloud|status])")
+    g.add_argument("mode", nargs="?", default="status", choices=["local", "cloud", "status"])
+    g.set_defaults(func=cmd_chat_mode)
+
     g = sub.add_parser("ask", help="tek soru: verilen (ya da tasks.chat) modele sor, ör. --model openai:gpt-5-mini")
     g.add_argument("question")
     g.add_argument("--model", default="", help="<sağlayıcı>:<model>; boşsa tasks.chat")
     g.add_argument("--stream", action="store_true", help="cevabı parça parça yazdır")
     g.set_defaults(func=cmd_ask)
 
+    g = sub.add_parser("moodle-login", help="okulun Moodle'ına giriş: şifre gizli sorulur, yalnız jeton saklanır")
+    g.set_defaults(func=cmd_moodle_login)
+    g = sub.add_parser("moodle-sync", help="Moodle → ders notları (haftalar, duyurular, teslimler), dosyalar, kapanışlar")
+    g.add_argument("--apply", action="store_true", help="yaz (yoksa deneme)")
+    g.add_argument("--no-files", action="store_true", help="dosya indirme")
+    g.set_defaults(func=cmd_moodle_sync)
+
     g = sub.add_parser("set-secret")
-    g.add_argument("name", choices=["claude-oauth", "telegram-bot", *[f"imap-{a}" for a in (accounts().get("imap") or {})],
+    g.add_argument("name", choices=["claude-oauth", "telegram-bot", "svc-school-password", *[f"imap-{a}" for a in (accounts().get("imap") or {})],
                                     *[f"api-{n}" for n in ("openai", "anthropic", "gemini", "openrouter", "groq", "deepseek", "mistral")]])
     g.set_defaults(func=cmd_set_secret)
 

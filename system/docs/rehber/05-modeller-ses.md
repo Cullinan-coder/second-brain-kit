@@ -54,6 +54,10 @@ Ollama kurulu ama çalışmıyorsa: Windows'ta görev çubuğundaki gizli simgel
 
 Yazı modeli sohbet, özet ve tarih çıkarmada; **görüntü modeli** (vision) ekran/kamera ve resim okumada kullanılır; **gömme (embedding) modeli** arama ve beyin dizini içindir (`sb embed-test` yapılandırılmış gömme modeliyle denenir). Hangi görevin hangi modelle yapıldığı `config/llm.yaml` içindeki `ollama:` ve `tasks:` bölümlerinden okunur.
 
+### Asistan sohbeti: bulut ya da yerel
+
+Sohbet modeli varsayılan olarak yereldir. `config/llm.yaml` içinde `tasks:` altına `chat: gemini:gemini-2.5-flash` eklersen asistan Gemini ile konuşur ve üst çubuktaki model adından ya da `sb chat-mode local|cloud|status` ile istediğin an yerele geçebilirsin. Hassas içerik, `private` notlar ve sıkı izin profili her zaman yerelde kalır; bulut hata verirse tur yerel modelle cevaplanır ve sana söylenir. Ayrıntı ve gizlilik notu: [Gemini ile kullanım ve yerele geçiş](09-asistan-kullanimi.md#gemini-ile-kullanım-ve-yerele-geçiş).
+
 ## Ses: Whisper (konuşmayı yazıya çevirme)
 
 **Ne işe yarar:** mikrofonla konuşup asistana yazdırmak (sohbet kutusundaki mikrofon düğmesi), sesli not, toplantı/ders kaydı dökümü, video/ses dosyası dökümü. Yerel **faster-whisper** kullanılır: ses dosyası bilgisayardan çıkmaz; notlara yalnız döküm girer.

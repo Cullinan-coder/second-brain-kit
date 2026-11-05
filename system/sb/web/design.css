@@ -35,6 +35,15 @@ svg.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-wid
 .titles{flex:1;min-width:0}
 #title{margin:0;font-size:var(--t-md);font-weight:var(--w-semi);line-height:var(--lh-snug);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub{color:var(--muted);font-size:var(--t-xs);line-height:var(--lh-snug)}
+.sub-btn{display:block;max-width:100%;border:0;background:transparent;padding:0;font:inherit;font-size:var(--t-xs);text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:var(--r1)}
+.sub-btn:hover{color:var(--fg);text-decoration:underline}
+.sub-btn::after{content:" \25BE"}
+.menu .menu-note{max-width:min(300px,calc(100vw - 32px));padding:var(--s2) var(--s3);font-size:var(--t-xs);line-height:var(--lh-snug);color:var(--muted);border-top:1px solid var(--border);margin-top:var(--s1)}
+.menu button[aria-checked="true"]{font-weight:var(--w-semi)}
+.menu button[aria-checked="true"]::after{content:"\2713";margin-left:auto;color:var(--accent)}
+.menu button:disabled{opacity:.55;cursor:not-allowed}
+.msg-model{font-size:var(--t-xs);color:var(--muted)}
+.msg-model.fb{color:var(--warn,var(--muted))}
 .top-actions{display:flex;align-items:center;gap:var(--s1)}
 .only-mobile{display:none!important}
 .brand{display:flex;align-items:center;gap:var(--s2);font-weight:650;font-size:var(--t-lg);letter-spacing:-.015em;flex:1}
@@ -272,7 +281,9 @@ details.trace pre{margin:var(--s1) 0 0;white-space:pre-wrap;font-family:var(--mo
   .only-mobile{display:inline-flex!important}
   #side{position:fixed;inset:0 auto 0 0;z-index:var(--z-side);transform:translateX(-102%);transition:transform var(--d2) var(--ease);box-shadow:var(--shadow);width:var(--side-w);visibility:hidden}
   body.drawer #side{transform:none;visibility:visible}
-  #top{padding:var(--s2) var(--s3)}
+  #top{padding:var(--s2) var(--s3);flex-wrap:wrap;row-gap:0}
+  .top-actions{margin-left:auto}
+  .titles{order:10;flex:1 0 100%;padding-bottom:var(--s1)}
   #log{padding:var(--s3) var(--s3) var(--s2)}
   #composer{padding:0 var(--s3) var(--s2)}.chips{padding:0 var(--s3) var(--s2)}
   .bubble{max-width:94%}

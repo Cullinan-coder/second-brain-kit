@@ -115,6 +115,31 @@ Onay bekleyen her şey **tek bir listede** toplanır: sohbet kartları (komut, t
 - **Gece koşusu:** `00-Inbox/Gece işleri.md` maddelerini `sb night` Claude Code'a sırayla yaptırır ([Gece koşusu](moduller/night.md)).
 - **Hafıza modu:** `sb mode normal | ekonomik | manuel` hafıza kancalarının ne kadar bağlam eklediğini ayarlar.
 
+## Gemini ile kullanım ve yerele geçiş
+
+Asistanın sohbet modeli istersen bulutta (Gemini) çalışır; **istediğin anda** yerel modele (Ollama) geçip geri dönebilirsin.
+
+**Nasıl açılır:** `config/llm.yaml` içindeki `tasks:` altına `chat: gemini:gemini-2.5-flash` yaz (Google'dan alınan anahtar: `sb set-secret api-gemini`; bkz. [API anahtarları](04-api-anahtarlari.md)). Hangi Gemini modelinin hesabında açık olduğunu `sb ask "merhaba" --model gemini:<model>` ile dene; Google bazı modelleri yeni hesaplara kapatabilir (404 ya da kota hatası verir). Kit kurulumunda bu satır kapalıdır, asistan varsayılan olarak yereldedir.
+
+**Nasıl geçilir:**
+- Uygulamanın üst çubuğunda sohbet başlığının altındaki model adına («Gemini 2.5 Flash · bulut» ya da «qwen3:14b · yerel») tıkla; menüden **bulut** ya da **yerel**i seç. Seçim bir sonraki mesajdan itibaren geçerlidir. Klavyeyle: model adına Tab ile git, Enter, ok tuşları, Enter; Esc kapatır.
+- Komut satırı: `sb chat-mode local`, `sb chat-mode cloud`, `sb chat-mode status`.
+- Seçim `~/.secondbrain/chat_mode.json` dosyasında durur ve yeniden başlatmada korunur. Mod telefondan da değiştirilebilir (eşlenmiş cihaz yeterli; her istek eşleme, Origin ve jeton denetiminden geçer, eşlenmemiş cihaz reddedilir). Telefonda da menüdeki gizlilik satırı görünür: bulut modunda mesajların Google'a gider.
+
+**Hangi veri Google'a gider:** bulut modunda mesajın, sohbet geçmişin ve asistanın o tur için kasadan/arşivden getirdiği parçalar (not, mail, SMS, belge, takvim özetleri) Gemini API'ye gönderilir. Bu bilgisayardan çıkar.
+
+**Hangi veri gitmez:** şifre, API anahtarı, IBAN, geçerli kart numarası, TC kimlik numarası, doğrulama kodu gibi hassas değer ya da şifre/banka gibi sır konusu içeren turlar otomatik **yerel modelle** cevaplanır. `private` işaretli notlar buluta hiç gönderilmez. İzin profili **sıkı** ise bulut kapalıdır. Bu korumalar bulut modunda da aynen sürer.
+
+**Hangi modelin cevapladığı görünür:** her cevabın altında küçük bir etiket vardır (ör. «Gemini 2.5 Flash (bulut)» ya da «qwen3:14b (yerel) · hassas içerik»).
+
+**Bulut yanıt vermezse:** kota, ağ, anahtar ya da sunucu hatasında (ve `fallback_to_local` açıkken) o tur yerel modelle cevaplanır; cevabın başında «Bulut modeli yanıt vermedi, bu tur yerel modelle cevaplandı: …» yazar. Sessizce düşmez.
+
+**Bütçe:** her bulut çağrısı `sb usage` kaydına yazılır. `budget:` ayarındaki günlük/aylık sınır dolunca bulut çağrısı yapılmaz, tur yerele düşer ve nedeni («bütçe doldu») görünür. Model menüsü bugünkü harcamayı gösterir.
+
+**Gizlilik hakkında dürüst not:** Google'ın Gemini API şartları değişebilir. Bilgimize göre ücretsiz katmanda gönderilen veriler Google tarafından ürünleri geliştirmek için kullanılabilir (insanlar tarafından okunabilir), ücretli (faturalandırmalı) katmanda kullanılmaz. Bu bilgiyi kendin kontrol et: Google'ın güncel «Gemini API Additional Terms» sayfasına bak. Kişisel yazışma ve notlar için hassas olanı yerelde bırak ya da yerel modda çalış.
+
+**Yerele nasıl dönersin:** model adına tıkla → **Yerel**, ya da `sb chat-mode local`. Yerel modda bulut hiç çağrılmaz.
+
 ## Sınırlar ve beklentiler
 
 - Yerel model, büyük bulut modellerinden küçüktür; karmaşık sorularda hata yapabilir. Önemli kararlarda kaynağı kendin kontrol et.

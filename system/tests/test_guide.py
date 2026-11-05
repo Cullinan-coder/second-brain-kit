@@ -36,7 +36,7 @@ def built(bg, tmp_path_factory):
 def test_build_runs_and_counts(built):
     out, stats = built
     assert stats["modules"] == len(plugins.all("module")) == 52
-    assert stats["sources"] == len(plugins.all("source")) == 42
+    assert stats["sources"] == len(plugins.all("source")) == 43
     assert stats["mcps"] == len(plugins.all("mcp")) == 18
     assert stats["items"] == 258
     assert (out / "README.md").exists()

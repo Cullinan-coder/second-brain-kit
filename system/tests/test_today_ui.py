@@ -42,7 +42,7 @@ def test_today_styles_and_reduced_motion():
 
 def test_sw_cache_bumped_and_lists_today():
     sw = _t("sw.js")
-    assert "sb-shell-v4" in sw and "/static/today.js" in sw
+    assert "sb-shell-v5" in sw and "/static/today.js" in sw
 
 
 def test_startup_goes_to_today_when_done():

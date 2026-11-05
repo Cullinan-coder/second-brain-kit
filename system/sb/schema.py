@@ -3,7 +3,7 @@
 Kasa biçimi (ön bilgi alanı, klasör/dosya adı kuralı, config anahtarı) değişirse eski kasalar bozulmasın diye:
 - Kasa sürümü `_system/config/kasa.yaml` içindeki `schema_version: N`. Dosya/anahtar yoksa **1** (mevcut kasalar).
 - Kodun beklediği sürüm `CURRENT`. Göçler `sb/migrations/m000N_*.py` (bkz. oradaki `__init__`).
-- Her göç adımı: git temiz mi → şifreli yedek → `up()` → sürüm damgası → tek commit («şema göçü N→M»).
+- Zincirin başında git temiz mi → TEK şifreli yedek; her göç adımı: `up()` → sürüm damgası → tek commit («şema göçü N→M»).
   Herhangi bir adım patlarsa YALNIZ göçün kendi değişiklikleri geri alınır (başka değişikliğe dokunulmaz).
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
-CURRENT = 2
+CURRENT = 3
 DEFAULT_VERSION = 1
 CONFIG_REL = "_system/config/kasa.yaml"
 KEY = "schema_version"
@@ -219,10 +219,6 @@ def _apply_step(v: Path, m: Migration, frm: int, log: list[str]) -> None:
     cfg_tracked = _git(v, "ls-files", "--error-unmatch", CONFIG_REL, check=False).returncode == 0
     ours: str | None = None
     try:
-        r = _backup()
-        if not r.get("ok"):
-            raise SchemaError("Yedek alınamadı, göç yapılmadı: " + str(r.get("message") or r))
-        log.append(f"Yedek alındı: {', '.join(r.get('created') or [])}")
         changes = m.up(v, False)
         log.extend(f"  {m.version}: {c}" for c in changes)
         write_version(m.version, v)
@@ -266,6 +262,15 @@ def run(vault: Path | None = None, dry_run: bool = False) -> dict:
         return {"ok": True, "applied": [], "log": log}
     applied: list[int] = []
     try:
+        dirty0 = _status(v, untracked=False)
+        if not dirty0:                                              # zincir başına TEK şifreli yedek (adım başına değil)
+            try:
+                r = _backup()
+            except Exception as e:                                  # noqa: BLE001 — disk dolu, anahtar kayıp…
+                raise SchemaError(f"Yedek alınamadı, göç yapılmadı: {type(e).__name__}: {e}") from e
+            if not r.get("ok"):
+                raise SchemaError("Yedek alınamadı, göç yapılmadı: " + str(r.get("message") or r))
+            log.append(f"Yedek alındı: {', '.join(r.get('created') or [])}")
         for m in todo:
             dirty = _status(v, untracked=False)
             if dirty:

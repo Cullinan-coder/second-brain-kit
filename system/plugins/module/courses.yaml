@@ -5,8 +5,8 @@ name:
   tr: Okul (ÖBS/LMS)
   en: School (SIS/LMS)
 desc:
-  tr: Ders notları, ders dosyaları, ders derlemesi
-  en: Course notes, course files and course summaries.
+  tr: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları
+  en: Course notes, course files and course summaries, UZEM/Moodle weekly topics and course files.
 category: school_project
 module: courses
 catalog_ids:

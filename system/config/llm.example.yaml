@@ -9,6 +9,7 @@ tasks:
   worker: ollama           # Claude Code'un ücretsiz alt işçisi (sb qwen / MCP local_work)
   cluster: ollama          # not kümelerine ad koyma (sb clusters)
   answer: ollama           # beyin dizininden kaynak numaralı cevap (sb answer); kişisel veri yerelde kalsın
+  # chat: gemini:gemini-2.5-flash   # asistan sohbeti bulutta (anahtar: `sb set-secret api-gemini`); arayüzde başlıktan ya da `sb chat-mode local` ile anında yerele geçilir; hassas içerik yerelde kalır. gemini-2.5-pro yeni hesaplara kapalı (404, 2026-11-05)
   topic_map: claude
   course_deep: claude
   project_deep: claude

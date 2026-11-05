@@ -39,3 +39,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# UZEM ders dosyaları: kasada durur ama GitHub'a gitmez (telif, boyut)
+40-Kaynaklar/UZEM/**
+!40-Kaynaklar/UZEM/**/*.md

@@ -84,7 +84,7 @@ LMS_NAME = str(LMS.get("name") or "LMS")
 
 
 def uzem_items(con, course_name: str, limit: int = 15) -> str:
-    """ÜNİ LMS (Moodle) bildirim maillerinden bu derse ait olanlar: duyuru, ödev, teslim, yeni içerik (en yeni üstte)."""
+    """ÜNİ UZEM (Moodle) bildirim maillerinden bu derse ait olanlar: duyuru, ödev, teslim, yeni içerik (en yeni üstte)."""
     import re
     if con is None or len(course_name) < 4 or not LMS_FROM:
         return ""

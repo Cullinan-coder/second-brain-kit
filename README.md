@@ -8,11 +8,11 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.14.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.15.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
-| Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
+| Özellik | 52 modül, 258 tek tek seçilebilen madde, 43 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
-| Test | 1.000+ otomatik test; her push'ta Windows'ta, her sürümde Windows ve macOS'ta sıfırdan kurulum + test |
+| Test | 1.200+ otomatik test; her push'ta Windows'ta, her sürümde Windows ve macOS'ta sıfırdan kurulum + test |
 | Erişim | Depo gizlidir; yalnız davet edilen kişiler kurabilir |
 
 > **Bu README'yi okuyan biri** projenin ne yaptığını, nasıl kurulduğunu, verinin nereye gittiğini, neyin çalışıp neyin
@@ -214,6 +214,8 @@ güncelleme denetimi → sağlık testi (`sb doctor`) → bugünün günlük iş
 | "Bugün ne var?" | Uygulama açılınca ilk ekran **Bugün**: 7 günlük teslim/sınav/etkinlik, bekleyen onaylar, önemli okunmamış mailler, eskiyen kaynaklar. Terminalde `sb today` (`--json`) |
 | Dışa aktardığım dosyayı (WhatsApp zip, Takeout, Spotify…) içeri almak | Kasadaki `00-Inbox/İçe aktar/` klasörüne at. Türü tanınır ve içe aktarılır (10 dk'da bir ve günlük çalışmada); dosya `_işlendi/<tarih>/` altına taşınır, silinmez; aynı dosya ikinci kez alınmaz; tanınmazsa `_tanınmadı/` altına taşınır ve Onaylar'da kaynağını seçmen istenir |
 | "Son günlerde ne yaptık?" | `sb recap` / asistan |
+| "Bu kelimenin anlamı/yazımı?" | Asistan TDK sözlüğüne (sozluk.gov.tr) bakarak cevaplar; kendi bilgisiyle uydurmaz |
+| Sabah özetim gelmedi ya da spam'e düştü | Her gönderimden sonra özetin Gmail'de gelen kutusuna mı spam'e mi düştüğü salt okunur kontrol edilir; spam'se masaüstü bildirimi ve sonraki özette uyarı çıkar |
 | Bekleyen onaylar (komut, takvim, WhatsApp, tarih adayları, otomasyon) | Asistanın üst çubuğunda ✓ ve sayı → **Görünümler → Onaylar**. Tek liste; Obsidian'daki `00-Inbox/onay-bekleyenler.md` aynı listenin görünümü (`[x]` = onay, satırı silmek = iptal). Kartlar yeniden başlatmada kaybolmaz, süresi dolunca düşer |
 | Uzun gece işi | `geceye ekle: iş @klasör` → `gece koşusunu başlat` (yalnız bilgisayardan, onaylı) |
 
@@ -230,6 +232,7 @@ Her kaynağın manifestinde bir **tazelik eşiği** vardır (`refresh:`: otomati
 | **Haftalık** (Pazar 15:00) | Özet, hijyen raporu, bağlantı ve küme önerileri |
 | **Dışa aktarma dosyasıyla** (`sb import <kaynak> <dosya>` ya da sihirbaz 9. adım) | WhatsApp, Telegram Desktop, Discord, Slack, Instagram, X, LinkedIn, Takeout (Gemini, Chrome, Keep, YouTube, Fotoğraflar, Konum), Spotify (tam geçmiş ve teknik günlük paketi), Kindle, Notion, Evernote, OneNote, Apple Notlar, Pocket, Raindrop, Zotero, BibTeX, banka CSV, Coursera/Udemy, ekran süresi, Todoist/TickTick/Trello/Jira/Linear/MS To Do, ChatGPT/Claude/Gemini sohbetleri, tarayıcı geçmişi |
 | **Elle** | ÖBS (`data/obs.yaml`), RSS/arXiv (`sb import rss`) |
+| **Okul ders siteleri (Moodle/e-destek, UZEM)** | `sb moodle-login` + `sb moodle-sync` (resmî mobil servis, salt okunur, adres `lms.moodle_url` ayarında) ders notlarına haftalık içerik, duyuru ve teslimleri yazar, dosyaları indirir. ÜNİ UZEM için ayrıca `sb uzem sync` (ilk çalıştırma elle: önce `--dry-run`). Dosyalar kasada `40-Kaynaklar/UZEM/` altında durur ama git'e, telefona ve GitHub'a gitmez; yedeğe girer |
 
 Dışa aktarılan kaynakları güncel tutmak senin elinde. Öneri: WhatsApp ve sohbet geçmişleri ayda bir, Takeout 2 ayda bir planlı, banka ay sonu.
 Her kaynağın "nasıl alınır" anlatımı: [system/docs/rehber/kaynaklar/](system/docs/rehber/kaynaklar/).
@@ -241,6 +244,10 @@ Her kaynağın "nasıl alınır" anlatımı: [system/docs/rehber/kaynaklar/](sys
 - `config/llm.yaml`: görev başına hedef (`tasks:`), kurallar (`routing:`), hata/kota olunca yedek zinciri (`fallback:`), yanıt önbelleği. Maliyet `sb usage`, yerel 0 USD.
 - **Gizlilik süzgeci:** şifre, API anahtarı, OTP, kart, TCKN ve IBAN içeren metin ile `private` notlar buluta **hiç** gitmez, yerel modele düşer. "Tam yerel" + "sıkı" izin profilinde hiçbir istek buluta gitmez.
 - Claude Code (`claude -p`) aboneliğinle derin derleme işlerinde kullanılır.
+- **Bulut ↔ yerel anında geçiş:** `config/llm.yaml` → `tasks.chat: gemini:gemini-2.5-flash` (örnek) ile asistan sohbeti bulutta çalışır. Asistanın üst çubuğunda model etiketine tıklayarak (bilgisayarda ve telefonda) ya da `sb chat-mode local|cloud|status` ile **istediğin an yerele geçersin**. Her cevabın altında hangi modelin yazdığı görünür. Bulut hata verirse o tur yerelle cevaplanır ve sana söylenir (sessiz düşme yok).
+- **Bulut modunun gizlilik bedeli:** o turun mesajı, sohbet geçmişi ve kasadan/mail/SMS'ten getirilen ilgili parçalar sağlayıcıya gider. Şifre, IBAN, kart, TC kimlik ve `private` notlar yerelde kalır. Gemini API'nin ücretsiz katmanında içerikler sağlayıcı tarafından ürün geliştirmede kullanılabilir (ücretli katmanda kullanılmaz; güncel şartları kontrol et).
+- **Abonelik ≠ API:** Google AI Pro/Claude Pro gibi tüketici abonelikleri, yazılımların kullandığı API kotasını kapsamaz. Gemini komut satırı aracı bireysel hesaplar için kapatıldığından Gemini abonelik planıyla asistana bağlanılamaz.
+- **Günlük harcama sınırı:** `config/llm.yaml` `budget` (varsayılan günlük 2, aylık 10 dolar); aşılırsa bulut çağrısı yapılmaz.
 
 ## 10. Telefon
 
@@ -326,7 +333,7 @@ second-brain-kit/
     plugins/                                modül / kaynak / MCP / uygulama manifestleri, hazır seçimler
     integrations/ · skills/                 Claude Code kancaları, skill'ler, tarayıcı eklentisi
     tools/                                  rehber üretici, kit üretici, demo kasası, ekran görüntüsü aracı
-    tests/                                  1.000+ test
+    tests/                                  1.200+ test
     docs/rehber/                            136 sayfalık kullanıcı rehberi (üretilir; kaynağı docs/rehber-src/)
   vault/                                    boş kasa şablonu (00-Inbox … 90-Arşiv, şablonlar)
   apps/clipboardline/ · apps/nashi/         gömülü uygulamaların kaynak kodu (UPSTREAM.md: kaynak commit)

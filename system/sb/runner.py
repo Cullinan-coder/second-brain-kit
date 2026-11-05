@@ -45,11 +45,13 @@ DAILY_REST = [
     ("rehber", ["contacts-sync"], 900),
     ("drive", ["drive-sync"], 5400),
     ("drive notları", ["drive-index"], 900),
+    ("e-destek", ["moodle-sync", "--apply"], 1800),              # okul Moodle'ı → ders notları, dosyalar (lms.moodle_url boşsa atlanır)
     ("bilgisayar dosyaları", ["local-files"], 5400),
     ("belge içerikleri", ["content-sync"], 7200),
     ("hazır uygulamalar (ClipBoardLine, Nashi)", ["apps", "sync", "all"], 900),
     ("projeler", ["projects-sync"], 3600),
     ("proje derleme", ["project-deep", "--all"], 10800),
+    ("UZEM / Moodle dersleri", ["uzem", "sync", "--daily"], 900),            # haftalık konular, duyurular, ödevler, ders dosyaları (40-Kaynaklar/UZEM)
     ("ders dosyaları", ["course-files"], 900),
     ("ders derleme", ["course-deep", "--all"], 7200),
     ("oturum günlükleri", ["sessions-sync"], 7200),
@@ -139,14 +141,36 @@ def lint_errors() -> int:
     return int(last.split(",")[-1].strip().split()[0]) if "hata" in last else 0
 
 
+DELIVERY_WARN = DATA / "delivery_warning.txt"     # gelen kutusuna ulaşmayan özet → bir sonraki özetin başına uyarı
+
+
 def _deliver(text: str, log) -> None:
-    """Özeti mail (varsayılan, şirket SMTP → sadece kullanıcının adresi) ve Telegram bağlıysa Telegram ile gönderir."""
-    from . import mailer, telegram
+    """Özeti mail (varsayılan, şirket SMTP → sadece kullanıcının adresi) ve Telegram bağlıysa Telegram ile gönderir.
+
+    Gönderdikten sonra mailin gelen kutusuna gerçekten düştüğü Gmail'den (salt okunur) kontrol edilir; düşmediyse
+    masaüstü bildirimi + bir sonraki özete uyarı. "Gönderildi" sunucunun kabul ettiği anlamına gelir, teslim değil.
+    """
+    from . import actions, mailer, telegram
     subject = text.splitlines()[0][:120] if text else "Second Brain"
+    problem = None
     try:
-        log(f"Mail gönderildi ({mailer.send(subject, text)}) → {', '.join(mailer.settings()['to'])}")
+        msgid = mailer.new_id()
+        log(f"Mail gönderildi ({mailer.send(subject, text, msgid=msgid)}) → {', '.join(mailer.settings()['to'])}")
+        where = mailer.delivery(msgid)
+        log(f"Teslim kontrolü: {where}")
+        if where != "gelen kutusu" and not where.startswith("kontrol edilemedi"):
+            problem = f"'{subject}' maili gelen kutusuna değil, {where} klasörüne düştü."
     except BaseException as e:      # SystemExit dahil: teslimat hatası çalışmayı düşürmemeli
         log(f"Mail gönderilemedi: {e}")
+        problem = f"'{subject}' maili gönderilemedi: {e}"
+    if problem:
+        DELIVERY_WARN.write_text(f"{datetime.now():%Y-%m-%d %H:%M} {problem}", encoding="utf-8")
+        try:
+            actions.toast("Second Brain: özet maili ulaşmadı", problem + " Özet kasada da duruyor (50-Günlük).")
+        except Exception as e:
+            log(f"Bildirim gösterilemedi: {e}")
+    else:
+        DELIVERY_WARN.unlink(missing_ok=True)
     if telegram.chat_id():
         try:
             log(f"Telegram: {telegram.send(text)} mesaj gönderildi")
@@ -216,6 +240,9 @@ def daily(skip: set[str] | None = None, force: bool = False) -> int:
             text = digest.build_daily(con, VAULT, date.today(), fetch_events(), steps)
         except Exception as e:
             text = f"⚠ Sabah özeti üretilemedi: {e}"
+        if DELIVERY_WARN.exists():
+            lines = text.splitlines() or [""]
+            text = "\n".join([lines[0], "", f"⚠ Önceki özet: {DELIVERY_WARN.read_text(encoding='utf-8').strip()}", *lines[1:]])
         log(git_sync(log))
         _write_note(f"{date.today():%Y-%m-%d} Özet", f"ozet:{date.today():%Y-%m-%d}", text)
         _deliver(text, log)

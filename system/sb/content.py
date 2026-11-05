@@ -163,7 +163,8 @@ def sync(con: sqlite3.Connection, log=print, limit: int | None = None) -> tuple[
             con.commit()
             log(f"  {i}/{len(todo)}")
     current = {r[0] for r in rows}
-    stale = [p for p in known if p not in current]
+    # UZEM ders dosyaları (kasada, local_files taramasında yok) `sb uzem sync` ile dizine girer; burada silinmez.
+    stale = [p for p in known if p not in current and "/40-Kaynaklar/UZEM/" not in p.replace("\\", "/")]
     con.executemany("DELETE FROM file_text WHERE path = ?", [(p,) for p in stale])
     con.commit()
     log(f"içerik: {done} belge işlendi ({errors} okunamadı), {len(stale)} silinen kaldırıldı")

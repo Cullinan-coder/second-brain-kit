@@ -283,6 +283,10 @@
     wrap.append(bubble);
     const atts = (m.attachments || []).map((a) => (typeof a === 'string' ? a : a && (a.name || a.att_id))).filter(Boolean);
     if (atts.length) wrap.append(el('div', { cls: 'm-att' }, atts.map((n) => el('span', { cls: 'att-chip' }, [icon('clip'), el('span', { cls: 'n', text: String(n) })]))));
+    if (role === 'assistant' && m.model && m.model.model) {
+      const mm = m.model, why = mm.reason ? ' · ' + mm.reason : '';
+      wrap.append(el('div', { cls: 'msg-model' + (mm.fallback ? ' fb' : ''), title: mm.fallback ? 'Bulut modeli yanıt vermedi' : 'Bu cevabı veren model', text: modelName(mm.model) + why }));
+    }
     if (role === 'assistant' && m.trace && m.trace.length) {
       wrap.append(el('details', { cls: 'trace' }, [el('summary', { text: 'Araç adımları (' + m.trace.length + ')' }), el('pre', { text: m.trace.join('\n') })]));
     }
@@ -567,6 +571,59 @@
       else if (e.key === 'Escape') { e.stopPropagation(); closeMenu(true); }
       else if (e.key === 'Tab') closeMenu();
     });
+  }
+  /* ---------- sohbet modu: bulut ↔ yerel ---------- */
+  function modelName(spec) {
+    const i = String(spec).indexOf(':'); if (i < 0) return String(spec);
+    const prov = spec.slice(0, i), model = spec.slice(i + 1);
+    if (prov === 'ollama') return model + ' (yerel)';
+    return prov.charAt(0).toUpperCase() + prov.slice(1) + ' ' + model.replace(new RegExp('^' + prov + '-', 'i'), '').split('-').map((w) => (/\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ') + ' (bulut)';
+  }
+  function cloudLabel(st) { return st.cloud_label || modelName(st.cloud_model).replace(' (bulut)', ''); }
+  function paintMode() {
+    const st = SB.chatMode, sub = $('#subtitle'); if (!sub) return;
+    if (!st) { sub.textContent = SB.model ? 'Yerel asistan · ' + SB.model : 'Yerel asistan'; return; }
+    sub.textContent = st.mode === 'cloud' ? cloudLabel(st) + ' · bulut' : (st.local_model || SB.model || 'yerel model') + ' · yerel';
+    sub.title = 'Sohbet modelini değiştir (bulut / yerel)' + (st.why_local ? ' — ' + st.why_local : '');
+  }
+  async function refreshMode() {
+    if (!SB.has('/api/v2/chat/mode')) return paintMode();
+    const r = await api('/api/v2/chat/mode');
+    if (!failed(r) && r && r.mode) SB.chatMode = r;
+    paintMode();
+  }
+  function modeMenu(btn) {
+    if (menuEl && menuOpener === btn) return closeMenu(true);
+    closeMenu();
+    const st = SB.chatMode; if (!st) return;
+    const mk = (mode, text) => el('button', { type: 'button', attrs: { role: 'menuitemradio', 'aria-checked': String(st.mode === mode) }, on: { click: () => { closeMenu(true); setMode(mode); } } }, text);
+    const cloudBtn = mk('cloud', st.cloud_model ? cloudLabel(st) + ' (bulut)' : 'Bulut (ayarlı değil)');
+    const localBtn = mk('local', 'Yerel (' + (st.local_model || 'Ollama') + ')');
+    if (!st.cloud_model) { cloudBtn.disabled = true; cloudBtn.title = 'Bulut modeli ayarlı değil (config/llm.yaml → tasks.chat)'; }
+    const notes = [el('div', { cls: 'menu-note', text: 'Bulut modunda mesajların ve ilgili notların Google\'a gider; şifre/IBAN/TC kimlik içeren ve private notlar yerelde kalır.' })];
+    if (!st.cloud_model) notes.push(el('div', { cls: 'menu-note', text: 'Bulut modeli ayarlı değil.' }));
+    else if (st.mode === 'cloud' && !st.cloud_available) notes.push(el('div', { cls: 'menu-note', text: 'Bulut API anahtarı yok: cevaplar yerel modelle verilir.' }));
+    if (st.budget && st.budget.limit_usd) notes.push(el('div', { cls: 'menu-note', text: 'Bugün: $' + Number(st.budget.today_usd || 0).toFixed(2) + ' / $' + Number(st.budget.limit_usd).toFixed(2) }));
+    menuEl = el('div', { cls: 'menu', attrs: { role: 'menu', 'aria-label': 'Sohbet modeli' } }, [cloudBtn, localBtn].concat(notes));
+    document.body.append(menuEl); menuOpener = btn; btn.setAttribute('aria-expanded', 'true');
+    const rc = btn.getBoundingClientRect(); const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
+    menuEl.style.left = Math.max(8, Math.min(innerWidth - mw - 8, rc.left)) + 'px';
+    menuEl.style.top = Math.max(8, Math.min(innerHeight - mh - 8, rc.bottom + 4)) + 'px';
+    const first = menuEl.querySelector('button:not(:disabled)'); if (first) first.focus();
+    menuEl.addEventListener('keydown', (e) => {
+      const bs = $$('button:not(:disabled)', menuEl); const i = bs.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' && bs.length) { e.preventDefault(); bs[(i + 1) % bs.length].focus(); }
+      else if (e.key === 'ArrowUp' && bs.length) { e.preventDefault(); bs[(i - 1 + bs.length) % bs.length].focus(); }
+      else if (e.key === 'Escape') { e.stopPropagation(); closeMenu(true); }
+      else if (e.key === 'Tab') closeMenu();
+    });
+  }
+  async function setMode(mode) {
+    if (SB.chatMode && SB.chatMode.mode === mode) return;
+    const r = await api('/api/v2/chat/mode', { mode });
+    if (failed(r)) return SB.toast('Mod değiştirilemedi: ' + (r && r.error), 'error');
+    SB.chatMode = r; paintMode();
+    SB.toast(mode === 'cloud' ? 'Bulut modeli açık' : 'Yerel modele geçildi', 'ok');
   }
   async function convUpdate(c, patch) {
     const r = await api('/api/v2/conv/update', Object.assign({ sid: c.sid }, patch));
@@ -954,10 +1011,11 @@
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !curView && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '') && !(document.activeElement || {}).isContentEditable) { q.focus(); }
     });
     document.addEventListener('mousedown', (e) => {
-      if (menuEl && !menuEl.contains(e.target)) closeMenu();
+      if (menuEl && !menuEl.contains(e.target) && !(menuOpener && menuOpener.contains(e.target))) closeMenu();
       const n = $('#notif'); if (!n.hidden && !n.contains(e.target) && !$('#btn-bell').contains(e.target)) closeNotif();
     });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) pollNotifs(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { pollNotifs(); refreshMode(); } });
+    bus.on('message', (d) => { if (d && d.role === 'assistant') refreshMode(); });
   }
 
   async function loadRoutes() {
@@ -971,10 +1029,11 @@
   async function init() {
     applySettings();
     wire(); builtins(); syncThemeBtn(); renderViewsMenu();
-    $('#subtitle').textContent = SB.model ? 'Yerel asistan · ' + SB.model : 'Yerel asistan';
+    paintMode();
+    $('#subtitle').addEventListener('click', (e) => modeMenu(e.currentTarget));
     $('#btn-phone').hidden = !SB.local;
     welcome();
-    await loadRoutes();
+    await loadRoutes(); refreshMode();
     // yeteneğe göre düğmeleri göster
     $('#btn-attach').hidden = !SB.has('/api/v2/upload');
     $('#btn-bell').hidden = !SB.has('/api/v2/notifications');

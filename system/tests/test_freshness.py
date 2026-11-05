@@ -41,7 +41,7 @@ def _put(rec):
 def test_manifests_have_valid_refresh():
     assert plugins.validate() == []
     src = plugins.all("source")
-    assert len(src) == 42
+    assert len(src) == 43
     for m in src:
         r = m["refresh"]
         assert r["mode"] in ("auto", "export", "manual") and r["every_days"] >= 1 and r["hint"]["tr"] and r["hint"]["en"]

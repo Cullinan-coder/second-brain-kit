@@ -79,7 +79,7 @@ Kurulumdan önce hangi hesap/anahtarın gerekeceğini görmek için tek tablo. A
 | [OpenAI](04-api-anahtarlari.md#anahtar-openai) | `image_gen`, `models` |
 | [OpenRouter](04-api-anahtarlari.md#anahtar-openrouter) | `models` |
 | [Outlook](03-hesaplar.md#hesap-outlook) | `outlook` |
-| [Okul (ÖBS / LMS)](03-hesaplar.md#hesap-okul) | `courses` |
+| [Okul (ÖBS / LMS)](03-hesaplar.md#hesap-okul) | `courses`, `uzem` |
 | [Sentry](mcp/sentry.md) | `sentry` |
 | [Slack](mcp/slack.md) | `slack` |
 | [Spotify](03-hesaplar.md#hesap-spotify) | `media`, `spotify` |

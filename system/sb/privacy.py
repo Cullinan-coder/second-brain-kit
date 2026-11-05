@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import re
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -233,12 +235,99 @@ def _backup_wanted(p: Path) -> bool:
         return False
 
 
-def _vault_files(folder: str = "") -> list[tuple[Path, str]]:
+UZEM_REL = "40-Kaynaklar/UZEM"                      # UZEM ders dosyaları: kasada, git/telefon dışı; ayrı AKIŞLI yedeğe girer
+STREAM_MAGIC = b"SBCHUNK1\n"                        # akışlı şifreli yedek: sihirli bayt + [4 bayt uzunluk][Fernet belirteci]...
+STREAM_CHUNK = 64 * 1024 * 1024                     # bir belirteç için düz metin parça boyutu (bellek tepesi ~2 x bu)
+UZEM_BACKUP_KEEP = 2                                # vault-uzem-* yedeklerinden kaç tane kalır (büyükler; config: backup_keep_uzem)
+
+
+def backup_include_uzem() -> bool:
+    """config/gizlilik.yaml `backup_include_uzem` (varsayılan true): UZEM dosyaları ayrı akışlı yedeğe girsin mi."""
+    try:
+        v = _yaml(GIZLILIK_CFG).get("backup_include_uzem", True)
+    except Exception:                                           # noqa: BLE001
+        return True
+    return v not in (False, "false", "False", 0)
+
+
+def _is_uzem(rel: str) -> bool:
+    return rel == UZEM_REL or rel.startswith(UZEM_REL + "/")
+
+
+def _vault_files(folder: str = "", uzem: bool = False) -> list[tuple[Path, str]]:
     """Yedeklenecek kasa dosyaları: _system/.git dışındaki her dosya (Word/Excel/PowerPoint ekleri, Obsidian ayarları,
-    canvas dahil). Eskiden yalnız .md/.enc/.yaml/.png/.jpg/.pdf alınıyordu ve belgeler yedeğe girmiyordu."""
+    canvas dahil). UZEM ders dosyaları (büyük) burada YOKTUR: `uzem=True` yalnız onları döndürür (akışlı yedek için)."""
     base = (VAULT / folder) if folder else VAULT
-    return [(p, p.relative_to(VAULT).as_posix()) for p in base.rglob("*")
+    rows = [(p, p.relative_to(VAULT).as_posix()) for p in base.rglob("*")
             if p.is_file() and not (set(p.relative_to(VAULT).parts) & BACKUP_SKIP_DIRS) and _backup_wanted(p)]
+    return [(p, a) for p, a in rows if _is_uzem(a) == uzem]
+
+
+class _EncStream:
+    """Yazılan baytları STREAM_CHUNK'lık parçalara bölüp her birini ayrı Fernet belirteci olarak dosyaya yazar (bellekte tek parça tutulur)."""
+
+    def __init__(self, fh, enc, dec, chunk: int = STREAM_CHUNK):
+        self.fh, self.enc, self.dec, self.chunk = fh, enc, dec, chunk
+        self.buf = bytearray()
+        fh.write(STREAM_MAGIC)
+
+    def write(self, b) -> int:
+        self.buf += b
+        while len(self.buf) >= self.chunk:
+            self._emit(bytes(self.buf[:self.chunk]))
+            del self.buf[:self.chunk]
+        return len(b)
+
+    def flush(self) -> None:
+        pass
+
+    def _emit(self, raw: bytes) -> None:
+        tok = self.enc(raw)
+        if self.dec(tok) != raw:
+            raise RuntimeError("yedek şifreleme doğrulaması başarısız")
+        self.fh.write(len(tok).to_bytes(4, "big") + tok)
+
+    def close(self) -> None:
+        if self.buf:
+            self._emit(bytes(self.buf))
+            self.buf.clear()
+
+
+def stream_decrypt_to(src: Path, dec, out) -> None:
+    """Akışlı şifreli yedeği parça parça çözüp `out` dosyasına yazar."""
+    with open(src, "rb") as f:
+        if f.read(len(STREAM_MAGIC)) != STREAM_MAGIC:
+            raise ValueError("akışlı yedek değil")
+        while True:
+            head = f.read(4)
+            if not head:
+                break
+            out.write(dec(f.read(int.from_bytes(head, "big"))))
+
+
+def uzem_backup(dest: Path | None = None, cipher=None, chunk: int = STREAM_CHUNK) -> Path | None:
+    """UZEM ders dosyaları → `vault-uzem-<damga>.zip.enc` (akışlı: zip doğrudan şifreli parçalara yazılır; GB'lık dosyalar belleği şişirmez,
+    diske düz metin kopya düşmez). Şifre çözücü yoksa (cipher=None) YAZILMAZ. Dosya yoksa None."""
+    files = _vault_files(uzem=True)
+    if not files or cipher is None:
+        return None
+    enc, dec = cipher
+    out_dir = dest or BACKUPS
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"vault-uzem-{datetime.now():%Y%m%d-%H%M%S}.zip.enc"
+    tmp = out.with_name(out.name + ".part")
+    try:
+        with open(tmp, "wb") as fh:
+            es = _EncStream(fh, enc, dec, chunk)
+            with zipfile.ZipFile(es, "w", zipfile.ZIP_STORED, allowZip64=True) as zf:   # belgeler çoğunlukla zaten sıkışık
+                for src, arc in files:
+                    zf.write(src, arc)
+            es.close()
+        tmp.replace(out)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    return out
 
 
 def vault_backup(folder: str = "", dest: Path | None = None, cipher=None) -> Path:
@@ -299,12 +388,21 @@ def backup_keep() -> int:
         return 8
 
 
+def backup_keep_uzem() -> int:
+    try:
+        return max(1, int(_yaml(GIZLILIK_CFG).get("backup_keep_uzem", UZEM_BACKUP_KEEP)))
+    except (TypeError, ValueError):
+        return UZEM_BACKUP_KEEP
+
+
 def prune_backups(keep: int | None = None) -> list[str]:
     """Tüm-kasa şifreli yedeklerinden (`vault-tum-*.zip.enc`) en yeni `keep` tanesi kalır. Başka yedeklere (klasör, geri yükleme öncesi,
     sistem) dokunulmaz. Silinen adları döndürür."""
     keep = backup_keep() if keep is None else max(1, keep)
     old = sorted(BACKUPS.glob("vault-tum-*.zip.enc"), key=lambda p: p.name, reverse=True)[keep:] if BACKUPS.exists() else []
     gone = []
+    if BACKUPS.exists():
+        old += sorted(BACKUPS.glob("vault-uzem-*.zip.enc"), key=lambda p: p.name, reverse=True)[backup_keep_uzem():]
     for p in old:
         try:
             p.unlink()
@@ -335,6 +433,17 @@ def create_backup(scheduled: bool = False) -> dict:
     if c is None:
         return {"ok": False, "message": "Yedek şifrelenemiyor (cryptography/keyring kurulu değil); düz metin yedek alınmadı: uv pip install cryptography keyring"}
     made = [vault_backup(cipher=c).name]
+    uzem_note = ""
+    if backup_include_uzem():
+        try:
+            u = uzem_backup(cipher=c)
+            if u:
+                made.append(u.name)
+                uzem_note = " UZEM dosyaları ayrı akışlı yedekte (vault-uzem-*)."
+        except Exception as e:                                   # noqa: BLE001 — ana yedek alındı
+            made.append(f"UZEM yedeği alınamadı: {type(e).__name__}")
+    elif _vault_files(uzem=True):
+        uzem_note = " UZEM dosyaları yedeğe dahil değil (gizlilik.yaml: backup_include_uzem)."
     try:
         made.append(update.backup(dest=BACKUPS).name)            # kod yedeği (kişisel not içermez; rollback düz zip okur)
     except Exception as e:                                       # noqa: BLE001 — kasa yedeği yine de alındı
@@ -342,7 +451,7 @@ def create_backup(scheduled: bool = False) -> dict:
     removed = prune_backups() if scheduled else []
     vault_ops.log("sistem" if scheduled else "kullanıcı", "yedek", "", ", ".join(made) + (f"; eskiler silindi: {', '.join(removed)}" if removed else ""), "")
     out = {"ok": True, "created": made, "encrypted": True,
-           "note": "Yedek kasa anahtarıyla şifrelidir: anahtarı da yedekle (sb vault-key --export <dosya>), yoksa yedek açılamaz."}
+           "note": "Yedek kasa anahtarıyla şifrelidir: anahtarı da yedekle (sb vault-key --export <dosya>), yoksa yedek açılamaz." + uzem_note}
     if removed:
         out["removed"] = removed
     return out
@@ -687,7 +796,14 @@ def restore(name: str, confirm: bool = False) -> dict:
         if c is None:
             return {"ok": False, "message": "Şifreli yedek açılamıyor: cryptography/keyring kurulu değil ya da anahtar yok."}
         try:
-            src = io.BytesIO(c[1](z.read_bytes()))
+            with open(z, "rb") as fh:
+                streamed = fh.read(len(STREAM_MAGIC)) == STREAM_MAGIC
+            if streamed:                                        # akışlı (UZEM) yedek: parça parça çözülür, geçici dosyaya yazılır
+                src = tempfile.TemporaryFile()
+                stream_decrypt_to(z, c[1], src)
+                src.seek(0)
+            else:
+                src = io.BytesIO(c[1](z.read_bytes()))
         except Exception:                                       # noqa: BLE001 — yanlış anahtar / bozuk dosya
             return {"ok": False, "message": f"{z.name} çözülemedi: anahtar bu yedeğe ait değil ya da dosya bozuk."}
     else:
@@ -697,7 +813,7 @@ def restore(name: str, confirm: bool = False) -> dict:
         members = [m for m in zf.namelist() if _safe_member(m) and _restore_target(root, m) is not None]
         if not confirm:
             return {"ok": True, "dry_run": True, "files": len(members), "message": "Yapılmadı. Uygulamak için --confirm ekle."}
-        existing = [(root / m, m) for m in members if (root / m).is_file()]
+        existing = [(root / m, m) for m in members if (root / m).is_file() and not _is_uzem(m)]   # UZEM dosyaları bellekte yedeklenmez (yedek elde)
         stamp = f"{datetime.now():%Y%m%d-%H%M%S}"
         if c is not None:                                       # geri yükleme öncesi durum da düz yazılmaz
             pre_buf = io.BytesIO()
@@ -711,7 +827,10 @@ def restore(name: str, confirm: bool = False) -> dict:
         for m in members:
             t = root / m
             t.parent.mkdir(parents=True, exist_ok=True)
-            filelock.atomic_write(t, zf.read(m))
+            tmpf = t.with_name(t.name + ".sbrestore")
+            with zf.open(m) as zin, open(tmpf, "wb") as zout:
+                shutil.copyfileobj(zin, zout, 1 << 20)
+            os.replace(tmpf, t)
     vault_ops.log("kullanıcı", "geri yükle", z.name, f"{len(members)} dosya; önceki durum {pre.name}", "")
     return {"ok": True, "restored": len(members), "pre_backup": pre.name}
 

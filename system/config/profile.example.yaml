@@ -11,3 +11,5 @@ lms:                              # isteğe bağlı: okulunun Moodle/LMS bildiri
   from: ""                        # ör. noreply@lms.universite.edu.tr (boşsa kapalı)
   link_regex: 'https://\S+?(?=[\s\]\)>"'']|$)'
   name: LMS
+  moodle_url: ""                  # isteğe bağlı: okulun Moodle adresi (ör. https://lms.universite.edu.tr) → sb moodle-login, sb moodle-sync
+  moodle_calendar: false          # true: ödev/quiz kapanışları [ÖDEV] olarak takvime doğrudan yazılır (false: yalnız ders notunda)

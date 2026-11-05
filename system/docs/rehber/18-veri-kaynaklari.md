@@ -1,6 +1,6 @@
 # Veri kaynakları
 
-Sihirbazın 9. adımı **42 kaynaktan** veri alır. Her kaynağın sayfasında dışa aktarma adımları, sihirbazda yükleme, komut ve sorun giderme vardır. Genel anlatım: [Veri yükleme](07-veri-yukleme.md).
+Sihirbazın 9. adımı **43 kaynaktan** veri alır. Her kaynağın sayfasında dışa aktarma adımları, sihirbazda yükleme, komut ve sorun giderme vardır. Genel anlatım: [Veri yükleme](07-veri-yukleme.md).
 
 | Kaynak | Biçim | Bağlı modül | Hesap |
 |---|---|---|---|
@@ -27,6 +27,7 @@ Sihirbazın 9. adımı **42 kaynaktan** veri alır. Her kaynağın sayfasında d
 | [Microsoft To Do](kaynaklar/mstodo.md) | .csv, .json | [Not ve görev içe aktarmaları](moduller/imports_notes.md) | — |
 | [Nashi dışa aktarım kaydı](kaynaklar/nashi.md) | .json | [Nashi (dosya dönüştürücü)](moduller/nashi.md) | — |
 | [Notion dışa aktarımı](kaynaklar/notion.md) | .zip, klasör | [Not ve görev içe aktarmaları](moduller/imports_notes.md) | — |
+| [Okul ders sitesi (UZEM / Moodle)](kaynaklar/uzem.md) | hesap | [Okul (ÖBS/LMS)](moduller/courses.md) | [Okul (ÖBS / LMS)](03-hesaplar.md#hesap-okul) |
 | [OneNote](kaynaklar/onenote.md) | klasör, .docx, .html | [Not ve görev içe aktarmaları](moduller/imports_notes.md) | — |
 | [Outlook / Microsoft 365 mail](kaynaklar/outlook.md) | hesap | [Mesaj içe aktarmaları](moduller/imports_comm.md) | [Outlook](03-hesaplar.md#hesap-outlook), [E-posta (IMAP)](03-hesaplar.md#hesap-imap) |
 | [Pocket](kaynaklar/pocket.md) | .html, .csv | [Medya ve okuma içe aktarmaları](moduller/imports_media.md) | — |

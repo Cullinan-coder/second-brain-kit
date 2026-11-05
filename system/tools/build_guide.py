@@ -35,7 +35,7 @@ FEATURES = CODE / "features.yaml"
 HAND_PAGES = [
     "00-baslangic", "01-kurulum", "02-sihirbaz-adim-adim", "03-hesaplar", "04-api-anahtarlari", "05-modeller-ses",
     "06-mcp", "07-veri-yukleme", "08-uygulama-turu", "09-asistan-kullanimi", "10-guvenlik-gizlilik", "11-sorun-giderme",
-    "12-sss", "13-sozluk", "14-komut-referansi", "22-uygulamalar",
+    "12-sss", "13-sozluk", "14-komut-referansi", "22-uygulamalar", "23-uzem-moodle",
 ]
 GEN_TOP = ["15-hazir-secimler", "16-moduller", "17-ozellik-katalogu", "18-veri-kaynaklari", "19-mcp-katalogu",
            "20-sektor-paketleri", "21-ne-ister"]

@@ -48,6 +48,44 @@ def backup_check() -> tuple[str, str, str]:
     return (OK if days <= BACKUP_MAX_DAYS else FAIL), label, "haftalık görev çalışmıyor olabilir (SecondBrain-Weekly); elle: sb backup"
 
 
+UZEM_WARN_GB = 5
+BACKUP_WARN_GB = 30
+
+
+def uzem_check() -> tuple[str, str, str] | None:
+    """UZEM ders dosyaları (40-Kaynaklar/UZEM): git'e izlenen dosya varsa ✗ (sızıntı), klasör > 5 GB ise !. Klasör yoksa satır yok."""
+    import subprocess
+    from . import uzem_sync
+    root = uzem_sync.files_root(VAULT)
+    if not root.is_dir():
+        return None
+    try:
+        r = subprocess.run(["git", "-C", str(VAULT), "ls-files", "-z", "--", uzem_sync.UZEM_REL], capture_output=True, timeout=60)
+        tracked = [x for x in r.stdout.decode("utf-8", "replace").split("\0") if x and not x.endswith(".md")] if r.returncode == 0 else []
+    except (OSError, subprocess.SubprocessError):
+        tracked = []
+    if tracked:
+        return FAIL, f"UZEM dosyaları git'e izleniyor ({len(tracked)} dosya): GitHub'a gidebilir",             "git rm -r --cached 40-Kaynaklar/UZEM ; sb migrate --yes (ignore satırları)"
+    gb = uzem_sync.folder_size(root) / 1024 ** 3
+    if gb > UZEM_WARN_GB:
+        return WARN, f"UZEM klasörü {gb:.1f} GB (> {UZEM_WARN_GB} GB); yedekler şişebilir", "gereksiz dersleri 40-Kaynaklar/UZEM altından elle sil"
+    return OK, f"UZEM dosyaları: {gb:.2f} GB, git dışı", ""
+
+
+def backup_size_check() -> tuple[str, str, str] | None:
+    """Yedek klasörü > 30 GB ise uyarı (UZEM yedekleri büyüyebilir). Hiçbir şey otomatik silinmez."""
+    try:
+        from .privacy import BACKUPS
+        if not BACKUPS.is_dir():
+            return None
+        gb = sum(p.stat().st_size for p in BACKUPS.iterdir() if p.is_file()) / 1024 ** 3
+    except Exception:                                            # noqa: BLE001
+        return None
+    if gb > BACKUP_WARN_GB:
+        return WARN, f"Yedek klasörü {gb:.1f} GB (> {BACKUP_WARN_GB} GB)", "eski yedekleri elle sil ya da gizlilik.yaml: backup_include_uzem: false"
+    return None
+
+
 def schema_check() -> tuple[str, str, str]:
     """Kasa şema sürümü kodla uyumlu mu: gerideyse ✗ (sb migrate), kodun ilerisindeyse ✗ (eski kod + yeni kasa)."""
     from . import schema
@@ -161,6 +199,9 @@ def checks() -> list[tuple[str, str, str]]:
         add(OK if lnk.exists() else WARN, "Beyne at kısayolu (Ctrl+Alt+B)", "powershell -ExecutionPolicy Bypass -File _system/tools/hotkey.ps1")
     add(OK if _http("http://127.0.0.1:8765/") else WARN, "Asistan sunucusu (127.0.0.1:8765)", "zamanlayıcıyı kur ya da `sb chat`")
     from .spotify_api import client_id
+    from .moodle import BASE as _moodle
+    if _moodle:
+        add(OK if _kr("moodle-token") else WARN, "Okul Moodle girişi (isteğe bağlı)", "sb moodle-login")
     add(OK if client_id() and _kr("spotify-refresh") else WARN, "Spotify doğrudan çalma (isteğe bağlı)", "docs/KURULUM-SPOTIFY.md")
     add(OK if (DATA / "remote_tokens.json").exists() else WARN, "Telefon erişimi (isteğe bağlı, Tailscale)", "docs/KURULUM-TELEFON.md")
     from .update import PENDING
@@ -171,6 +212,10 @@ def checks() -> list[tuple[str, str, str]]:
     out.append(backup_check())
     out.append(schema_check())
     out.append(freshness_check())
+    for chk in (uzem_check, backup_size_check):
+        row = chk()
+        if row:
+            out.append(row)
     gitdir = VAULT / ".git"
     add(OK if gitdir.exists() else WARN, "Kasa git deposu (geri alma + yedek)", "cd kasa && git init (özel GitHub reposuna bağla)")
     return out

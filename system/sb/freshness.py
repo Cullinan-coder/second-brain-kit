@@ -38,7 +38,7 @@ ITEM_KEY = {"activity": "takeout", "play": "takeout", "notebooklm": "takeout"}
 MESSAGE_KEYS = {"whatsapp", "telegram", "discord", "slack", "instagram", "linkedin", "sms"}
 # günlük adım (sb komutunun ilk argümanı) → anahtarlar
 STEP_KEYS = {"sms-sync": ["sms"], "sync-gcal": ["calendar"], "contacts-sync": ["contacts"], "drive-sync": ["drive"],
-             "local-files": ["local_files"], "projects-sync": ["projects"], "sessions-sync": ["sessions"], "github-deep": ["github"]}
+             "local-files": ["local_files"], "projects-sync": ["projects"], "sessions-sync": ["sessions"], "github-deep": ["github"], "uzem": ["uzem"]}
 # kaydı yoksa "hiç" diye gösterilmeyecek otomatik kaynaklar (kurulumu/hesabı ayrıca doğrulanamaz): yalnız kaydı olunca etkin
 RECORD_ONLY = {"sms", "clipboardline", "nashi", "github", "sessions", "icloud", "outlook", "local_files", "projects"}
 
@@ -292,6 +292,11 @@ def _auto_connected(key: str) -> bool:
     from . import features
     if not features.enabled(key):
         return False
+    if key == "uzem":                                            # okul hesabı (öğrenci no) kayıtlı değilse izlenmez
+        try:
+            return bool(((config.accounts() or {}).get("school") or {}).get("user"))
+        except Exception:                                        # noqa: BLE001
+            return False
     if key in ("gmail", "imap", "calendar", "drive", "contacts"):
         try:
             acc = config.accounts()

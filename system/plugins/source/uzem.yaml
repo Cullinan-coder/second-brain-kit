@@ -1,0 +1,50 @@
+# Eklenti tanımı (manifest) — sb/plugins.py doğrular.
+id: uzem
+type: source
+name:
+  tr: Okul ders sitesi (UZEM / Moodle)
+  en: School course site (UZEM / Moodle)
+desc:
+  tr: Moodle haftalık konular, duyurular, ödevler ve ders dosyaları → ders notları ve 40-Kaynaklar/UZEM.
+  en: Moodle weekly topics, announcements, assignments and course files → course notes and 40-Kaynaklar/UZEM.
+category: imports
+parent: courses
+catalog_ids: []
+requires:
+  accounts:
+  - school
+  fields: []
+  secrets: []
+  hardware: {}
+  apps: []
+import:
+  formats:
+  - hesap
+  how_to:
+    tr: '1. Kurulum sihirbazının «Okul» adımında öğrenci numaranı ve UZEM şifreni kaydet (şifre yalnız işletim sistemi şifre kasasına gider).
+
+      2. `sb uzem sync --dry-run` ile önce ne alınacağına bak (giriş yapar, hiçbir şey yazmaz).
+
+      3. `sb uzem sync` derslerin haftalık konularını ders notlarına yazar, dosyaları 40-Kaynaklar/UZEM altına indirir (git, telefon dışı).
+
+      Giriş yalnız GET istekleriyle yapılır; yanlış şifrede hesabı kilitlememek için tekrar denenmez.'
+    en: '1. In the setup wizard «School» step save your student number and UZEM password (the password goes only to the OS keyring).
+
+      2. Run `sb uzem sync --dry-run` first to see what would be fetched (it signs in but writes nothing).
+
+      3. `sb uzem sync` writes weekly topics into the course notes and downloads files to 40-Kaynaklar/UZEM (outside git and the phone).
+
+      Only GET requests are used; a wrong password is never retried so the account is not locked.'
+  connector: null
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "Günlük çalışma `sb uzem sync` ile alır; durduysa elle çalıştır, giriş hatası varsa okul şifresini sihirbazdan yenile."
+    en: "The daily run fetches it with `sb uzem sync`; run it by hand if it stalled, renew the school password in the wizard on login errors."
+health:
+  cli: sb uzem status
+default_on: true
+presets:
+- meslek:ogrenci
+- meslek:akademisyen

@@ -1,6 +1,6 @@
 # Okul (ÖBS/LMS)
 
-> Ders notları, ders dosyaları, ders derlemesi
+> Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları
 
 | | |
 |---|---|
@@ -12,7 +12,7 @@
 
 ## Ne işe yarar
 
-Ders notları, ders dosyaları, ders derlemesi.
+Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 
 Bu modül özellik kataloğundan **13 maddeyi** kapsar (aşağıda tek tek). Her madde için ayrı bir sihirbaz kutusu vardır.
 
@@ -46,6 +46,10 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 - **Komutlar:** [`sb course-files`](../14-komut-referansi.md#sb-course-files), [`sb course-deep`](../14-komut-referansi.md#sb-course-deep), [`sb obs-import`](../14-komut-referansi.md#sb-obs-import), [`sb courses`](../14-komut-referansi.md#sb-courses), [`sb gpa`](../14-komut-referansi.md#sb-gpa) (tümü: [Komut referansı](../14-komut-referansi.md)).
 - **Asistan:** sohbet kutusuna doğal dille isteyebilirsin; ayrıntılı kullanım ve örnekler: [Asistan kullanımı](../09-asistan-kullanimi.md).
 
+## Bağlı veri kaynakları
+
+- [Okul ders sitesi (UZEM / Moodle)](../kaynaklar/uzem.md): Moodle haftalık konular, duyurular, ödevler ve ders dosyaları → ders notları ve 40-Kaynaklar/UZEM.
+
 ## Sağlık testi
 
 Çalışıp çalışmadığını `sb doctor` ile denetle (ayrıntı: [`sb doctor`](../14-komut-referansi.md#sb-doctor)). Uygulamada **Çalışmaya başla** düğmesi aynı sağlık kontrolünü çalıştırır.
@@ -72,7 +76,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 178. Sınav takvimi ve çalışma planı
 
-- **Ne işe yarar:** «Sınav takvimi ve çalışma planı» (Görev, takvim ve verimlilik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Sınav takvimi ve çalışma planı» (Görev, takvim ve verimlilik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -83,7 +87,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 192. Ders panosu
 
-- **Ne işe yarar:** «Ders panosu» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Ders panosu» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -94,7 +98,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 193. Ders notu üretici
 
-- **Ne işe yarar:** «Ders notu üretici» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Ders notu üretici» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -105,7 +109,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 194. Sınav hazırlık modu
 
-- **Ne işe yarar:** «Sınav hazırlık modu» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Sınav hazırlık modu» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -116,7 +120,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 195. Ödev yardımcısı (öğretici kip)
 
-- **Ne işe yarar:** «Ödev yardımcısı (öğretici kip)» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Ödev yardımcısı (öğretici kip)» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -127,7 +131,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 196. Kaynakça yöneticisi
 
-- **Ne işe yarar:** «Kaynakça yöneticisi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Kaynakça yöneticisi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -138,7 +142,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 197. Tez/proje yazım asistanı
 
-- **Ne işe yarar:** «Tez/proje yazım asistanı» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Tez/proje yazım asistanı» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -149,7 +153,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 198. GANO hesaplama ve senaryo
 
-- **Ne işe yarar:** «GANO hesaplama ve senaryo» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «GANO hesaplama ve senaryo» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -160,7 +164,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 199. Ders programı ve duyuru takibi
 
-- **Ne işe yarar:** «Ders programı ve duyuru takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Ders programı ve duyuru takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -171,7 +175,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 200. Hoca/asistan iletişim geçmişi
 
-- **Ne işe yarar:** «Hoca/asistan iletişim geçmişi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Hoca/asistan iletişim geçmişi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -182,7 +186,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 201. Grup projesi takibi
 
-- **Ne işe yarar:** «Grup projesi takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Grup projesi takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -193,7 +197,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 202. Burs, staj, yarışma takibi
 
-- **Ne işe yarar:** «Burs, staj, yarışma takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Burs, staj, yarışma takibi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).
@@ -204,7 +208,7 @@ Hazır seçimlerin ne olduğu: [Hazır seçimler](../15-hazir-secimler.md). Sihi
 
 ### 203. Okul belgeleri arşivi
 
-- **Ne işe yarar:** «Okul belgeleri arşivi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi.
+- **Ne işe yarar:** «Okul belgeleri arşivi» (Öğrenci ve akademik kategorisi), «Okul (ÖBS/LMS)» modülünün parçasıdır. Modülün amacı: Ders notları, ders dosyaları, ders derlemesi, UZEM/Moodle haftalık konular ve ders dosyaları.
 - **Durum:** hazır (sürüm 0.7.0).
 - **Nasıl açılır:** «Okul (ÖBS/LMS)» modülü açıkken gelir; sihirbazın 3. adımında bu maddenin kendi kutusu vardır (modül sayfasının [Nasıl açılır](#nasil-acilir) bölümü).
 - **Ne ister:** hesap: [Okul (ÖBS / LMS)](../03-hesaplar.md#hesap-okul); alan: Okul sistemi adresi (ÖBS/LMS) (`school_url`).

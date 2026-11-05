@@ -1160,6 +1160,20 @@ sb ask [--model MODEL] [--stream] question
 
 **Örnek:** `sb ask`
 
+### sb chat-mode
+
+**Ne yapar:** asistan modeli: bulut ↔ yerel (sb chat-mode [local|cloud|status]).
+
+```
+sb chat-mode [{local,cloud,status}]
+```
+
+| Değer | Anlamı |
+|---|---|
+| `{local,cloud,status}` | `local`: yerel modele geç · `cloud`: `tasks.chat` bulut modeline dön (ayarlı değilse hata) · `status`: durum (varsayılan) |
+
+**Örnek:** `sb chat-mode local` · `sb chat-mode status`
+
 ## Okul, plan ve görevler
 
 ### sb obs-import
