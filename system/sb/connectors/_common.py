@@ -89,6 +89,14 @@ def _summary(kaynak, rows, titles, new) -> dict:
             "ornek": uniq[:3]}
 
 
+def _fresh(res: dict, dry_run: bool) -> dict:
+    """Kaynak tazeliği kancası (sb/freshness.py): yazan (dry-run olmayan) ve kayıt okuyan her içe aktarma kaydı tazeler."""
+    if not dry_run and res.get("okunan"):
+        from .. import freshness
+        freshness.record_ingest(res["kaynak"], res["okunan"], res["yeni"], res.get("tarih_max"))
+    return res
+
+
 def ingest_messages(kaynak: str, rows: list[dict], con, dry_run: bool = False) -> dict:
     new = 0
     for r in rows:
@@ -99,7 +107,7 @@ def ingest_messages(kaynak: str, rows: list[dict], con, dry_run: bool = False) -
             maildb.insert(con, r)
     if not dry_run:
         con.commit()
-    return _summary(kaynak, rows, [r.get("subject") for r in rows], new)
+    return _fresh(_summary(kaynak, rows, [r.get("subject") for r in rows], new), dry_run)
 
 
 def ingest_items(kaynak: str, rows: list[dict], con, dry_run: bool = False, refresh: bool = False) -> dict:
@@ -120,7 +128,7 @@ def ingest_items(kaynak: str, rows: list[dict], con, dry_run: bool = False, refr
             maildb.insert_item(con, r)
     if not dry_run:
         con.commit()
-    return _summary(kaynak, rows, [r.get("title") for r in rows], new)
+    return _fresh(_summary(kaynak, rows, [r.get("title") for r in rows], new), dry_run)
 
 
 def clean(text: str | None) -> str:
@@ -169,4 +177,4 @@ def sync_items(kaynak: str, rows: list[dict], con, dry_run: bool = False) -> dic
         con.commit()
     out = _summary(kaynak, rows, [r.get("title") for r in rows], new)
     out.update(guncellenen=upd, tekrar=dup)
-    return out
+    return _fresh(out, dry_run)

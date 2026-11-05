@@ -36,6 +36,12 @@ import:
       3. Drop the file on the Data import screen or try `sb import clipboardline <file> --dry-run` first.
       Records with secrets such as passwords, keys, cards or IBANs are skipped; the file is only read.'
   connector: clipboardline
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "Günlük çalışma bunu kendiliğinden yapar; durduysa `sb daily --force` çalıştır, sorun sürerse `sb doctor` bak."
+    en: "The daily run does this on its own; if it stalled run `sb daily --force`, then `sb doctor` if it persists."
 health:
   cli: sb apps status clipboardline
 default_on: true

@@ -39,6 +39,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import keep <file> --dry-run` first).
       The file is read only on this computer.'
   connector: keep
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Google Takeout'tan Keep'i seçerek yeni dışa aktarma iste ve zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request a new Takeout export with Keep selected and drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb import keep <dosya> --dry-run
 default_on: true

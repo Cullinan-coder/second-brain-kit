@@ -39,6 +39,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import screentime <file> --dry-run`
       first). The file is read only on this computer.'
   connector: screentime
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Ekran süresi verisini CSV olarak yeniden dışa aktar ve 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Re-export screen time data as CSV and drop it into 00-Inbox/İçe aktar."
 health:
   cli: sb import screentime <dosya> --dry-run
 default_on: true

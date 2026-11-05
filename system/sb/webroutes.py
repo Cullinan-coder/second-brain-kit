@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 MAX_UPLOAD = 30 * 1024 * 1024
-MODULES = ("api_conv", "api_views", "api_memory", "voice", "vision", "api_plan", "api_school", "api_comms", "api_career", "api_privacy", "api_personal", "api_auto", "api_agents", "api_mobile", "api_startup", "api_apps")   # yoksa ya da hata verirse atlanır
+MODULES = ("api_conv", "api_views", "api_memory", "voice", "vision", "api_plan", "api_school", "api_comms", "api_career", "api_privacy", "api_personal", "api_auto", "api_agents", "api_mobile", "api_startup", "api_apps", "api_today")   # yoksa ya da hata verirse atlanır
 
 
 class ApiError(Exception):

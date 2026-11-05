@@ -51,6 +51,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import notion <file> --dry-run` first).
       The file is read only on this computer.'
   connector: notion
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Notion'da Ayarlar → Dışa aktar ile çalışma alanını Markdown+CSV olarak indir ve zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export the workspace as Markdown+CSV in Notion Settings and drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb import notion <dosya> --dry-run
 default_on: true

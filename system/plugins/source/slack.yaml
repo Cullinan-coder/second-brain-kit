@@ -61,6 +61,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import slack <file> --dry-run` first).
       The file is read only on this computer.'
   connector: slack
+refresh:
+  mode: export
+  every_days: 180
+  hint:
+    tr: "Slack çalışma alanı dışa aktarmasını yeniden iste ve zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request the Slack workspace export again and drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb import slack <dosya> --dry-run
 default_on: true

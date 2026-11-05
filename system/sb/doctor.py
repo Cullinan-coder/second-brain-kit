@@ -64,6 +64,23 @@ def schema_check() -> tuple[str, str, str]:
     return FAIL, st["message"], "_system/config/kasa.yaml içindeki schema_version değerini düzelt (sayı olmalı)"
 
 
+def freshness_check() -> tuple[str, str, str]:
+    """Etkin kaynaklardan bayat/eskiyen sayısı (salt okunur). Bayat varsa !, hiçbiri yoksa ✓."""
+    try:
+        from . import freshness
+        st = freshness.status()
+    except Exception as e:                                       # noqa: BLE001
+        return WARN, "Kaynak tazeliği kontrol edilemedi", str(e)[:80]
+    c = st["counts"]
+    if not st["sources"]:
+        return OK, "Kaynak tazeliği: etkin kaynak yok", ""
+    bad = [s for s in st["sources"] if s["state"] in ("bayat", "eskiyor")]
+    label = f"Kaynak tazeliği: {c['bayat']} bayat, {c['eskiyor']} eskiyor, {c['taze']} taze" + (f", {c['hiç']} hiç alınmamış" if c["hiç"] else "")
+    if not bad:
+        return OK, label, ""
+    return WARN, label, "; ".join(f"{s['name']['tr']} ({s['age_days']:g} gün)" for s in bad[:3]) + " — ayrıntı: sb today / sb freshness"
+
+
 def checks() -> list[tuple[str, str, str]]:
     out: list[tuple[str, str, str]] = []
 
@@ -153,6 +170,7 @@ def checks() -> list[tuple[str, str, str]]:
     add(OK if codex else WARN, "Codex (isteğe bağlı alt ajan)", "npm i -g @openai/codex ve codex login")
     out.append(backup_check())
     out.append(schema_check())
+    out.append(freshness_check())
     gitdir = VAULT / ".git"
     add(OK if gitdir.exists() else WARN, "Kasa git deposu (geri alma + yedek)", "cd kasa && git init (özel GitHub reposuna bağla)")
     return out

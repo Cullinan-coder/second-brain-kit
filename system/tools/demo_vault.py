@@ -60,6 +60,12 @@ def notes() -> dict[str, str]:
         "teslim", "acik", ["teslim"], "BIL201 Ödev 2 - Bağlı Liste",
         "Çift yönlü bağlı liste gerçekle ve birim testlerini yaz.\n\n- [ ] Ekleme/silme\n- [ ] Testler\n- [ ] Rapor",
         due=_d(3), kind="odev", due_time="23:59", course="[[BIL201 Veri Yapıları]]")
+    n["10-Dersler/MAT101 Analiz I/Kısa Sınav 3.md"] = _note(
+        "teslim", "acik", ["teslim"], "MAT101 Kısa Sınav 3",
+        "Türev uygulamaları; 20 dakika.", due=_d(0), kind="sinav", due_time="14:00", course="[[MAT101 Analiz I]]")
+    n["10-Dersler/BIL201 Veri Yapıları/Lab Raporu 2.md"] = _note(
+        "teslim", "acik", ["teslim"], "BIL201 Lab Raporu 2",
+        "Yığın ve kuyruk deneyinin raporu.", due=_d(1), kind="odev", due_time="17:00", course="[[BIL201 Veri Yapıları]]")
     n["10-Dersler/MAT101 Analiz I/Ara Sınav.md"] = _note(
         "teslim", "acik", ["teslim"], "MAT101 Ara Sınav",
         "Konular: limit, süreklilik, türev uygulamaları. Formül kâğıdı serbest.",
@@ -104,6 +110,7 @@ def notes() -> dict[str, str]:
     return n
 
 
+UNREAD = {0, 1, 3, 5, 7}                                  # okunmamış (UNREAD etiketli) demo mailleri
 MAILS = [
     ("main", "Ödev 2 için son hatırlatma", "Elif Arslan", "ornek@example.com", "okul", "Merhaba, BIL201 Ödev 2 teslimi için son günler. Sorusu olan ofis saatinde uğrasın."),
     ("main", "Staj görüşmesi için uygun saatler", "Mehmet Demir", "ornek@example.com", "kariyer", "Merhaba Ayşe, staj görüşmesi için perşembe ya da cuma öğleden sonra uygunum."),
@@ -194,6 +201,7 @@ def build(root: Path | None = None) -> Path:
     data.mkdir(parents=True, exist_ok=True)
     _mail_db(data / "mail.db")
     _convs(data)
+    _today_state(data)
     return root
 
 
@@ -205,9 +213,33 @@ def _mail_db(path: Path) -> None:
     for i, (acc, subj, name, addr, cat, body) in enumerate(MAILS):
         maildb.insert(con, {"account": acc, "id": f"demo-{i}", "thread_id": f"t{i}", "date_ms": int((now - timedelta(hours=7 * i + 2)).timestamp() * 1000),
                             "from_addr": addr, "from_name": name, "to_addrs": "ornek@example.com", "cc_addrs": "", "subject": subj,
-                            "snippet": body[:90], "body": body, "labels": [], "attachments": [], "category": cat, "category_src": "rule"})
+                            "snippet": body[:90], "body": body, "labels": ["UNREAD"] if i in UNREAD else [], "attachments": [], "category": cat, "category_src": "rule"})
     con.commit()
     con.close()
+
+
+def _today_state(data: Path) -> None:
+    """Bugün görünümü dolu görünsün: uydurma onay kartları, kaynak tazeliği ve başarısız günlük adım (yalnız demo veri klasörüne)."""
+    now = datetime.now().astimezone()
+
+    def iso(days: float) -> str:
+        return (now - timedelta(days=days)).isoformat(timespec="seconds")
+    sources = {"whatsapp": (12, 340), "todoist": (3, 52), "bank": (71, 120), "takeout": (130, 9000), "spotify": (200, 15000),
+               "browser": (10, 4100), "rss": (20, 310), "notion": (8, 77)}
+    fr = {"version": 1, "seeded": iso(30), "hashes": {}, "sources": {
+        k: {"last_ok": iso(age), "via": "ingest", "total": total, "last_new": 14, "last_read": 14} for k, (age, total) in sources.items()},
+        "steps": {"drive": {"ts": iso(0.3), "rc": 1, "tail": "invalid_grant: yeniden yetkilendirme gerekli (demo)"}}}
+    (data / "freshness.json").write_text(json.dumps(fr, ensure_ascii=False, indent=1), encoding="utf-8")
+    rows = []
+    for i, (kind, title, detail, origin, ago) in enumerate([
+            ("takvim", "Kütüphane projesi görüşmesi ekle (Cuma 15:00)", "Etkinlik: Kütüphane projesi görüşmesi, 45 dk.", "sohbet", 3.2),
+            ("tarih", "Mailden tarih adayı: Ara sınav B-204, 10:30", "Kaynak: «Analiz I ara sınav yeri»", "tarih", 2.1),
+            ("komut", "Not klasörünü yedekle", "git commit -m demo", "otomasyon", 1.4),
+            ("tarih", "SMS'ten tarih adayı: Pazartesi 15:00 görüşme", "Kaynak: SMS", "tarih", 0.5)]):
+        rows.append({"id": f"d{i}c0ffee"[:8], "kind": kind, "title": title, "detail": detail, "source": "yerel", "origin": origin, "sid": "",
+                     "session": "", "created": iso(ago), "expires": (now + timedelta(days=30)).isoformat(timespec="seconds"),
+                     "status": "bekliyor", "result": "", "decided": "", "action": "", "payload": {}, "extra": {}})
+    (data / "approvals.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + chr(10) for r in rows), encoding="utf-8")
 
 
 def _convs(data: Path) -> None:

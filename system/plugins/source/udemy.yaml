@@ -41,6 +41,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import udemy <file> --dry-run` first).
       The file is read only on this computer.'
   connector: udemy
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Udemy kurs listesini dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export your Udemy course list and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import udemy <dosya> --dry-run
 default_on: true

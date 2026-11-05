@@ -49,6 +49,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import gmaps <file> --dry-run` first).
       The file is read only on this computer.'
   connector: gmaps
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Google Takeout'tan Konum Geçmişi/Haritalar'ı seçerek yeni dışa aktarma iste ve 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request a new Takeout export with Location History/Maps and drop it into 00-Inbox/İçe aktar."
 health:
   cli: sb import gmaps <dosya> --dry-run
 default_on: true

@@ -38,6 +38,12 @@ requires:
   secrets: []
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 7
+  hint:
+    tr: "`sb contacts-sync` çalıştır; olmazsa Google girişini kontrol et."
+    en: "Run `sb contacts-sync`; if it fails check Google sign-in."
 health:
   cli: sb doctor
 default_on: true

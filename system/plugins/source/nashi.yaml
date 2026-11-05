@@ -36,6 +36,12 @@ import:
       3. Drop the file on the Data import screen or try `sb import nashi <file> --dry-run` first.
       If the listed files still exist on this computer their pdf, docx, txt and image (OCR) content is read too; content with secrets is not added.'
   connector: nashi
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "Günlük çalışma bunu kendiliğinden yapar; durduysa `sb daily --force` çalıştır, sorun sürerse `sb doctor` bak."
+    en: "The daily run does this on its own; if it stalled run `sb daily --force`, then `sb doctor` if it persists."
 health:
   cli: sb apps status nashi
 default_on: true

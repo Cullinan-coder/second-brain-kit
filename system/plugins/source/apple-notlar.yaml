@@ -44,6 +44,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import apple-notlar <file> --dry-run`
       first). The file is read only on this computer.'
   connector: apple-notlar
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Apple Notlar'ı HTML/TXT olarak dışa aktar ve klasörü 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export Apple Notes as HTML/TXT and drop the folder into 00-Inbox/İçe aktar."
 health:
   cli: sb import apple-notlar <dosya> --dry-run
 default_on: true

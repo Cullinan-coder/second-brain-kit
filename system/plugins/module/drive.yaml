@@ -37,6 +37,12 @@ requires:
   secrets: []
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 2
+  hint:
+    tr: "Google girişini kontrol et (`sb login main`); sonra `sb drive-sync`."
+    en: "Check Google sign-in (`sb login main`), then run `sb drive-sync`."
 health:
   cli: sb doctor
 default_on: true

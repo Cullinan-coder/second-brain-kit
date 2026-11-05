@@ -55,6 +55,12 @@ requires:
   - imap_password
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "IMAP şifresini kontrol et (`sb set-secret imap-<hesap>`); sonra `sb daily --force`."
+    en: "Check the IMAP password (`sb set-secret imap-<account>`), then `sb daily --force`."
 health:
   cli: sb doctor
 default_on: true

@@ -42,6 +42,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import coursera <file> --dry-run` first).
       The file is read only on this computer.'
   connector: coursera
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Coursera ilerleme/sertifika dışa aktarmasını yeniden al ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Re-export your Coursera progress/certificates and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import coursera <dosya> --dry-run
 default_on: true

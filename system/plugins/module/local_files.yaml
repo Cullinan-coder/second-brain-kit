@@ -16,6 +16,12 @@ requires:
   secrets: []
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 2
+  hint:
+    tr: "`sb local-files` çalıştır; config/local_files.yaml klasörlerini kontrol et."
+    en: "Run `sb local-files`; check the folders in config/local_files.yaml."
 health:
   cli: sb doctor
 default_on: true

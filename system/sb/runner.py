@@ -35,6 +35,7 @@ def mail_steps() -> list[tuple[str, list[str], int]]:
 
 DAILY_REST = [
     ("sms/arama", ["sms-sync"], 1800),
+    ("içe aktarma klasörü", ["import-inbox"], 3600),          # 00-Inbox/İçe aktar: yeni dışa aktarma dosyaları (asistan açıkken 10 dk'da bir de bakar)
     ("mail kategori", ["mail-categorize"], 600),
     ("tarih çıkarma", ["extract-dates", "--days", "14", "--apply"], 3600),
     ("onayladıkların → takvim", ["approve", "--apply"], 600),     # onay-bekleyenler.md'de [x] işaretlediklerin
@@ -195,7 +196,13 @@ def daily(skip: set[str] | None = None, force: bool = False) -> int:
         return 0
     with lock():
         log(f"günlük çalışma başladı {datetime.now():%F %T}")
-        from . import features
+        from . import features, freshness
+        try:
+            seeded = freshness.seed()["added"]                # ilk çalışmada mail.db geçmişinden tazelik tohumu
+            if seeded:
+                log(f"kaynak tazeliği tohumlandı: {len(seeded)} kaynak")
+        except Exception as e:                                 # noqa: BLE001
+            log(f"tazelik tohumu atlandı: {e}")
         steps = [run_step(n, a, t, log) for n, a, t in mail_steps() + DAILY_REST
                  if (not skip or n not in skip) and features.step_enabled(a)]
         try:

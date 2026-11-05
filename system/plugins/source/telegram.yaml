@@ -60,6 +60,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import telegram <file> --dry-run` first).
       The file is read only on this computer.'
   connector: telegram
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Telegram Desktop'ta Ayarlar → Gelişmiş → Telegram verilerini dışa aktar (JSON) ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "In Telegram Desktop use Settings → Advanced → Export Telegram data (JSON) and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import telegram <dosya> --dry-run
 default_on: true

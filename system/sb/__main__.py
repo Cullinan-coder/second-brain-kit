@@ -851,6 +851,22 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("doctor", help="kurulumu kontrol et (eksikleri ve ne yapılacağını söyler)")
     g.set_defaults(func=lambda a: __import__("sb.doctor", fromlist=["x"]).run())
 
+    g = sub.add_parser("today", help="bugün: teslimler, bekleyen onaylar, önemli okunmamış mail, eskiyen kaynaklar, son başarısız adım")
+    g.add_argument("--json", action="store_true", help="arayüz için JSON çıktı")
+    g.set_defaults(func=lambda a: __import__("sb.today", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("freshness", help="kaynak tazeliği: her kaynağın son içe aktarması, yaşı, nasıl güncellenir")
+    g.add_argument("action", nargs="?", choices=["status", "seed"], default="status", help="status (varsayılan) | seed: mail.db geçmişinden ilk kaydı yaz")
+    g.add_argument("--json", action="store_true")
+    g.add_argument("--dry-run", action="store_true", help="hiçbir şey yazma (tohum bellekte hesaplanır)")
+    g.set_defaults(func=lambda a: __import__("sb.freshness", fromlist=["x"]).cli(a))
+
+    g = sub.add_parser("import-inbox", help="00-Inbox/İçe aktar klasöründeki yeni dışa aktarma dosyalarını tanı, içe aktar, _işlendi'ye taşı")
+    g.add_argument("--assign", nargs=2, metavar=("DOSYA", "KAYNAK"), help="_tanınmadı altındaki dosyayı seçtiğin kaynakla içe aktar")
+    g.add_argument("--me", help="--assign: kendi adın (WhatsApp/Telegram)")
+    g.add_argument("--no-create", action="store_true", help="klasör yoksa oluşturma")
+    g.set_defaults(func=lambda a: __import__("sb.import_inbox", fromlist=["x"]).cli(a))
+
     g = sub.add_parser("linkedin-import", help="00-Inbox/_imports altındaki LinkedIn arşivini kasaya aktar")
     g.add_argument("--dry-run", action="store_true")
     g.set_defaults(func=lambda a: __import__("sb.linkedin", fromlist=["x"]).run(dry_run=a.dry_run) and 0)

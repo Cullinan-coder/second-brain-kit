@@ -22,6 +22,8 @@ PLUGINS = CODE / "plugins"
 TYPES = ("module", "source", "mcp", "sector")
 AXES = ("meslek", "donanim", "gizlilik", "yogunluk")
 KINDS = {"text", "path", "email", "secret", "url", "bool", "choice", "number"}
+REFRESH_MODES = ("auto", "export", "manual")                 # auto: günlük bağlayıcı · export: dışa aktarma dosyası · manual: elle
+REFRESH_DEFAULT = {"mode": "manual", "every_days": 30}      # kaynak manifestinde refresh yoksa
 ACCOUNTS = {"google", "imap", "outlook", "icloud", "github", "telegram", "spotify", "tailscale", "openai", "anthropic", "gemini",
             "openrouter", "groq", "deepseek", "mistral", "school", "notion", "slack", "atlassian", "linear", "brave", "sentry",
             "figma", "whatsapp", "linkedin"}
@@ -190,6 +192,37 @@ def _check_app(a, errs: list[str]) -> None:
             errs.append(f"app.{plat_}.sha256 gerekli: bilinen iyi dosyanın 64 haneli küçük harfli SHA-256 özeti (güven zinciri sabitlemesi)")
 
 
+def _check_refresh(m: dict, errs: list[str]) -> None:
+    """`refresh:` {mode: auto|export|manual, every_days: 1..3650, hint: {tr, en}} — kaynak tazeliği (sb/freshness.py okur).
+    Kaynak manifestinde zorunlu değil (eksikse varsayılan: manual/30), ama VARSA tam ve geçerli olmalı; modülde isteğe bağlı."""
+    r = m.get("refresh")
+    if r is None:
+        return
+    if not isinstance(r, dict):
+        errs.append("refresh: sözlük olmalı")
+        return
+    if r.get("mode") not in REFRESH_MODES:
+        errs.append(f"refresh.mode {REFRESH_MODES} içinden olmalı")
+    d = r.get("every_days")
+    if not isinstance(d, int) or isinstance(d, bool) or not 1 <= d <= 3650:
+        errs.append("refresh.every_days 1..3650 arası tamsayı olmalı")
+    _bi(r.get("hint"), "refresh.hint", errs)
+    for k in r:
+        if k not in ("mode", "every_days", "hint"):
+            errs.append(f"refresh: bilinmeyen anahtar {k}")
+
+
+def refresh_of(m: dict) -> dict:
+    """Manifestin tazelik ayarı (eksik alanlar varsayılanla tamamlanır; hint boşsa genel bir cümle)."""
+    r = dict(REFRESH_DEFAULT)
+    r.update({k: v for k, v in (m.get("refresh") or {}).items() if v is not None})
+    h = r.get("hint")
+    if not (isinstance(h, dict) and h.get("tr") and h.get("en")):
+        r["hint"] = {"tr": "Veriyi yeniden dışa aktar ve içe aktar (Veri yükleme ekranı ya da `sb import`).",
+                     "en": "Export the data again and import it (Data import screen or `sb import`)."}
+    return r
+
+
 def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
     errs: list[str] = []
     t, id_ = m.get("type"), m.get("id")
@@ -206,6 +239,9 @@ def validate_manifest(m: dict, ids: set[str] | None = None) -> list[str]:
     if not isinstance(m.get("default_on", True), bool):
         errs.append("default_on bool olmalı")
     _check_requires(m, errs)
+    _check_refresh(m, errs)
+    if t == "source" and m.get("refresh") is None:
+        errs.append("refresh: kaynak manifestinde zorunlu (mode, every_days, hint)")
     h = m.get("health")
     if not (isinstance(h, dict) and str(h.get("cli", "")).startswith("sb ")):
         errs.append("health.cli 'sb ...' ile başlamalı")

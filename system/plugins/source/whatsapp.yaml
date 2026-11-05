@@ -68,6 +68,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import whatsapp <file> --dry-run` first).
       The file is read only on this computer.'
   connector: whatsapp
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "WhatsApp'ta sohbeti medyasız dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export the chat without media in WhatsApp and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import whatsapp <dosya> --dry-run
 default_on: true

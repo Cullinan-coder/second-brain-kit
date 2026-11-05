@@ -42,6 +42,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import rss <file> --dry-run` first).
       The file is read only on this computer.'
   connector: rss
+refresh:
+  mode: manual
+  every_days: 14
+  hint:
+    tr: "`sb import rss` çalıştır (akışlar config/rss.yaml içinde)."
+    en: "Run `sb import rss` (feeds are listed in config/rss.yaml)."
 health:
   cli: sb import rss --dry-run
 default_on: true

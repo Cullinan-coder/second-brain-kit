@@ -30,6 +30,12 @@ requires:
   hardware: {}
   apps:
   - gh
+refresh:
+  mode: auto
+  every_days: 2
+  hint:
+    tr: "`sb github-deep` çalıştır; GitHub girişini kontrol et."
+    en: "Run `sb github-deep`; check the GitHub sign-in."
 health:
   cli: sb doctor
 default_on: true

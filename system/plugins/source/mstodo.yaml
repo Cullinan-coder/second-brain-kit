@@ -40,6 +40,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import mstodo <file> --dry-run` first).
       The file is read only on this computer.'
   connector: mstodo
+refresh:
+  mode: export
+  every_days: 7
+  hint:
+    tr: "Microsoft To Do verisini dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export your Microsoft To Do data and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import mstodo <dosya> --dry-run
 default_on: true

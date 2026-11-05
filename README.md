@@ -8,7 +8,7 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.13.1** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.14.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 42 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |
@@ -211,6 +211,8 @@ güncelleme denetimi → sağlık testi (`sb doctor`) → bugünün günlük iş
 | Kopyaladığım bir şeyi bulmak | Asistanda ara (ClipBoardLine kayıtları dahil) ya da ClipBoardLine'da `Ctrl+Alt+T` |
 | Dosya dönüştürmek | Nashi; çıktı otomatik beyne girer |
 | Video, makale, aklına gelen şey | Kopyala → `Ctrl+Alt+B` (Beyne at) ya da telefonda Paylaş → İkinci Beyin |
+| "Bugün ne var?" | Uygulama açılınca ilk ekran **Bugün**: 7 günlük teslim/sınav/etkinlik, bekleyen onaylar, önemli okunmamış mailler, eskiyen kaynaklar. Terminalde `sb today` (`--json`) |
+| Dışa aktardığım dosyayı (WhatsApp zip, Takeout, Spotify…) içeri almak | Kasadaki `00-Inbox/İçe aktar/` klasörüne at. Türü tanınır ve içe aktarılır (10 dk'da bir ve günlük çalışmada); dosya `_işlendi/<tarih>/` altına taşınır, silinmez; aynı dosya ikinci kez alınmaz; tanınmazsa `_tanınmadı/` altına taşınır ve Onaylar'da kaynağını seçmen istenir |
 | "Son günlerde ne yaptık?" | `sb recap` / asistan |
 | Bekleyen onaylar (komut, takvim, WhatsApp, tarih adayları, otomasyon) | Asistanın üst çubuğunda ✓ ve sayı → **Görünümler → Onaylar**. Tek liste; Obsidian'daki `00-Inbox/onay-bekleyenler.md` aynı listenin görünümü (`[x]` = onay, satırı silmek = iptal). Kartlar yeniden başlatmada kaybolmaz, süresi dolunca düşer |
 | Uzun gece işi | `geceye ekle: iş @klasör` → `gece koşusunu başlat` (yalnız bilgisayardan, onaylı) |
@@ -218,6 +220,8 @@ güncelleme denetimi → sağlık testi (`sb doctor`) → bugünün günlük iş
 Asistan kullanımı: [09-asistan-kullanimi](system/docs/rehber/09-asistan-kullanimi.md) · uygulama turu: [08-uygulama-turu](system/docs/rehber/08-uygulama-turu.md).
 
 ## 8. Veri kaynakları ve güncellik
+
+Her kaynağın manifestinde bir **tazelik eşiği** vardır (`refresh:`: otomatik / dışa aktarma / elle, kaç günde bir, nasıl güncellenir ipucu). Sistem her kaynağın son başarılı içe aktarmasını kaydeder; eşik aşılınca kaynak **eskiyor**, iki katı aşılınca **bayat** olur. Uyarılar Bugün ekranında, üst çubuktaki rozette, sabah özetinde ve `sb doctor`'da görünür; `sb freshness` tam tabloyu verir. Hiç kullanmadığın kaynak bayat diye uyarmaz.
 
 | Sıklık | Kaynaklar |
 |---|---|
@@ -352,7 +356,7 @@ uv run python tools/guide_shots.py      # rehber ekran görüntülerini uydurma 
 | Kasa şema sürümü / göç | Yok; not biçimi değişirse elle uyarlama gerekir |
 | Zamanlanmış şifreli yedek | Var (0.12.0, haftalık). Eski sürümlerden kalan düz `vault-*.zip` dosyaları diskte durur, elle silinmeli |
 | Kalite ölçümü | Tarih çıkarma, kişi birleştirme ve arama doğruluğu için değerlendirme seti yok |
-| Kaynak tazeliği | Klasör izleme, "bayat kaynak" uyarısı ve `sb today` yok |
+| Kaynak tazeliği | Var (0.14.0): izlenen klasör, bayatlık uyarısı, `sb today`. Takvim, rehber ve Drive ilk günlük çalışmaya kadar "hiç" görünür |
 | Linux | Denenmedi; zamanlayıcı, paket ve CI yok |
 | Mobil | PWA; mağaza uygulaması yok (plan: Capacitor), bilgisayar kapalıyken çalışmaz |
 | Masaüstü uygulaması | Obsidian/Tailscale'i yönetmez; gömülü terminal ve Claude Code paneli yok |

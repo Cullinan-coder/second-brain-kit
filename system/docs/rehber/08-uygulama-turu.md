@@ -39,9 +39,37 @@ Her gün (ya da bilgisayarı açınca) bir kez bas. Üst çubukta **Çalışmaya
 | 4. **Modelleri ısıt** | Yerel modeli (Ollama, 30 dk bellekte tutulur) ve Whisper'ı belleğe yükler; ilk soru hızlı gelsin |
 | 5. **Hazır** | Her şey tamam |
 
-Durum işaretleri: **○** bekliyor · **…** çalışıyor · **✓** tamam · **!** uyarı · **✗** hata · **–** atlandı. Alt satır: «Çalışıyor…», «Bitti.» ya da «Bitti; sorunlar var.»
+Durum işaretleri: **○** bekliyor · **…** çalışıyor · **✓** tamam · **!** uyarı · **✗** hata · **–** atlandı. Alt satır: «Çalışıyor…», «Bitti.» ya da «Bitti; sorunlar var.» Çalışma bitince uygulama kendiliğinden **Bugün** ekranına geçer.
 
 ![Çalışmaya başla ekranı: beş adım ve durumları](img/uygulama-calismaya-basla.png)
+
+<a id="bugun"></a>
+
+## Bugün (açılış ekranı)
+
+Uygulama açılınca boş sohbet yerine **Bugün** ekranı gelir (kenar çubuğundaki **Görünümler** menüsünün ilk satırı; sohbete geçmek için **Sohbete geç**, **Yeni sohbet** ya da ← düğmesi). Ekran açıkken **60 saniyede bir** kendini yeniler; **Yenile** ile hemen de yenileyebilirsin. Telefonda kartlar tek sütuna iner.
+
+| Kart | Ne gösterir |
+|---|---|
+| **Bugün ve 7 gün** | Kasa notlarındaki teslim, sınav ve etkinlikler: tarih, saat ve kalan gün. Renk: **Bugün** kırmızı, **Yarın** turuncu, sonraki günler mavi |
+| **Bekleyen onaylar** | Onay sayısı ve en eski 3 kart; **Onaylar'a git** ile karar verirsin |
+| **Önemli okunmamış mailler** | Son 7 günün önemli kategorilerindeki okunmamış mailler: sayı ve ilk başlıklar. Telefonda başlıklar gizlenir, yalnız sayı görünür |
+| **Eskiyen kaynaklar** | Durum rozeti (**taze / eskiyor / bayat / hiç**), yaş, eşik ve «nasıl güncellenir» ipucu; **Kaynaklar** tüm tabloyu açar. **İçe aktar klasör yolunu kopyala** kasadaki `00-Inbox/İçe aktar/` yolunu panoya koyar (bu klasöre bırakılan dışa aktarma dosyaları kendiliğinden alınır: [Veri yükleme](07-veri-yukleme.md#izlenen-klasor-ve-kaynak-tazeligi)) |
+| **Son başarısız günlük adım** | Yalnız bir adım başarısızsa görünür: adın, zamanı, çıkış kodu ve son satırlar |
+
+Veri `GET /api/v2/today` ucundan gelir; aynı özeti terminalde `sb today` verir.
+
+![Bugün ekranı: teslimler, onaylar, mailler, eskiyen kaynaklar](img/uygulama-bugun.png)
+
+<a id="kaynaklar"></a>
+
+## Kaynaklar
+
+Görünümler menüsündeki **Kaynaklar**, kullandığın her veri kaynağının tazeliğini tek tabloda gösterir: **Kaynak**, **Mod** (otomatik / dışa aktarma / elle), **Son güncelleme**, **Eşik** (kaç günde eskir), **Durum** ve **İpucu** (nasıl güncellenir). **Yalnız sorunlu** kutusu taze olmayanları (eskiyor, bayat, hiç) süzer. Hiç kullanmadığın kaynak listede görünmez ve uyarı vermez.
+
+Üst çubukta **bayat** kaynak varsa onay sayacının yanında bir rozet çıkar; tıklayınca bu ekran açılır. Rozet bayat kaynak kalmayınca kaybolur. Eşikler ve durumların anlamı: [Veri yükleme → Kaynak tazeliği](07-veri-yukleme.md#izlenen-klasor-ve-kaynak-tazeligi).
+
+![Kaynaklar ekranı: tazelik tablosu ve «yalnız sorunlu» süzgeci](img/uygulama-kaynaklar.png)
 
 ## Ana ekran: sol kenar çubuğu
 
@@ -65,6 +93,7 @@ Dar ekranda (telefon) kenar çubuğu menü düğmesiyle (☰) açılır/kapanır
 | **Komut paleti (Ctrl+K)** | Not, kişi, proje, komut ya da sohbet ara (aşağıya bak) |
 | **Telefon eşleme** | Eşleme kodu ve adresi gösterir (telefon erişimi açıksa) |
 | **Tema** | Açık/koyu/sistem arasında geçer |
+| **Onaylar** (✓) ve **Kaynaklar** (↻) | Onay sayacı; bayat kaynak rozeti (yalnız bayat varsa görünür) |
 | **Bildirimler** (zil) | Bildirim listesi; **Hepsini okundu yap** |
 | **Çalışmaya başla** | Yukarıdaki sıra |
 

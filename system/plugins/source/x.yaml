@@ -47,6 +47,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import x <file> --dry-run` first). The
       file is read only on this computer.'
   connector: x
+refresh:
+  mode: export
+  every_days: 180
+  hint:
+    tr: "X'te Ayarlar → Arşivini indir ile yeni arşiv iste ve zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request a new archive in X Settings → Download an archive of your data and drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb import x <dosya> --dry-run
 default_on: true

@@ -39,6 +39,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import kindle <file> --dry-run` first).
       The file is read only on this computer.'
   connector: kindle
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Kindle'dan My Clippings.txt dosyasını bilgisayara kopyala ve 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Copy My Clippings.txt from your Kindle and drop it into 00-Inbox/İçe aktar."
 health:
   cli: sb import kindle <dosya> --dry-run
 default_on: true

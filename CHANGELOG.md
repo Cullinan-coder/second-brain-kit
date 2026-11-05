@@ -2,6 +2,27 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.14.0 — 2026-11-05
+
+### Katkı (buraqfe05, PR #2)
+- **Asistan yerele kilitleniyordu:** sistem talimatındaki sır *konusu* (ör. "banka/kart numarası forma girilmez" kuralı) bulut süzgecini her sohbette tetikliyordu; artık sistem mesajında yalnız sır *değeri* aranır (kullanıcı mesajı ve araç sonuçları eskisi gibi sıkı taranır).
+- **OTP maskesi yanlış alarmları:** anahtar sözcük kendi başına geçmeli ("Autoencoder", "spinning" içindeki code/pin eşleşmez); tarihin parçası olan sayılar (`2026-11-03`, `03.11.2026`) kod sayılmaz. Gerçek kodlar ("Doğrulama kodunuz: 482193", "OTP 1234", "pin kodu 4321") maskelenmeye devam eder.
+- Aynı incelemedeki `git diff` bulgusu (PR #1) 0.13.1'de çözülmüştü; PR'daki saldırı örneklerinin hepsi bu sürümde de onaya düşer.
+
+### Bugün
+- **Bugün görünümü (`sb/web/today.js`) açılış ekranı oldu:** uygulama açılınca boş sohbet yerine gelir (sohbete **Sohbete geç**, **Yeni sohbet** ya da ← ile geçilir; `sb.home=chat` ayarı eski davranışı geri getirir). Kartlar: bugün ve 7 günün teslim/sınav/etkinlikleri (bugün/yarın/hafta renkleri), bekleyen onaylar (en eski 3, «Onaylar'a git»), önemli okunmamış mailler, eskiyen kaynaklar (durum rozeti, yaş, ipucu, içe aktar klasör yolunu kopyala), son başarısız günlük adım. Yükleme iskeleti, boş ve hata durumları; görünüm açıkken 60 sn'de bir yenilenir; `prefers-reduced-motion`'a uyar; telefonda tek sütun.
+- **Kaynaklar görünümü:** `/api/v2/freshness` tablosu (kaynak, mod, son güncelleme, eşik, durum, ipucu) + «Yalnız sorunlu» süzgeci. Üst çubukta bayat kaynak sayısı rozeti (onay sayacının yanında; tıklayınca Kaynaklar).
+- **Çalışmaya başla** bitince Bugün görünümüne geçer. `sw.js` önbelleği `sb-shell-v4`.
+- `sb today` / `/api/v2/today`: `due_time: 14:00` gibi YAML'ın dakikaya çevirdiği saatler (840) artık `14:00` görünür.
+- Rehber: Uygulama turu'na «Bugün» ve «Kaynaklar» bölümleri, iki yeni ekran görüntüsü; demo kasasına uydurma teslim/onay/tazelik verisi.
+
+### Kaynak tazeliği
+- **Manifest `refresh:`** (`mode: auto|export|manual`, `every_days`, `hint: {tr, en}`): 42 kaynak manifestinin hepsinde ve otomatik 9 modülde (gmail, imap, calendar, drive, contacts, local_files, projects, sessions, github) tazelik eşiği ve «nasıl güncellenir» cümlesi var; `sb/plugins.py` şemayı doğrular (kaynakta eksikse varsayılan manual/30).
+- **`sb freshness` (yeni):** `~/.secondbrain/freshness.json` (kilit + atomik yazım) her kaynağın son başarılı içe aktarmasını, kayıt sayısını ve son dosya özetini tutar. Dolduran kancalar: ortak içe aktarma işlevleri (`ingest_items`, `ingest_messages`, `sync_items`) ve günlük adım sonuçları. İlk çalıştırmada `mail.db` geçmişinden tohumlanır. Yalnız kullandığın kaynaklar raporlanır (içe aktarılmış ya da hesabı bağlı otomatik); durum: taze / eskiyor / bayat / hiç.
+- **İzlenen klasör `00-Inbox/İçe aktar/`:** günlük çalışma (`sb import-inbox` adımı) ve asistan açıkken 10 dakikada bir bakar; kaynağı tanır, içe aktarır, dosyayı `_işlendi/<tarih>/` altına TAŞIR (silme yok). Tanınmayan dosya `_tanınmadı/` altına gider ve Onaylar'a «kaynağını seç» kartı düşer (`sb import-inbox --assign`). Aynı içerik (SHA-256) ikinci kez alınmaz; yazılmakta olan dosya beklenir; zip bombası ve boyut sınırları (D-28) geçerli. Klasör git'e girmez (ilk oluşturulurken `.gitignore`'a eklenir).
+- **`sb today [--json]` (yeni):** tek ekran: bugünün ve 7 günün teslim/sınav/etkinlikleri, bekleyen onay sayısı + en eski 3, önemli okunmamış mailler, eskiyen kaynaklar (en çok 5, ipuçlarıyla), son başarısız günlük adım. Uçlar: `GET /api/v2/today` ve `GET /api/v2/freshness` (salt okunur; telefon da görür, mail konusu/gönderen, onay ayrıntısı, dosya adı ve adım çıktısı kırpılır).
+- **`sb doctor`** bayat kaynak sayısını gösterir; **sabah özeti** «Eskiyen kaynaklar» bölümü ekler.
+
 ## 0.13.1 — 2026-11-05
 
 - Kök `SHA256SUMS` temiz klonda diske düşen içerikten hesaplanır: `eol=crlf` kuralıyla CRLF dağıtılan `.ps1` betikleri dahil (ilk denemede 15 dosya tutmuyordu).

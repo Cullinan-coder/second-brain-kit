@@ -52,6 +52,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import linkedin <file> --dry-run` first).
       The file is read only on this computer.'
   connector: null
+refresh:
+  mode: export
+  every_days: 180
+  hint:
+    tr: "LinkedIn'de Ayarlar → Veri gizliliği → Verilerinin kopyasını al; zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "On LinkedIn go to Settings → Data privacy → Get a copy of your data; drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb doctor
 default_on: true

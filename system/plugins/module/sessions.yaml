@@ -17,6 +17,12 @@ requires:
   hardware: {}
   apps:
   - Claude Code
+refresh:
+  mode: auto
+  every_days: 2
+  hint:
+    tr: "`sb sessions-sync` çalıştır."
+    en: "Run `sb sessions-sync`."
 health:
   cli: sb doctor
 default_on: true

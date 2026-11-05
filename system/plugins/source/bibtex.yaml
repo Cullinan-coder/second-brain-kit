@@ -35,6 +35,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import bibtex <file> --dry-run` first).
       The file is read only on this computer.'
   connector: bibtex
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Yeni .bib dosyasını dışa aktar ve 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export a fresh .bib file and drop it into 00-Inbox/İçe aktar."
 health:
   cli: sb import bibtex <dosya> --dry-run
 default_on: true

@@ -42,6 +42,12 @@ import:
       This package does NOT contain listening history (that comes with "Extended streaming history"). Track names are resolved
       from a previously imported listening history or, if Spotify is connected, the Spotify API. The file is read only on this computer.'
   connector: spotify-teknik
+refresh:
+  mode: export
+  every_days: 180
+  hint:
+    tr: "Spotify'dan «Teknik günlük bilgisi» içeren veri paketini iste ve zip'i 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request the Spotify data pack with Technical Log Information and drop the zip into 00-Inbox/İçe aktar."
 health:
   cli: sb import spotify-teknik <zip> --dry-run
 default_on: true

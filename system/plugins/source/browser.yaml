@@ -51,6 +51,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import browser <file> --dry-run` first).
       The file is read only on this computer.'
   connector: browser
+refresh:
+  mode: export
+  every_days: 7
+  hint:
+    tr: "Tarayıcı geçmişi/yer imi dosyasını yeniden al (`sb import browser --discover` konumu gösterir) ve içe aktar."
+    en: "Re-read the browser history/bookmarks file (`sb import browser --discover` shows where) and import it."
 health:
   cli: sb import browser <dosya> --dry-run
 default_on: true

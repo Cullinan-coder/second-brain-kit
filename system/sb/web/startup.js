@@ -16,11 +16,17 @@
     return n;
   };
   const MARK = { pending: '○', running: '…', ok: '✓', warn: '!', error: '✗', skipped: '–' };
-  let timer = null, last = null, box = null, btn = null;
+  let timer = null, last = null, box = null, btn = null, watching = false;
 
   function paint(st) {
     last = st;
     if (btn) { btn.disabled = !!st.running; btn.title = st.running ? 'Çalışıyor…' : 'Çalışmaya başla'; }
+    if (watching && st.done && !st.running) {          // bu oturumda başlatılan çalışma bitti: Bugün görünümüne geç
+      watching = false;
+      const onStartup = !!(box && box.isConnected);
+      SB.toast(st.ok ? 'Çalışmaya başla bitti.' : 'Çalışmaya başla bitti; sorunlar var (Bugün ve Kaynaklar ekranlarına bak).', st.ok ? undefined : 'error');
+      if (onStartup && SB.has && SB.has('/api/v2/today')) { SB.openView('today'); return; }
+    }
     if (!box || !box.isConnected) return;
     const kids = [];
     if (st.update && st.update.available) {
@@ -92,8 +98,9 @@
     const r = await SB.api('/api/v2/startup/run', {});
     if (!r || r.error) { SB.toast('Başlatılamadı: ' + (r && r.error), 'error'); return; }
     if (!r.started) SB.toast('Zaten çalışıyor');
-    if (r.status) paint(r.status);
     SB.openView('startup');
+    watching = true;
+    if (r.status) paint(r.status);
     watch();
   }
 

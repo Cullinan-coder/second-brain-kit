@@ -70,6 +70,8 @@ CATALOG: dict[str, tuple[str, list[tuple]]] = {
     "uygulama-ayarlar": ("settings", [("wait", 600)]),
     "uygulama-ana-pencere": ("chat", [("open_conv", "demo-hafta"), ("wait", 600)]),
     "uygulama-calismaya-basla": ("chat", [("view", "startup"), ("wait", 800)]),
+    "uygulama-bugun": ("chat", [("view", "today"), ("wait_gone", "Yükleniyor", 15), ("wait", 800)]),
+    "uygulama-kaynaklar": ("chat", [("view", "sources"), ("wait", 1500)]),
     "gizlilik-ekran": ("chat", [("view", "privacy"), ("wait", 1500)]),
     "asistan-ilk-soru": ("chat", [("send", "Bu hafta hangi teslimlerim var?"), ("wait_reply", 90)]),
     "asistan-onay-karti": ("chat_scripted", [("send", "Yarın 15:00'e kütüphane projesi görüşmesi ekle"), ("wait_reply", 60)]),

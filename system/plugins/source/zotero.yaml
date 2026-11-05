@@ -40,6 +40,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import zotero <file> --dry-run` first).
       The file is read only on this computer.'
   connector: zotero
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Zotero kütüphanesini (zotero.sqlite) yeniden içe aktar: `sb import zotero <dosya>`."
+    en: "Import the Zotero library (zotero.sqlite) again: `sb import zotero <file>`."
 health:
   cli: sb import zotero <dosya> --dry-run
 default_on: true

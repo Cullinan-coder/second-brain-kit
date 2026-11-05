@@ -787,6 +787,56 @@ sb import [--me ME] [--days DAYS] [--dry-run] [--discover] source [path]
 
 **Örnek:** `sb import whatsapp sohbet.zip --me "Ayşe" --dry-run`
 
+### sb today
+
+**Ne yapar:** bugün: teslimler, bekleyen onaylar, önemli okunmamış mail, eskiyen kaynaklar, son başarısız adım (tek ekran; salt okunur).
+
+```
+sb today [--json]
+```
+
+| Seçenek | Anlamı |
+|---|---|
+| `--json` | arayüz için JSON çıktı (`GET /api/v2/today` ile aynı gövde) |
+
+**Örnek:** `sb today`
+
+### sb freshness
+
+**Ne yapar:** kaynak tazeliği: her kaynağın son içe aktarması, yaşı ve nasıl güncellenir.
+
+```
+sb freshness [--json] [--dry-run] [{status,seed}]
+```
+
+| Değer | Anlamı |
+|---|---|
+| `status` | tablo (varsayılan) |
+| `seed` | `mail.db` geçmişinden ilk kaydı yaz |
+
+| Seçenek | Anlamı |
+|---|---|
+| `--json` | JSON çıktı (`GET /api/v2/freshness` ile aynı gövde) |
+| `--dry-run` | hiçbir şey yazma (tohum bellekte hesaplanır) |
+
+**Örnek:** `sb freshness --dry-run`
+
+### sb import-inbox
+
+**Ne yapar:** 00-Inbox/İçe aktar klasöründeki yeni dışa aktarma dosyalarını tanı, içe aktar, `_işlendi/<tarih>/` altına taşı (silme yok).
+
+```
+sb import-inbox [--assign DOSYA KAYNAK] [--me ME] [--no-create]
+```
+
+| Seçenek | Anlamı |
+|---|---|
+| `--assign DOSYA KAYNAK` | `_tanınmadı` altındaki dosyayı seçtiğin kaynakla içe aktar |
+| `--me ME` | `--assign`: kendi adın (WhatsApp/Telegram) |
+| `--no-create` | klasör yoksa oluşturma |
+
+**Örnek:** `sb import-inbox --assign "sohbet.zip" whatsapp --me "Ayşe"`
+
 ### sb history-import
 
 **Ne yapar:** ChatGPT / Claude.ai / Gemini geçmişini içe aktar (önce --apply olmadan dene).

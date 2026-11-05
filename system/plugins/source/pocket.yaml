@@ -35,6 +35,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import pocket <file> --dry-run` first).
       The file is read only on this computer.'
   connector: pocket
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Pocket'tan kayıtlarını dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export your Pocket saves and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import pocket <dosya> --dry-run
 default_on: true

@@ -43,6 +43,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import evernote <file> --dry-run` first).
       The file is read only on this computer.'
   connector: evernote
+refresh:
+  mode: export
+  every_days: 30
+  hint:
+    tr: "Evernote'ta defterleri .enex olarak dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export notebooks as .enex in Evernote and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import evernote <dosya> --dry-run
 default_on: true

@@ -1587,6 +1587,8 @@ def serve(port: int = PORT) -> None:
     threading.Thread(target=remote_loop, args=(stop, auth, port), daemon=True).start()
     threading.Thread(target=apps_loop, args=(stop,), daemon=True).start()
     threading.Thread(target=approvals_loop, args=(stop,), daemon=True).start()
+    from . import import_inbox
+    threading.Thread(target=import_inbox.loop, args=(stop,), daemon=True).start()      # 00-Inbox/İçe aktar: 10 dakikada bir
     try:
         server = AssistantServer(("127.0.0.1", port), make_handler(auth=auth))
     except OSError as e:                                             # port başka bir asistan/süreç tarafından tutuluyor (D-14)

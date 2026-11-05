@@ -39,6 +39,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import jira <file> --dry-run` first).
       The file is read only on this computer.'
   connector: jira
+refresh:
+  mode: export
+  every_days: 7
+  hint:
+    tr: "Jira'dan sorguyu CSV olarak dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export your Jira query as CSV and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import jira <dosya> --dry-run
 default_on: true

@@ -52,6 +52,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import gphotos <file> --dry-run` first).
       The file is read only on this computer.'
   connector: gphotos
+refresh:
+  mode: export
+  every_days: 60
+  hint:
+    tr: "Google Takeout'tan Fotoğraflar'ı seçerek yeni dışa aktarma iste ve 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Request a new Takeout export with Photos and drop it into 00-Inbox/İçe aktar."
 health:
   cli: sb import gphotos <dosya> --dry-run
 default_on: true

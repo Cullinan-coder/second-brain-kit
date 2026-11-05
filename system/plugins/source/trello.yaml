@@ -41,6 +41,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import trello <file> --dry-run` first).
       The file is read only on this computer.'
   connector: trello
+refresh:
+  mode: export
+  every_days: 7
+  hint:
+    tr: "Trello panosunu JSON olarak dışa aktar ve dosyayı 00-Inbox/İçe aktar klasörüne bırak."
+    en: "Export the Trello board as JSON and drop the file into 00-Inbox/İçe aktar."
 health:
   cli: sb import trello <dosya> --dry-run
 default_on: true

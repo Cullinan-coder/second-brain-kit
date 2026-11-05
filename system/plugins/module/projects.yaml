@@ -37,6 +37,12 @@ requires:
   secrets: []
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 2
+  hint:
+    tr: "`sb projects-sync` çalıştır; GitHub girişini kontrol et."
+    en: "Run `sb projects-sync`; check the GitHub sign-in."
 health:
   cli: sb doctor
 default_on: true

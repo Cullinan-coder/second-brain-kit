@@ -37,6 +37,12 @@ requires:
   secrets: []
   hardware: {}
   apps: []
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "Google girişi düşmüş olabilir: `sb login main`; sonra `sb daily --force`."
+    en: "Google sign-in may have lapsed: `sb login main`, then `sb daily --force`."
 health:
   cli: sb doctor
 default_on: true

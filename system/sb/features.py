@@ -71,7 +71,7 @@ STEP_MODULE = {          # günlük çalışma komutu → modül
     "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "project-deep": "projects",
     "course-files": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
     "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
-    "github-deep": "github", "apps": None, "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
+    "github-deep": "github", "import-inbox": None, "apps": None, "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
 }
 
 

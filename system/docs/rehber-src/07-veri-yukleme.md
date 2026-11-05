@@ -80,6 +80,65 @@ Bir kaynağın içe aktarıcısı henüz yazılmamışsa Önizle şunu der: «**
 | Zip açılmıyor | Dosya indirme sırasında bozulmuştur; yeniden indir. Zip bombasına karşı bir güvenlik sınırı da vardır |
 | Hizmette «Verilerimi indir» bulunamıyor | Menü adı sürüme göre değişir; «export your data» + hizmet adını arat, kaynak sayfasındaki resmî adrese bak |
 
+<a id="izlenen-klasor-ve-kaynak-tazeligi"></a>
+
+## İzlenen klasör ve kaynak tazeliği
+
+**İzlenen klasör:** kasadaki `00-Inbox/İçe aktar/` klasörüne bir dışa aktarma dosyasını (zip, json, csv, txt…) ya da klasörünü bırakman yeter. Günlük çalışma ve asistan açıkken 10 dakikada bir klasöre bakar:
+
+1. Dosya hâlâ yazılıyorsa (boyutu ya da son değişiklik zamanı değişiyorsa) dokunmaz, sonraki turu bekler.
+2. Çok büyük dosyayı ve zip bombasını (sıkıştırma oranı, dosya sayısı, açılmış boyut sınırı) reddeder.
+3. Aynı içerik daha önce alındıysa (içerik SHA-256 karması) **ikinci kez içe aktarmaz**; «zaten alınmıştı» der ve dosyayı taşır.
+4. Kaynağı tanır ve içe aktarır; başarılıysa dosya `_işlendi/<tarih>/` altına **taşınır (silinmez)**.
+5. Tanınmazsa (ya da okunamazsa) dosya `_tanınmadı/` altına taşınır ve **Onaylar**'a «bu dosya tanınmadı, kaynağını seç» kartı düşer. Kaynağı sen seçince: `sb import-inbox --assign "dosya.zip" whatsapp`.
+
+Klasör git'e girmez (ilk oluşturulurken kasa `.gitignore` dosyasına eklenir). Elle çalıştırmak için: `sb import-inbox`.
+
+**Kaynak tazeliği:** her kaynağın son başarılı içe aktarma zamanı `~/.secondbrain/freshness.json` içinde tutulur. Her kaynak manifestindeki `refresh:` alanı ne kadar sürede eskiyeceğini ve nasıl güncelleneceğini söyler:
+
+| Alan | Anlamı |
+|---|---|
+| `mode` | `auto` günlük çalışan bağlayıcı (Gmail, takvim, Drive…) · `export` dışa aktarma dosyası (WhatsApp 30 gün, Takeout 60, Spotify 180…) · `manual` elle (RSS) |
+| `every_days` | eşik: yaş bu değeri aşınca «eskiyor», iki katını aşınca «bayat» (otomatik kaynaklarda +0,5 gün hoşgörü) |
+| `hint` | «nasıl güncellenir» tek cümle (`tr`, `en`) |
+
+Yalnız **kullandığın** kaynaklar raporlanır: bir kez içe aktardığın ya da hesabı bağlı otomatik kaynaklar. Hiç kullanmadığın kaynak bayat diye uyarmaz. İlk çalıştırmada geçmiş kayıtlardan (`mail.db`) tohumlanır.
+`sb freshness` tabloyu, `sb today` günün özetini gösterir; `sb doctor` bayat kaynak sayısını yazar, sabah özeti «Eskiyen kaynaklar» bölümü ekler.
+
+### Arayüz için JSON (`GET /api/v2/today`, `GET /api/v2/freshness`)
+
+İkisi de salt okunur; telefon da çağırabilir (telefonda mail konusu/gönderen, onay ayrıntısı, dosya adı ve adım çıktısı çıkarılır). Durumlar: `taze`, `eskiyor`, `bayat`, `hiç`.
+
+```json
+// GET /api/v2/today   (sb today --json aynı gövdeyi verir)
+{
+  "generated": "2026-11-05T09:30:00+03:00", "date": "2026-11-05", "remote": false,
+  "deadlines": {
+    "today": [{"date": "2026-11-05", "time": "10:00", "title": "Vize", "type": "sinav", "kind": null, "status": "aktif", "days_left": 0}],
+    "week":  [{"date": "2026-11-05", "time": "10:00", "title": "Vize", "type": "sinav", "kind": null, "status": "aktif", "days_left": 0}]
+  },
+  "approvals": {"count": 4, "oldest": [{"id": "a1b2c3d4", "kind": "takvim", "title": "Toplantı ekle", "created": "2026-11-03T08:00:00+03:00", "detail": "…"}]},
+  "mail": {"count": 2, "by_category": {"okul": 1, "finans": 1},
+           "items": [{"category": "okul", "subject": "Vize yeri", "from": "Hoca", "date": "2026-11-04 09:12"}]},
+  "stale_sources": {"total": 1, "items": [{"source": "bank", "name": {"tr": "Banka hareketleri", "en": "Bank transactions"}, "mode": "export",
+                    "state": "bayat", "age_days": 71.0, "threshold_days": 30, "hint": {"tr": "…", "en": "…"}}]},
+  "last_failed_step": {"name": "drive", "ts": "2026-11-05T01:10:00+03:00", "rc": 1, "tail": "invalid_grant"}
+}
+```
+
+```json
+// GET /api/v2/freshness
+{
+  "generated": "2026-11-05T09:30:00+03:00", "seeded": true,
+  "counts": {"taze": 5, "eskiyor": 1, "bayat": 1, "hiç": 0}, "stale": 2,
+  "sources": [{"source": "bank", "name": {"tr": "…", "en": "…"}, "mode": "export", "last": "2026-08-26T10:00:00+03:00",
+               "age_days": 71.0, "threshold_days": 30, "state": "bayat", "hint": {"tr": "…", "en": "…"},
+               "records": 120, "last_new": 14, "data_max": "2026-08-25", "via": "ingest",
+               "file": {"name": "ekstre.csv", "size": 20480, "sha256": "9f2c…", "at": "2026-08-26T10:00:00+03:00", "read": 14, "new": 14},
+               "last_fail": null}]
+}
+```
+
 ## Verim ipuçları
 
 - Önce **küçük bir dosya** ile dene.

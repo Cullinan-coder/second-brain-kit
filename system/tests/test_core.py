@@ -1717,3 +1717,24 @@ def test_remote_cannot_approve_command_or_whatsapp():
     pid = chat.add_proposal(s, "komut", "x", "dir", lambda: ran.append(1)).split()  # öneri metni döner
     pid = next(iter(s.proposals))
     assert "yalnız bilgisayardan" in chat.decide(s, pid, True) and not ran
+
+
+def test_cloud_filter_system_rules_topic_not_forcing_local():
+    """Asistan kuralında sır KONUSU ("kart numarası forma girilmez") sohbeti yerele zorlamaz; sır DEĞERİ ve kullanıcı mesajındaki konu zorlar."""
+    from sb import router
+    rule = "- Resmi kimlik, vergi, banka/kart numarası gibi değerleri forma asistan girmez; listeyi hazırlar, kullanıcı girer."
+    assert router.cloud_safe_messages([{"role": "system", "content": rule}, {"role": "user", "content": "hangi dersleri alıyorum?"}])[1] is False
+    assert router.cloud_safe_messages([{"role": "system", "content": "şifre: hunter22"}, {"role": "user", "content": "selam"}])[1] is True
+    assert router.cloud_safe_messages([{"role": "system", "content": rule}, {"role": "user", "content": "kart numaram şu"}])[1] is True
+    assert router.cloud_safe_messages([{"role": "tool", "content": "IBAN'ım burada"}])[1] is True
+
+
+def test_otp_mask_keeps_codes_but_not_dates_or_inner_words():
+    """Tek kullanımlık kod maskelenir; tarih yılı ve kelime içindeki code/pin ("Autoencoder") maskelenmez (asistan bağlamı yerele düşüyordu)."""
+    from sb import router
+    from sb.redact import redact
+    for t in ("Doğrulama kodunuz: 482193", "OTP 1234 ile giriş", "your code is 98765", "pin kodu 4321"):
+        assert "••••" in redact(t)
+    for t in ("kod video · aktif · son etkinlik 2026-11-03 · Claude Code", "Autoencoder, CWRU Bearing, DCASE 2024 Task 2",
+              "spinning 2024 test", "kod 03.11.2026 tarihinde"):
+        assert redact(t) == t and not router.sensitive(t)

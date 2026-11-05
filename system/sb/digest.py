@@ -104,6 +104,15 @@ def build_daily(con: sqlite3.Connection, vault: Path, today: date, events: list[
     if act:
         out += ["", "🛠 Projelerde hareket"] + act[:8]
 
+    try:
+        from . import freshness
+        old = freshness.stale_sources(5)
+    except Exception:                                            # noqa: BLE001 — tazelik bölümü özeti düşürmesin
+        old = []
+    if old:
+        out += ["", f"🕰 Eskiyen kaynaklar ({len(old)})"]
+        out += [f"• {s['name']['tr']}: {s['age_days']:g} gün ({s['state']}) — {s['hint']['tr']}" for s in old]
+
     if steps is not None:
         bad = [s for s in steps if s["rc"] != 0]
         out += ["", f"⚙️ Güncelleme: {len(steps) - len(bad)}/{len(steps)} adım tamam"]

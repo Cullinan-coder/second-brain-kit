@@ -18,6 +18,9 @@ from sb import actions, apps, config
 
 SYSTEM = Path(__file__).resolve().parents[1]
 KIT = SYSTEM / "kit"
+# Kaynak deposuna özgü dosyalar (kit/, tools/build_kit.py) kurulu kopyada yoktur: o testler orada atlanır.
+_needs_source = pytest.mark.skipif(not (KIT / "install.py").exists() or not (SYSTEM / "tools" / "build_kit.py").exists(),
+                                   reason="kit/ ve tools/build_kit.py yalnız kaynak deposunda var")
 
 
 # ------------------------------------------------------------------ B-01 git diff / depo dışı no-index okuma
@@ -167,6 +170,7 @@ def _fake_kit(tmp_path):
     return out
 
 
+@_needs_source
 def test_b02_write_sums_hashes_git_content_not_crlf_worktree(tmp_path, monkeypatch):
     sys.path.insert(0, str(SYSTEM / "tools"))
     import importlib
@@ -245,6 +249,7 @@ def test_b02_sb_verify_cli(tmp_path, monkeypatch, capsys):
     assert rc == 1 and "sb/a.py" in capsys.readouterr().out
 
 
+@_needs_source
 def test_b02_installers_copy_sha256sums_into_system():
     for f in ("kit/install.py", "setup/engine.py"):
         src = (SYSTEM / f).read_text(encoding="utf-8")
@@ -252,12 +257,14 @@ def test_b02_installers_copy_sha256sums_into_system():
 
 
 # ------------------------------------------------------------------ B-03 denetim özeti belgesi
+@_needs_source
 def test_b03_changelog_has_no_dangling_audit_report_refs():
     txt = (KIT / "CHANGELOG.md").read_text(encoding="utf-8")
     assert "denetim-2026-11" not in txt
     assert "GUVENLIK-DENETIM-OZET" in txt
 
 
+@_needs_source
 def test_b03_summary_doc_covers_30_findings_without_attack_details():
     doc = (KIT / "docs" / "GUVENLIK-DENETIM-OZET.md").read_text(encoding="utf-8")
     for i in range(1, 31):
@@ -271,6 +278,7 @@ def test_b03_summary_doc_covers_30_findings_without_attack_details():
     assert "Invoke-" not in doc and "http://" not in doc
 
 
+@_needs_source
 def test_b03_build_kit_copies_summary_doc_and_still_excludes_report():
     src = (SYSTEM / "tools" / "build_kit.py").read_text(encoding="utf-8")
     assert '(KIT_SRC / "docs").glob("*.md")' in src

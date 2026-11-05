@@ -83,6 +83,12 @@ import:
       Drag the file onto the Data import screen in Second Brain (or try `sb import outlook <file> --dry-run` first).
       The file is read only on this computer.'
   connector: null
+refresh:
+  mode: auto
+  every_days: 1
+  hint:
+    tr: "Günlük çalışma bunu kendiliğinden yapar; durduysa `sb daily --force` çalıştır, sorun sürerse `sb doctor` bak."
+    en: "The daily run does this on its own; if it stalled run `sb daily --force`, then `sb doctor` if it persists."
 health:
   cli: sb doctor
 default_on: true
