@@ -2,6 +2,10 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.15.4 — 2026-11-05
+
+- **Dizin notları markdown olmayan dosyaları da bağlar** (yaml, py, swift, png…: Obsidian bunları da grafikte düğüm olarak gösterir ve grafikte kopuk halka oluşturuyordu). `Dizin – Dosyalar – …` notları; hiçbir şey gizlenmez.
+
 ## 0.15.3 — 2026-11-05
 
 - **Dizin notları arşivi ve sistem notlarını da kapsar** (grafikte hiçbir şey gizlenmez, yalnız bağlanır); 0.15.2'deki kapsam yalnız aktif klasörlerdi.
