@@ -149,7 +149,13 @@ def test_b02_digest_matches_real_git_blob(tmp_path):
     rules = ks.parse_gitattributes(attrs)
     for n, b in files.items():
         blob = run("show", f"HEAD:{n}").stdout
-        assert ks.sha256_normalized(b, n, rules) == _sha(blob), n
+        assert _sha(ks.normalized_bytes(b, n, rules)) == _sha(blob), n           # depoda saklanan içerik
+    # Özet = temiz klonda diske düşen bayt dizisi (eol=crlf kuralı dahil); kullanıcı bunu doğrular.
+    clone = tmp_path.parent / (tmp_path.name + "-klon")
+    r = subprocess.run(["git", "-c", "core.autocrlf=false", "clone", "-q", str(tmp_path), str(clone)], capture_output=True)
+    assert r.returncode == 0, r.stderr.decode(errors="replace")
+    for n, b in files.items():
+        assert ks.sha256_normalized(b, n, rules) == _sha((clone / n).read_bytes()), n
 
 
 def _fake_kit(tmp_path):
@@ -505,3 +511,16 @@ def test_b02_nested_gitattributes_apply_only_below_their_folder(tmp_path):
 def test_b05_status_reports_pinned_version_and_digest(aenv):
     st = apps.status("clipboardline")
     assert st["pinned_version"] == "1.7.8" and st["pinned_sha256"] == CBL_SHA and st["pinned_by_user"] is False
+
+
+def test_sums_match_clean_checkout_for_crlf_scripts():
+    """`*.ps1 text eol=crlf`: temiz klonda diske CRLF düşer; özet diskteki baytlarla tutmalı (2026-11-05, 15 dosya tutmuyordu)."""
+    from sb import kitsums
+    import hashlib
+    lf = b"Write-Host a\nWrite-Host b\n"
+    crlf = lf.replace(b"\n", b"\r\n")
+    for src in (lf, crlf):                                     # kaynak hangi satır sonuyla olursa olsun
+        assert kitsums.sha256_normalized(src, "tools/x.ps1") == hashlib.sha256(crlf).hexdigest()
+        assert kitsums.sha256_normalized(src, "README.md") == hashlib.sha256(lf).hexdigest()
+    b = b"\x00\x01\r\n\x02"
+    assert kitsums.sha256_normalized(b, "x.bin") == hashlib.sha256(b).hexdigest()   # ikili: dokunulmaz

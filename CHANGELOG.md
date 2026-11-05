@@ -4,6 +4,8 @@ Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; 
 
 ## 0.13.1 — 2026-11-05
 
+- Kök `SHA256SUMS` temiz klonda diske düşen içerikten hesaplanır: `eol=crlf` kuralıyla CRLF dağıtılan `.ps1` betikleri dahil (ilk denemede 15 dosya tutmuyordu).
+
 İş ortağı incelemesi (v0.12.0) düzeltmeleri. Güvenlik denetimi özeti: `docs/GUVENLIK-DENETIM-OZET.md`.
 
 ### Güvenlik (B-01)

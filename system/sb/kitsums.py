@@ -157,8 +157,21 @@ def normalized_bytes(data: bytes, relpath: str, rules: list | None = None) -> by
     return data.replace(b"\r\n", b"\n")
 
 
+def checkout_bytes(data: bytes, relpath: str, rules: list | None = None) -> bytes:
+    """Temiz bir `git clone` sonrası DİSKE düşecek bayt dizisi: saklanan içerik + `eol=crlf` kuralı (ör. `*.ps1`).
+    Özet bununla hesaplanır; böylece kullanıcı klonda dosyayı doğrudan özetleyince tutar (her işletim sisteminde aynı,
+    çünkü kalıpların hepsinde `eol` açıkça verilmiştir)."""
+    rules = parse_gitattributes(DEFAULT_GITATTRIBUTES) if rules is None else rules
+    stored = normalized_bytes(data, relpath, rules)
+    a = _attrs_for(relpath.replace("\\", "/"), rules)
+    t = a.get("text")
+    if a.get("eol") != "crlf" or t is False or t is None or (t == "auto" and _is_binary(stored)):
+        return stored
+    return stored.replace(b"\n", b"\r\n")
+
+
 def sha256_normalized(data: bytes, relpath: str, rules: list | None = None) -> str:
-    return hashlib.sha256(normalized_bytes(data, relpath, rules)).hexdigest()
+    return hashlib.sha256(checkout_bytes(data, relpath, rules)).hexdigest()
 
 
 # ------------------------------------------------------------------ kurulu kopyayı doğrulama
