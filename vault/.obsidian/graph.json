@@ -1,6 +1,6 @@
 {
   "collapse-filter": false,
-  "search": "",
+  "search": "-path:\"90-Arşiv\"",
   "showTags": true,
   "showAttachments": true,
   "hideUnresolved": true,
@@ -228,6 +228,6 @@
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 0.07058167567046357,
+  "scale": 0.11092056124457196,
   "close": true
 }

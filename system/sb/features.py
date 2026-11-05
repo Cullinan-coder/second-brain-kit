@@ -70,7 +70,7 @@ STEP_MODULE = {          # günlük çalışma komutu → modül
     "sync-gcal": "calendar", "inbox-process": "inbox", "contacts-sync": "contacts", "drive-sync": "drive", "drive-index": "drive",
     "local-files": "local_files", "content-sync": "local_files", "projects-sync": "projects", "moodle-sync": "courses", "project-deep": "projects",
     "course-files": "courses", "uzem": "courses", "course-deep": "courses", "sessions-sync": "sessions", "obs-import": "courses", "mail-index": "gmail",
-    "index": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
+    "index": "brain", "hubs": "brain", "mentions": "brain", "chat-links": "brain", "merge-people": "brain", "search2": "brain", "derive": "derived",
     "github-deep": "github", "import-inbox": None, "apps": None, "clusters": "brain", "suggest-links": "brain", "analyze": "brain", "persona": "memory_ui", "graph-style": "brain", "automation-tick": "automation",
 }
 

@@ -43,3 +43,6 @@ desktop.ini
 # UZEM ders dosyaları: kasada durur ama GitHub'a gitmez (telif, boyut)
 40-Kaynaklar/UZEM/**
 !40-Kaynaklar/UZEM/**/*.md
+
+# İçe aktarma klasörü: dışa aktarma dosyaları (zip, json…) git'e girmesin
+00-Inbox/İçe aktar/

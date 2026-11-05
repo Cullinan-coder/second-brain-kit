@@ -946,6 +946,9 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("arsenal", help="kasada 'Araçlar ve erişimler' notunu güncelle")
     g.set_defaults(func=lambda a: print(__import__("sb.arsenal", fromlist=["x"]).build()) or 0)
 
+    g = sub.add_parser("hubs", help="bağlantısız notlar için dizin notları yaz (grafikte kopuk nokta kalmasın)")
+    g.set_defaults(func=lambda a: print(__import__("sb.hubs", fromlist=["x"]).build()) or 0)
+
     g = sub.add_parser("migrate", help="kasa şema göçleri: --check (salt okunur), --dry-run, --yes (yedek alır, tek commit atar)")
     g.add_argument("--check", action="store_true", help="kaç göç bekliyor, ne değişecek (salt okunur; bekleyen varsa çıkış 3)")
     g.add_argument("--dry-run", action="store_true", help="göçleri deneme kipinde çalıştır: hiçbir şey yazılmaz")

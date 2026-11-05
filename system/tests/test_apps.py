@@ -481,3 +481,20 @@ def test_start_menu_shortcut_writes_lnk_under_appdata(monkeypatch, tmp_path):
     assert apps.start_menu_shortcut("Nashi", exe) is None                                # başarısızlık kurulumu bozmaz
     monkeypatch.setattr(apps.sys, "platform", "darwin")
     assert apps.start_menu_shortcut("Nashi", exe) is None
+
+
+def test_clipboardline_pencere_yamasi(tmp_path, monkeypatch):
+    from sb import apps
+    exe = tmp_path / "app" / "ClipBoardLine.exe"
+    nat = exe.parent / "resources" / "native"
+    nat.mkdir(parents=True)
+    f = nat / "windows-bridge.ps1"
+    f.write_bytes((apps._BRIDGE_PINVOKE + "\r\nx\r\n" + apps._BRIDGE_CALL + "\r\n").encode())
+    monkeypatch.setattr(apps, "plat", lambda: "win")
+    monkeypatch.setattr(apps, "sandbox_dir", lambda: None)
+    monkeypatch.setattr(apps, "spec", lambda *a, **k: {"exe": str(exe)})
+    monkeypatch.setattr(apps, "expand", lambda s: apps.Path(s))
+    assert apps.patch_clipboardline()["patched"] is True
+    t = f.read_bytes().decode()
+    assert "IsIconic($window)" in t and "\r\n" in t
+    assert apps.patch_clipboardline()["patched"] is False

@@ -104,3 +104,5 @@ views:
     name: Inbox
     order: [file.name, file.mtime]
 ```
+
+- [[40-Kaynaklar/Dizinler/Dizinler|Dizinler]] — bağlantısız notların dizini

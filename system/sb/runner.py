@@ -68,6 +68,7 @@ DAILY_REST = [
     ("kayıtlı aramalar", ["search2", "--saved"], 600),
     ("günlük yansıma", ["persona", "--reflect"], 900),
     ("otomasyonlar", ["automation-tick"], 900),                  # config/otomasyon.yaml kuralları; takvim/WhatsApp onaya düşer           # dünün makbuz/takvim/görevlerinden 5 satır (yerel model)
+    ("dizin notları", ["hubs"], 300),                           # bağlantısız notlar için Dizin – ... notları (grafik)
     ("araçlar notu", ["arsenal"], 300),                         # Araçlar ve erişimler.md (doctor + kaynak sayımı)
 ]
 

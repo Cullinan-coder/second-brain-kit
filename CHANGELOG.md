@@ -2,6 +2,11 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.15.2 — 2026-11-05
+
+- **ClipBoardLine pencere küçülme hatası:** arayüzü kapatınca odak önceki uygulamaya dönerken büyütülmüş/tam ekran pencere normal boyuta düşüp ortaya geliyordu (köken: ClipBoardLine `windows-bridge.ps1` her pencereye koşulsuz `SW_RESTORE` gönderiyor). Kurulumdan sonra betik yamalanır (`SW_RESTORE` yalnız simge durumundaki pencereye); idempotent, üst proje düzeltirse kendiliğinden pas geçer.
+- **Grafikte kopuk noktalar:** hiçbir nota bağlı olmayan notlar (rehber kişileri, Drive/Keep/NotebookLM kaynakları vb.) için `sb hubs`: klasör grubu başına `40-Kaynaklar/Dizinler/Dizin – …` notları + `Dizinler` (Dashboard'dan bağlı). Günlük çalışmada yenilenir.
+
 ## 0.15.1 — 2026-11-05
 
 - **`git_push` ayarı** (`config/gizlilik.yaml`, varsayılan `true`): `false` iken günlük çalışma kasayı yalnız yerelde commit'ler (geri alma için), GitHub'a göndermez. Kişisel notların uzak depoya gitmesini istemeyenler için.

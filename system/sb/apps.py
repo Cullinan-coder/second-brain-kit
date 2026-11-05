@@ -570,8 +570,45 @@ def install(app_id: str, progress=None, p: str | None = None, force: bool = Fals
         except AppsError as e:
             res["message"] += f" (başlangıç ayarı yazılamadı: {e})"
         f.unlink(missing_ok=True)
+        if app_id == "clipboardline":
+            try:
+                pr = patch_clipboardline(p)
+                if pr.get("patched"):
+                    res["message"] += " · " + pr["message"]
+            except OSError:
+                pass
     progress(100, res["message"])
     return res
+
+
+_BRIDGE_PINVOKE = '  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int command);'
+_BRIDGE_CALL = '      [void][ClipBoardLineNative]::ShowWindow($window,9)'
+
+
+def patch_clipboardline(p: str | None = None) -> dict:
+    """ClipBoardLine odağı önceki pencereye geri verirken büyütülmüş/tam ekran pencereye SW_RESTORE gönderip küçültüyordu.
+    Kurulu windows-bridge.ps1'de SW_RESTORE yalnız simge durumundaki pencereye gönderilir. İdempotent; üst proje düzeltince kendiliğinden pas geçer."""
+    p = p or plat()
+    if p != "win" or sandbox_dir():
+        return {"ok": True, "patched": False, "message": "yama gerekmiyor"}
+    try:
+        f = expand(spec("clipboardline", p)["exe"]).parent / "resources" / "native" / "windows-bridge.ps1"
+    except Exception:                                                        # noqa: BLE001
+        return {"ok": True, "patched": False, "message": "yama atlandı"}
+    if not f.exists():
+        return {"ok": True, "patched": False, "message": "windows-bridge.ps1 bulunamadı"}
+    b = f.read_bytes()
+    if b"IsIconic" in b:
+        return {"ok": True, "patched": False, "message": "yama zaten uygulanmış"}
+    nl = b"\r\n" if b"\r\n" in b else b"\n"
+    a1, a2 = _BRIDGE_PINVOKE.encode(), _BRIDGE_CALL.encode()
+    if b.count(a1) != 1 or b.count(a2) != 1:
+        return {"ok": True, "patched": False, "message": "ClipBoardLine betiği beklenen biçimde değil; yama uygulanmadı"}
+    b = b.replace(a1, a1 + nl + b'  [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);', 1)
+    b = b.replace(a2, b"      # SW_RESTORE only for minimized windows: maximized/full-screen windows must not shrink (Second Brain patch)" + nl +
+                  b"      if ([ClipBoardLineNative]::IsIconic($window)) { [void][ClipBoardLineNative]::ShowWindow($window,9) }", 1)
+    f.write_bytes(b)
+    return {"ok": True, "patched": True, "message": "ClipBoardLine pencere küçülme yaması uygulandı"}
 
 
 def _proc_running_safe(s: dict) -> bool:
