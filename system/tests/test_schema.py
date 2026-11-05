@@ -326,3 +326,23 @@ def test_engine_existing_vault_not_new(tmp_path):
     h = tmp_path / "gizli"
     (h / ".git").mkdir(parents=True)
     assert engine.vault_is_new(h) is True
+
+
+def test_git_sync_does_not_push_when_disabled(vault, monkeypatch):
+    """`git_push: false` iken günlük çalışma kasayı yerelde commit'ler ama GitHub'a göndermez."""
+    import subprocess
+    from sb import runner
+    calls = []
+    real = subprocess.run
+
+    def spy(cmd, *a, **k):
+        calls.append(cmd)
+        return real(cmd, *a, **k)
+    monkeypatch.setattr(runner, "VAULT", vault)
+    monkeypatch.setattr(runner, "git_push_enabled", lambda: False)
+    monkeypatch.setattr(runner.subprocess, "run", spy)
+    (vault / "yeni-not.md").write_text("x\n", encoding="utf-8")
+    msg = runner.git_sync(lambda m: None)
+    assert "yerelde commit" in msg
+    assert not any(len(c) > 3 and c[3] == "push" for c in calls if isinstance(c, list))
+    assert "yeni-not.md" in git(vault, "show", "--name-only", "--format=", "HEAD")

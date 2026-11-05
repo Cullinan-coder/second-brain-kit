@@ -8,7 +8,7 @@ her oturumda hatırlar).
 
 | | |
 |---|---|
-| Sürüm | **0.15.0** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
+| Sürüm | **0.15.1** (bkz. [CHANGELOG.md](CHANGELOG.md)) |
 | Platform | Windows 10/11 (birincil, günlük kullanımda) · macOS 13+ Apple Silicon (CI'da kurulup test edilir) · Linux: denenmedi |
 | Özellik | 52 modül, 258 tek tek seçilebilen madde, 43 veri kaynağı, 18 hazır MCP, 2 gömülü uygulama |
 | Belge | 136 sayfalık Türkçe kullanıcı rehberi: [system/docs/rehber/README.md](system/docs/rehber/README.md) |

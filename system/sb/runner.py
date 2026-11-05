@@ -117,6 +117,15 @@ def _logger(kind: str):
     return log
 
 
+def git_push_enabled() -> bool:
+    """`config/gizlilik.yaml` → `git_push` (varsayılan true). false: günlük çalışma kasayı yalnız yerelde commit'ler, GitHub'a göndermez."""
+    try:
+        from . import privacy
+        return bool(privacy._yaml(privacy.GIZLILIK_CFG).get("git_push", True))
+    except Exception:                                                # noqa: BLE001
+        return True
+
+
 def git_sync(log) -> str:
     """Kasa değişikliklerini commit + push eder (Obsidian Git ile çakışırsa bir kez daha dener)."""
     def git(*a):
@@ -126,6 +135,8 @@ def git_sync(log) -> str:
         if not git("status", "--porcelain").stdout.strip():
             return "git: değişiklik yok"
         c = git("commit", "-q", "-m", f"otomatik güncelleme {datetime.now():%Y-%m-%d %H:%M}\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>")
+        if not git_push_enabled():                                   # kişisel notlar GitHub'a gitmesin: yalnız yerel commit (geri alma için)
+            return "git: yerelde commit'lendi (GitHub'a gönderim kapalı: config/gizlilik.yaml → git_push: false)"
         p = git("push", "-q")
         if p.returncode == 0:
             return "git: gönderildi"

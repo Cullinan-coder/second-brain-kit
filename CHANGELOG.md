@@ -2,6 +2,11 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.15.1 — 2026-11-05
+
+- **`git_push` ayarı** (`config/gizlilik.yaml`, varsayılan `true`): `false` iken günlük çalışma kasayı yalnız yerelde commit'ler (geri alma için), GitHub'a göndermez. Kişisel notların uzak depoya gitmesini istemeyenler için.
+- Katkı: buraqfe05'in PR #3 commit'i (Moodle/TDK/teslim kontrolü) ana dalın geçmişine eklendi; içerik v0.15.0'da sertleştirmeleriyle birlikte zaten vardı.
+
 ## 0.15.0 — 2026-11-05
 
 ### Katkı (buraqfe05, PR #3): e-destek (Moodle), TDK sözlüğü, özet maili teslim kontrolü
