@@ -106,3 +106,5 @@ views:
 ```
 
 - [[40-Kaynaklar/Dizinler/Dizinler|Dizinler]] — bağlantısız notların dizini
+
+- [[40-Kaynaklar/Dizinler/Dizinler|Dizinler]] — bağlantısız notların dizini

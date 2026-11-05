@@ -1,6 +1,6 @@
 """Dizin notları: hiçbir yere bağlı olmayan (gelen/giden [[bağlantısı]] olmayan) notlar grafikte kopuk nokta olarak dağılıyordu.
 Her klasör grubu için bir dizin notu yazılır (`40-Kaynaklar/Dizinler/`), hepsi tek `Dizinler.md` notundan, o da Dashboard'dan bağlanır.
-Otomatik bölüm (sb:auto) her çalışmada yenilenir; elle yazılan kısım korunur. Arşiv, şablon ve sistem klasörleri dışarıda."""
+Otomatik bölüm (sb:auto) her çalışmada yenilenir; elle yazılan kısım korunur. Hiçbir şey gizlenmez: arşiv ve sistem notları da dizinlere girer."""
 from __future__ import annotations
 
 import re
@@ -11,7 +11,8 @@ from .config import VAULT
 from .notes import dump_note, replace_auto, split_note
 
 DIR = "40-Kaynaklar/Dizinler"
-SKIP = {".obsidian", ".git", ".trash", "_system", "90-Arşiv", "_templates", "_attachments", "node_modules", "Dizinler"}
+SKIP = {".obsidian", ".git", ".trash", ".venv", "node_modules", "Dizinler"}
+IGNORED = ("_system/ingest/", "_system/tools/", "_system/sb/")            # Obsidian userIgnoreFilters
 LINK = re.compile(r"\[\[([^\]|#]+)")
 BAD = set('|[]#^')
 
@@ -20,7 +21,7 @@ def _notes(v: Path) -> list[str]:
     out = []
     for p in v.rglob("*.md"):
         rel = p.relative_to(v).as_posix()
-        if set(rel.split("/")[:-1]) & SKIP:
+        if set(rel.split("/")[:-1]) & SKIP or rel.startswith(IGNORED):
             continue
         out.append(rel)
     return out
@@ -32,6 +33,9 @@ def _group(rel: str) -> str:
         return "Kök notlar"
     if parts[0] == "40-Kaynaklar" and len(parts) > 2:
         return parts[1]
+    if parts[0] in ("90-Arşiv", "_system", "_templates", "_attachments"):
+        base = {"90-Arşiv": "Arşiv", "_system": "Sistem", "_templates": "Şablonlar", "_attachments": "Ekler"}[parts[0]]
+        return f"{base} {parts[1]}" if len(parts) > 2 else base
     return parts[0].split("-", 1)[-1] if re.match(r"\d\d-", parts[0]) else parts[0]
 
 

@@ -2,10 +2,14 @@
 
 Kurulu sürümünü `sb version` gösterir. Güncellemek için `sb update` yaz; notlarına ve ayarlarına dokunmaz.
 
+## 0.15.3 — 2026-11-05
+
+- **Dizin notları arşivi ve sistem notlarını da kapsar** (grafikte hiçbir şey gizlenmez, yalnız bağlanır); 0.15.2'deki kapsam yalnız aktif klasörlerdi.
+
 ## 0.15.2 — 2026-11-05
 
 - **ClipBoardLine pencere küçülme hatası:** arayüzü kapatınca odak önceki uygulamaya dönerken büyütülmüş/tam ekran pencere normal boyuta düşüp ortaya geliyordu (köken: ClipBoardLine `windows-bridge.ps1` her pencereye koşulsuz `SW_RESTORE` gönderiyor). Kurulumdan sonra betik yamalanır (`SW_RESTORE` yalnız simge durumundaki pencereye); idempotent, üst proje düzeltirse kendiliğinden pas geçer.
-- **Grafikte kopuk noktalar:** hiçbir nota bağlı olmayan notlar (rehber kişileri, Drive/Keep/NotebookLM kaynakları vb.) için `sb hubs`: klasör grubu başına `40-Kaynaklar/Dizinler/Dizin – …` notları + `Dizinler` (Dashboard'dan bağlı). Günlük çalışmada yenilenir.
+- **Grafikte kopuk noktalar:** hiçbir nota bağlı olmayan notlar (rehber kişileri, Drive/Keep/NotebookLM kaynakları vb.) için `sb hubs`: klasör grubu başına `40-Kaynaklar/Dizinler/Dizin – …` notları + `Dizinler` (Dashboard'dan bağlı). Günlük çalışmada yenilenir; arşiv ve sistem notları dahil, hiçbir şey gizlenmez.
 
 ## 0.15.1 — 2026-11-05
 

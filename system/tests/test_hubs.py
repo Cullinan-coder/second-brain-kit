@@ -14,7 +14,7 @@ def test_dizin_notlari(tmp_path):
     _w(v, "40-Kaynaklar/Keep/Not.md")
     _w(v, "90-Arşiv/60-Kişiler/Eski.md")
     _w(v, "Dashboard.md", "# D")
-    assert hubs.orphans(v) == ["40-Kaynaklar/Keep/Not.md", "Dashboard.md"]
+    assert hubs.orphans(v) == ["40-Kaynaklar/Keep/Not.md", "90-Arşiv/60-Kişiler/Eski.md", "Dashboard.md"]
     hubs.build(v)
     assert "Not" in (v / "40-Kaynaklar/Dizinler/Dizin – Keep.md").read_text(encoding="utf-8")
     assert not (v / "40-Kaynaklar/Dizinler/Dizin – Kişiler.md").exists()
